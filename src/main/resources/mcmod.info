@@ -1,0 +1,8 @@
+[{
+  "modid": "npetestproject",
+  "name": "NPE Test Project",
+  "description": "Random stuff I want to try out",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "authorList": ["NPException"]
+}]
