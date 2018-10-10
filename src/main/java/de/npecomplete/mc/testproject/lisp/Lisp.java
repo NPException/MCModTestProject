@@ -10,6 +10,15 @@ public class Lisp {
 		globalEnv = new LispEnvironment(null);
 	}
 
+	public void initStandardEnvironment() {
+		globalEnv.bind("if", LispSpecialForm.IF);
+		globalEnv.bind("def", LispSpecialForm.DEF);
+		globalEnv.bind("let", LispSpecialForm.LET);
+		globalEnv.bind("fn", LispSpecialForm.FN);
+		globalEnv.bind("do", LispSpecialForm.DO);
+		globalEnv.bind("quote", LispSpecialForm.QUOTE);
+	}
+
 	public Object eval(Object obj) throws LispException {
 		return eval(obj, globalEnv);
 	}
