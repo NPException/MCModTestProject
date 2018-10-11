@@ -1,6 +1,9 @@
 package de.npecomplete.mc.testproject.lisp.data;
 
-public interface LispSequence {
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+public interface LispSequence extends Iterable<Object> {
 	//@formatter:off
 	LispSequence EMPTY_SEQUENCE = new LispSequence() {
 		@Override public Object first() { return null; }
@@ -34,4 +37,29 @@ public interface LispSequence {
 	 * @return true if the sequence is empty.
 	 */
 	boolean empty();
+
+	/**
+	 * @return an iterator over the sequence
+	 */
+	@Override
+	default Iterator<Object> iterator() {
+		LispSequence[] box = {this};
+		return new Iterator<Object>() {
+			@Override
+			public boolean hasNext() {
+				LispSequence seq = box[0];
+				return seq != null && !seq.empty();
+			}
+
+			@Override
+			public Object next() {
+				LispSequence seq = box[0];
+				if (seq == null || empty()) {
+					throw new NoSuchElementException();
+				}
+				box[0] = seq.next();
+				return seq.first();
+			}
+		};
+	}
 }

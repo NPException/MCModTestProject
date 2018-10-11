@@ -3,8 +3,10 @@ package de.npecomplete.mc.testproject.lisp.util;
 import static de.npecomplete.mc.testproject.lisp.Lisp.eval;
 
 import java.util.Arrays;
+import java.util.List;
 
 import de.npecomplete.mc.testproject.lisp.Lisp;
+import de.npecomplete.mc.testproject.lisp.LispException;
 import de.npecomplete.mc.testproject.lisp.LispSpecialForm;
 import de.npecomplete.mc.testproject.lisp.data.LispSequence;
 import de.npecomplete.mc.testproject.lisp.data.ListSequence;
@@ -70,13 +72,17 @@ public final class LispElf {
 		return true;
 	}
 
+	// PLAYGROUND //
+
 	public static LispSequence Seq(Object... value) {
 		return new ListSequence(Arrays.asList(value), 0);
 	}
 
-	// PLAYGROUND //
+	public static List<Object> List(Object... value) {
+		return Arrays.asList(value);
+	}
 
-	private static final LispSpecialForm printForm = (args, env) -> {
+	private static final LispSpecialForm printlnForm = (args, env) -> {
 		while (args != null && !args.empty()) {
 			System.out.print(eval(args.first(), env));
 			args = args.next();
@@ -85,28 +91,54 @@ public final class LispElf {
 		return null;
 	};
 
-	public static void main(String[] arguments) {
+	private static final LispSpecialForm prnStrForm = (args, env) -> {
+		if (!LispElf.matchSize(args, 1, 1)) {
+			throw new LispException("'prn-str' function requires exactly 1 argument: (prn-str ARG)");
+		}
+		return LispPrinter.printStr(eval(args.first(), env));
+	};
+
+	public static void main(String[] arguments) throws Exception {
 		Lisp lisp = new Lisp();
 		lisp.initStandardEnvironment();
 
-		Symbol PRINT = new Symbol("print");
-		lisp.globalEnv.bind(PRINT.name, printForm);
+		Symbol PRINTLN = new Symbol("println");
+		lisp.globalEnv.bind(PRINTLN.name, printlnForm);
+
+		Symbol PRN_STR = new Symbol("prn-str");
+		lisp.globalEnv.bind(PRN_STR.name, prnStrForm);
 
 		Symbol DO = new Symbol("do");
 		Symbol IF = new Symbol("if");
 		Symbol QUOTE = new Symbol("quote");
+		Symbol LET = new Symbol("let");
 
-		Object result = lisp.eval(
-				Seq(DO,
-						Seq(IF, true,
-								Seq(PRINT, "Hello World")
-						),
-						Seq(IF, null,
-								Seq(PRINT, Seq(QUOTE, DO)),
-								Seq(PRINT, Seq(QUOTE, Seq(PRINT, "I'm quoted!")))
-						)
-				)
-		);
-		System.err.println("Result: " + result);
+		Symbol BLARG = new Symbol("blarg");
+
+		// @formatter:off
+		Object form =
+		  Seq(DO,
+		        Seq(IF, true,
+		              Seq(PRINTLN, "Hello\nWorld!")),
+		        Seq(IF, null,
+		              Seq(PRINTLN, "you don't see me"),
+		              Seq(PRINTLN, Seq(PRN_STR, Seq(QUOTE, Seq(PRINTLN, "I'm quoted!"))))),
+		        Seq(LET, List(BLARG, PRINTLN,
+		                      PRINTLN, QUOTE),
+		              Seq(BLARG, Seq(PRINTLN, "\"let\" works!")),
+		              Seq(BLARG, "It really works!"),
+		              "The End."));
+		// @formatter:off
+
+		System.out.println("Evaluating:");
+		System.out.println(LispPrinter.printStr(form));
+		System.out.println("----------");
+		System.out.println();
+
+		Object result = lisp.eval(form);
+
+		System.out.println();
+		System.out.println("----------");
+		System.out.println("Result: " + result);
 	}
 }

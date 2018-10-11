@@ -49,8 +49,8 @@ public class ListSequence implements LispSequence {
 				sb.append(",").append(rest.first());
 				rest = rest.next();
 			}
-			sb.append("])");
 		}
+		sb.append("])");
 		return sb.toString();
 	}
 }
