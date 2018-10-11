@@ -7,10 +7,10 @@ import java.util.List;
 
 import de.npecomplete.mc.testproject.lisp.Lisp;
 import de.npecomplete.mc.testproject.lisp.LispException;
-import de.npecomplete.mc.testproject.lisp.LispSpecialForm;
-import de.npecomplete.mc.testproject.lisp.data.LispSequence;
 import de.npecomplete.mc.testproject.lisp.data.ListSequence;
+import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
+import de.npecomplete.mc.testproject.lisp.special.SpecialForm;
 
 public final class LispElf {
 
@@ -35,15 +35,15 @@ public final class LispElf {
 	 * Checks if the given sequence has the specified
 	 * number of elements.
 	 */
-	public static boolean matchSize(LispSequence seq, int min, int max) {
+	public static boolean matchSize(Sequence seq, int min, int max) {
 		return minSize(seq, min) && maxSize(seq, max);
 	}
 
 	/**
-	 * @return true if the given {@link LispSequence} is not null
+	 * @return true if the given {@link Sequence} is not null
 	 * and contains at least 'min' elements.
 	 */
-	public static boolean minSize(LispSequence seq, int min) {
+	public static boolean minSize(Sequence seq, int min) {
 		if (seq == null || min > 0 && seq.empty()) {
 			return false;
 		}
@@ -57,10 +57,10 @@ public final class LispElf {
 	}
 
 	/**
-	 * @return true if the given {@link LispSequence} is not null
+	 * @return true if the given {@link Sequence} is not null
 	 * and contains at most 'max' elements.
 	 */
-	public static boolean maxSize(LispSequence seq, int max) {
+	public static boolean maxSize(Sequence seq, int max) {
 		if (seq == null || max <= 0 && !seq.empty()) {
 			return false;
 		}
@@ -74,7 +74,7 @@ public final class LispElf {
 
 	// PLAYGROUND //
 
-	public static LispSequence Seq(Object... value) {
+	public static Sequence Seq(Object... value) {
 		return new ListSequence(Arrays.asList(value), 0);
 	}
 
@@ -82,7 +82,7 @@ public final class LispElf {
 		return Arrays.asList(value);
 	}
 
-	private static final LispSpecialForm printlnForm = (args, env) -> {
+	private static final SpecialForm printlnForm = (args, env) -> {
 		while (args != null && !args.empty()) {
 			System.out.print(eval(args.first(), env));
 			args = args.next();
@@ -91,7 +91,7 @@ public final class LispElf {
 		return null;
 	};
 
-	private static final LispSpecialForm prnStrForm = (args, env) -> {
+	private static final SpecialForm prnStrForm = (args, env) -> {
 		if (!LispElf.matchSize(args, 1, 1)) {
 			throw new LispException("'prn-str' function requires exactly 1 argument: (prn-str ARG)");
 		}
@@ -139,6 +139,6 @@ public final class LispElf {
 
 		System.out.println();
 		System.out.println("----------");
-		System.out.println("Result: " + result);
+		System.out.println("Result: " + LispPrinter.printStr(result));
 	}
 }

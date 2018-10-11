@@ -3,19 +3,19 @@ package de.npecomplete.mc.testproject.lisp;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LispEnvironment {
+public class Environment {
 	private static final Object NULL_MARKER = new Object();
 
 	private final Map<String, Object> map = new HashMap<>();
-	private final LispEnvironment parent;
+	private final Environment parent;
 
-	public LispEnvironment(LispEnvironment parent) {
+	public Environment(Environment parent) {
 		super();
 		this.parent = parent;
 	}
 
-	public LispEnvironment top() {
-		LispEnvironment top = this;
+	public Environment top() {
+		Environment top = this;
 		while (top.parent != null) {
 			top = top.parent;
 		}

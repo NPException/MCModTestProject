@@ -5,10 +5,10 @@ import java.util.Iterator;
 import java.util.List;
 
 import de.npecomplete.mc.testproject.lisp.LispException;
-import de.npecomplete.mc.testproject.lisp.data.LispSequence;
+import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
 
-public class LispPrinter {
+public final class LispPrinter {
 
 	public static String printStr(Object o) {
 		StringBuilder sb = new StringBuilder();
@@ -26,7 +26,7 @@ public class LispPrinter {
 				out.append(((Symbol) o).name);
 				return;
 			}
-			if (o instanceof LispSequence) {
+			if (o instanceof Sequence) {
 				out.append('(');
 				printIterable((Iterable) o, out);
 				out.append(')');

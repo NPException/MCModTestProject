@@ -1,9 +1,11 @@
-package de.npecomplete.mc.testproject.lisp;
+package de.npecomplete.mc.testproject.lisp.function;
 
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import de.npecomplete.mc.testproject.lisp.LispException;
 
 @SuppressWarnings("unchecked")
 public interface LispFunction {

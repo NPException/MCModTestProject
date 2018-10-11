@@ -1,35 +1,37 @@
 package de.npecomplete.mc.testproject.lisp;
 
-import de.npecomplete.mc.testproject.lisp.data.LispSequence;
+import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
+import de.npecomplete.mc.testproject.lisp.function.LispFunction;
+import de.npecomplete.mc.testproject.lisp.special.SpecialForm;
 
 public class Lisp {
-	public final LispEnvironment globalEnv;
+	public final Environment globalEnv;
 
 	public Lisp() {
-		globalEnv = new LispEnvironment(null);
+		globalEnv = new Environment(null);
 	}
 
 	public void initStandardEnvironment() {
-		globalEnv.bind("if", LispSpecialForm.IF);
-		globalEnv.bind("def", LispSpecialForm.DEF);
-		globalEnv.bind("let", LispSpecialForm.LET);
-		globalEnv.bind("fn", LispSpecialForm.FN);
-		globalEnv.bind("do", LispSpecialForm.DO);
-		globalEnv.bind("quote", LispSpecialForm.QUOTE);
+		globalEnv.bind("if", SpecialForm.IF);
+		globalEnv.bind("def", SpecialForm.DEF);
+		globalEnv.bind("let", SpecialForm.LET);
+		globalEnv.bind("fn", SpecialForm.FN);
+		globalEnv.bind("do", SpecialForm.DO);
+		globalEnv.bind("quote", SpecialForm.QUOTE);
 	}
 
 	public Object eval(Object obj) throws LispException {
 		return eval(obj, globalEnv);
 	}
 
-	public static Object eval(Object obj, LispEnvironment env) throws LispException {
+	public static Object eval(Object obj, Environment env) throws LispException {
 		if (obj instanceof Symbol) {
 			return env.lookup(((Symbol) obj).name);
 		}
 
-		if (obj instanceof LispSequence) {
-			LispSequence seq = (LispSequence) obj;
+		if (obj instanceof Sequence) {
+			Sequence seq = (Sequence) obj;
 			if (seq.empty()) {
 				throw new LispException("Can't eval empty sequence");
 			}
@@ -37,9 +39,9 @@ public class Lisp {
 			Object first = eval(seq.first(), env);
 
 			// call to special form
-			if (first instanceof LispSpecialForm) {
-				LispSequence args = seq.more();
-				return ((LispSpecialForm) first).apply(args, env);
+			if (first instanceof SpecialForm) {
+				Sequence args = seq.more();
+				return ((SpecialForm) first).apply(args, env);
 			}
 
 			// TODO call to function

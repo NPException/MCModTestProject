@@ -2,12 +2,12 @@ package de.npecomplete.mc.testproject.lisp.data;
 
 import java.util.List;
 
-public class ListSequence implements LispSequence {
+public class ListSequence implements Sequence {
 	private final List<?> backingList;
 	private final int index;
 	private final boolean empty;
 
-	private LispSequence rest;
+	private Sequence rest;
 
 	/**
 	 * Creates a new sequence from a given list, starting at the
@@ -25,7 +25,7 @@ public class ListSequence implements LispSequence {
 	}
 
 	@Override
-	public LispSequence next() {
+	public Sequence next() {
 		if (rest == null) {
 			rest = index < backingList.size() - 1
 					? new ListSequence(backingList, index + 1)
@@ -44,7 +44,7 @@ public class ListSequence implements LispSequence {
 		StringBuilder sb = new StringBuilder("Sequence([");
 		if (!empty) {
 			sb.append(first());
-			LispSequence rest = next();
+			Sequence rest = next();
 			while (rest != null) {
 				sb.append(",").append(rest.first());
 				rest = rest.next();
