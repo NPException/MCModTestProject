@@ -21,7 +21,7 @@ final class LetSpecialForm implements SpecialForm {
 	@Override
 	public Object apply(Sequence args, Environment env) {
 		if (args.empty()) {
-			throw new LispException("'let' requires at least one argument");
+			throw new LispException("'let' requires at least one argument: (let BINDINGS *&FORMS*)");
 		}
 		Object arg1 = args.first();
 		if (!(arg1 instanceof List)) {
@@ -43,7 +43,7 @@ final class LetSpecialForm implements SpecialForm {
 				throw new LispException("'let' binding target is not a symbol: " + s);
 			}
 			Object value = Lisp.eval(it.next(), localEnv);
-			localEnv.bind(((Symbol) sym).name, value);
+			localEnv.bind((Symbol) sym, value);
 		}
 
 		// evaluate body

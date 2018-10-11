@@ -13,7 +13,7 @@ final class QuoteSpecialForm implements SpecialForm {
 	@Override
 	public Object apply(Sequence args, Environment env) {
 		if (!LispElf.matchSize(args, 1, 1)) {
-			throw new LispException("'quote' special form requires exactly 1 argument: (quote FORM)");
+			throw new LispException("'quote' requires exactly 1 argument: (quote FORM)");
 		}
 		return args.first();
 	}

@@ -13,12 +13,12 @@ public class Lisp {
 	}
 
 	public void initStandardEnvironment() {
-		globalEnv.bind("if", SpecialForm.IF);
-		globalEnv.bind("def", SpecialForm.DEF);
-		globalEnv.bind("let", SpecialForm.LET);
-		globalEnv.bind("fn", SpecialForm.FN);
-		globalEnv.bind("do", SpecialForm.DO);
-		globalEnv.bind("quote", SpecialForm.QUOTE);
+		globalEnv.bind(new Symbol("def"), SpecialForm.DEF);
+		globalEnv.bind(new Symbol("do"), SpecialForm.DO);
+		globalEnv.bind(new Symbol("fn"), SpecialForm.FN);
+		globalEnv.bind(new Symbol("if"), SpecialForm.IF);
+		globalEnv.bind(new Symbol("let"), SpecialForm.LET);
+		globalEnv.bind(new Symbol("quote"), SpecialForm.QUOTE);
 	}
 
 	public Object eval(Object obj) throws LispException {
@@ -27,7 +27,7 @@ public class Lisp {
 
 	public static Object eval(Object obj, Environment env) throws LispException {
 		if (obj instanceof Symbol) {
-			return env.lookup(((Symbol) obj).name);
+			return env.lookup((Symbol) obj);
 		}
 
 		if (obj instanceof Sequence) {

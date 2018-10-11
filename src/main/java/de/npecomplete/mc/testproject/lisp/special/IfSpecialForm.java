@@ -16,11 +16,11 @@ final class IfSpecialForm implements SpecialForm {
 	@Override
 	public Object apply(Sequence args, Environment env) {
 		if (!LispElf.matchSize(args, 2, 3)) {
-			throw new LispException("'if' special form requires 2 or 3 arguments: (if TEST THEN *ELSE*)");
+			throw new LispException("'if' requires 2 or 3 arguments: (if TEST THEN *ELSE*)");
 		}
 		Object test = Lisp.eval(args.first(), env);
 		return LispElf.truthy(test)
-				? Lisp.eval(args.more().first(), env)
-				: Lisp.eval(args.more().more().first(), env);
+				? Lisp.eval(args.next().first(), env)
+				: Lisp.eval(args.next().more().first(), env);
 	}
 }

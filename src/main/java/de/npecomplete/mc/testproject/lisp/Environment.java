@@ -3,6 +3,8 @@ package de.npecomplete.mc.testproject.lisp;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.npecomplete.mc.testproject.lisp.data.Symbol;
+
 public class Environment {
 	private static final Object NULL_MARKER = new Object();
 
@@ -22,19 +24,22 @@ public class Environment {
 		return top;
 	}
 
-	public Object lookup(String name) {
-		Object val = map.get(name);
+	public Object lookup(Symbol symbol) throws LispException {
+		Object val = map.get(symbol.name);
 		if (val != null) {
 			return val == NULL_MARKER ? null : val;
 		}
-		return parent == null ? null : parent.lookup(name);
+		if (parent != null) {
+			return parent.lookup(symbol);
+		}
+		throw new LispException("Symbol '" + symbol.name + "' is unbound");
 	}
 
-	public void bind(String name, Object value) {
-		map.put(name, value == null ? NULL_MARKER : value);
+	public void bind(Symbol symbol, Object value) {
+		map.put(symbol.name, value == null ? NULL_MARKER : value);
 	}
 
-	public void unbind(String name) {
-		map.remove(name);
+	public void unbind(Symbol symbol) {
+		map.remove(symbol.name);
 	}
 }

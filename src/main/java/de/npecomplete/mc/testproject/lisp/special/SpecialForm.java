@@ -9,7 +9,26 @@ public interface SpecialForm {
 
 	Object apply(Sequence args, Environment env);
 
-	// BASE IMPLEMENTATIONS
+	// BASE IMPLEMENTATIONS //
+
+	/**
+	 * Takes two arguments, a symbol and a form:
+	 * <code>(def SYMBOL FORM)</code><br>
+	 * The form is evaluated and the resulting value
+	 * bound to the symbol in the global environment
+	 * and then returned.
+	 */
+	SpecialForm DEF = new DefSpecialForm();
+
+	/**
+	 * Takes any number of arguments. Evaluates the
+	 * arguments and returns the result of the last
+	 * evaluation.
+	 */
+	SpecialForm DO = new DoSpecialForm();
+
+	// TODO
+	SpecialForm FN = new FnSpecialForm();
 
 	/**
 	 * Takes 2-3 arguments: TEST, THEN, [ELSE].
@@ -18,9 +37,6 @@ public interface SpecialForm {
 	 */
 	SpecialForm IF = new IfSpecialForm();
 
-	// TODO
-	SpecialForm DEF = new DefSpecialForm();
-
 	/**
 	 * Takes a binding form (a {@link List}) with symbol-value
 	 * pairs, and a body (one or more forms).
@@ -28,16 +44,6 @@ public interface SpecialForm {
 	 * within the body.
 	 */
 	SpecialForm LET = new LetSpecialForm();
-
-	// TODO
-	SpecialForm FN = new FnSpecialForm();
-
-	/**
-	 * Takes any number of arguments. Evaluates the
-	 * arguments and returns the result of the last
-	 * evaluation.
-	 */
-	SpecialForm DO = new DoSpecialForm();
 
 	/**
 	 * Takes a single argument. Returns that argument unevaluated.
