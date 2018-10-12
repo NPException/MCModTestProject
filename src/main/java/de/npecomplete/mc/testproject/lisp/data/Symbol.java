@@ -1,5 +1,7 @@
 package de.npecomplete.mc.testproject.lisp.data;
 
+import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
+
 public final class Symbol {
 	public final String name;
 
@@ -25,6 +27,6 @@ public final class Symbol {
 
 	@Override
 	public String toString() {
-		return "Symbol(" + name + ')';
+		return LispPrinter.printStr(this);
 	}
 }

@@ -1,6 +1,9 @@
 package de.npecomplete.mc.testproject.lisp.data;
 
+import java.util.Iterator;
 import java.util.List;
+
+import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 
 public class ListSequence implements Sequence {
 	private final List<?> backingList;
@@ -39,18 +42,14 @@ public class ListSequence implements Sequence {
 		return empty;
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public Iterator<Object> iterator() {
+		return (Iterator<Object>) backingList.listIterator(index);
+	}
+
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder("Sequence([");
-		if (!empty) {
-			sb.append(first());
-			Sequence rest = next();
-			while (rest != null) {
-				sb.append(",").append(rest.first());
-				rest = rest.next();
-			}
-		}
-		sb.append("])");
-		return sb.toString();
+		return LispPrinter.printStr(this);
 	}
 }

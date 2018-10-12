@@ -21,8 +21,12 @@ public interface LispFunction {
 		throw new LispException("Wrong arity: 2");
 	}
 
-	default Object apply(Object par1, Object par2, Object par3, Object... params) {
-		throw new LispException("Wrong arity: 3+");
+	default Object apply(Object par1, Object par2, Object par3) {
+		throw new LispException("Wrong arity: 3");
+	}
+
+	default Object apply(Object par1, Object par2, Object par3, Object... more) {
+		throw new LispException("Wrong arity: 4+");
 	}
 
 	/**

@@ -1,9 +1,13 @@
 package de.npecomplete.mc.testproject.lisp;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
 import de.npecomplete.mc.testproject.lisp.function.LispFunction;
 import de.npecomplete.mc.testproject.lisp.special.SpecialForm;
+import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 
 public class Lisp {
 	public final Environment globalEnv;
@@ -36,21 +40,52 @@ public class Lisp {
 				throw new LispException("Can't eval empty sequence");
 			}
 			// evaluate first element
-			Object first = eval(seq.first(), env);
+			Object callable = eval(seq.first(), env);
 
 			// call to special form
-			if (first instanceof SpecialForm) {
+			if (callable instanceof SpecialForm) {
 				Sequence args = seq.more();
-				return ((SpecialForm) first).apply(args, env);
+				return ((SpecialForm) callable).apply(args, env);
 			}
 
-			// TODO call to function
-			LispFunction fn = LispFunction.from(first);
+			// call to function
+			LispFunction fn = LispFunction.from(callable);
 			if (fn != null) {
-				// TODO call function with args
+				Sequence args = seq.more();
+				if (args.empty()) {
+					return fn.apply(); // no arguments
+				}
+
+				Object arg1 = eval(args.first(), env);
+				args = args.next();
+				if (args == null) {
+					return fn.apply(arg1); // one argument
+				}
+
+				Object arg2 = eval(args.first(), env);
+				args = args.next();
+				if (args == null) {
+					return fn.apply(arg1, arg2); // two arguments
+				}
+
+				Object arg3 = eval(args.first(), env);
+				args = args.next();
+				if (args == null) {
+					return fn.apply(arg1, arg2, arg3); // three arguments
+				}
+
+				List<Object> moreArgs = new ArrayList<>(3);
+				do {
+					moreArgs.add(eval(args.first(), env));
+				} while ((args = args.next()) != null);
+				return fn.apply(arg1, arg2, arg3, moreArgs.toArray()); // var-args
 			}
 
-			throw new LispException("Can't call " + first);
+			String call = LispPrinter.printStr(seq);
+			String first = LispPrinter.printStr(seq.first());
+			throw new LispException("Can't call " + callable + " | "
+					+ "Was returned when evaluating: " + first + " | "
+					+ "Call: " + call);
 		}
 
 		return obj;

@@ -12,7 +12,6 @@ public class Environment {
 	private final Environment parent;
 
 	public Environment(Environment parent) {
-		super();
 		this.parent = parent;
 	}
 
@@ -37,9 +36,5 @@ public class Environment {
 
 	public void bind(Symbol symbol, Object value) {
 		map.put(symbol.name, value == null ? NULL_MARKER : value);
-	}
-
-	public void unbind(Symbol symbol) {
-		map.remove(symbol.name);
 	}
 }
