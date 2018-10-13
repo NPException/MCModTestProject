@@ -74,11 +74,18 @@ public class Lisp {
 					return fn.apply(arg1, arg2, arg3); // three arguments
 				}
 
+				Object arg4 = eval(args.first(), env);
+				args = args.next();
+				if (args == null) {
+					return fn.apply(arg1, arg2, arg3, arg4); // four arguments
+				}
+
+				// more than four arguments
 				List<Object> moreArgs = new ArrayList<>(3);
 				do {
 					moreArgs.add(eval(args.first(), env));
 				} while ((args = args.next()) != null);
-				return fn.apply(arg1, arg2, arg3, moreArgs.toArray()); // var-args
+				return fn.apply(arg1, arg2, arg3, arg4, moreArgs.toArray());
 			}
 
 			String call = LispPrinter.printStr(seq);

@@ -1,6 +1,7 @@
 package de.npecomplete.mc.testproject.lisp;
 
 import static de.npecomplete.mc.testproject.lisp.util.LispElf.Seq;
+import static de.npecomplete.mc.testproject.lisp.util.LispElf.Sym;
 
 import java.util.Arrays;
 import java.util.List;
@@ -47,25 +48,27 @@ public class Playground {
 		Lisp lisp = new Lisp();
 		lisp.initStandardEnvironment();
 
-		Symbol DEF = new Symbol("def");
+		Symbol DEF = Sym("def");
 
-		Symbol PRINTLN = new Symbol("println");
+		Symbol PRINTLN = Sym("println");
 		lisp.eval(Seq(DEF, PRINTLN, printlnForm));
 
-		Symbol PRN_STR = new Symbol("prn-str");
+		Symbol PRN_STR = Sym("prn-str");
 		lisp.eval(Seq(DEF, PRN_STR, prnStrForm));
 
-		Symbol DO = new Symbol("do");
-		Symbol IF = new Symbol("if");
-		Symbol QUOTE = new Symbol("quote");
-		Symbol LET = new Symbol("let");
-		Symbol FN = new Symbol("fn");
+		Symbol DO = Sym("do");
+		Symbol IF = Sym("if");
+		Symbol QUOTE = Sym("quote");
+		Symbol LET = Sym("let");
+		Symbol FN = Sym("fn");
 
-		Symbol BLARG = new Symbol("blarg");
+		Symbol BLARG = Sym("blarg");
 
-		Symbol FN_0 = new Symbol("fn-0");
-		Symbol FN_1 = new Symbol("fn-1");
-		Symbol ARG = new Symbol("arg");
+		Symbol FN_0 = Sym("fn-0");
+		Symbol FN_1 = Sym("fn-1");
+		Symbol ARG = Sym("arg");
+
+		Symbol MULTI = Sym("multi");
 
 		// @formatter:off
 		Object form =
@@ -87,12 +90,18 @@ public class Playground {
 		              Seq(FN_1, "Just passing by.")),
 		        Seq(Seq(FN, List(DO, IF, QUOTE, LET, FN),
 		                 Seq(PRINTLN, DO, IF, QUOTE, LET, FN)),
-		            1, 2, 3, 4, 5));
+		            1, 2, 3, 4, 5),
+		        Seq(DEF, MULTI,
+		             Seq(FN,
+		                  Seq(List(), Seq(PRINTLN, "Nothing to see.")),
+		                  Seq(List(ARG), Seq(PRINTLN, "Something to see: ", ARG)))),
+		        Seq(MULTI),
+		        Seq(MULTI, "FooBar!"));
 		// @formatter:off
 
 		run(lisp, form);
 
-		run(lisp, Seq(new Symbol("is-dead")));
+		run(lisp, Seq(Sym("is-dead")));
 	}
 
 	private static void run(Lisp lisp, Object form) {
