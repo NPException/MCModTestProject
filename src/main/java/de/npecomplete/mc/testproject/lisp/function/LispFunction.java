@@ -1,5 +1,7 @@
 package de.npecomplete.mc.testproject.lisp.function;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -13,7 +15,7 @@ public interface LispFunction {
 		throw new LispException("Wrong arity: 0");
 	}
 
-	default Object apply(Object par) {
+	default Object apply(Object par1) {
 		throw new LispException("Wrong arity: 1");
 	}
 
@@ -35,6 +37,22 @@ public interface LispFunction {
 	static LispFunction from(Object o) {
 		if (o instanceof LispFunction) {
 			return (LispFunction) o;
+		}
+		if (o instanceof Set) {
+			return new LispFunction() {
+				@Override
+				public Object apply(Object par) {
+					return ((Set) o).contains(par) ? par : null;
+				}
+			};
+		}
+		if (o instanceof Map) {
+			return new LispFunction() {
+				@Override
+				public Object apply(Object par) {
+					return ((Map) o).get(par);
+				}
+			};
 		}
 		if (o instanceof Function) {
 			return new LispFunction() {

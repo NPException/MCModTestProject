@@ -5,7 +5,7 @@ import java.util.List;
 
 import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 
-public class ListSequence implements Sequence {
+public final class ListSequence implements Sequence {
 	private final List<?> backingList;
 	private final int index;
 	private final boolean empty;

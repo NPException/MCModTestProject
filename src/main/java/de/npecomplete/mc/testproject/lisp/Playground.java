@@ -4,7 +4,13 @@ import static de.npecomplete.mc.testproject.lisp.util.LispElf.Seq;
 import static de.npecomplete.mc.testproject.lisp.util.LispElf.Sym;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
 import de.npecomplete.mc.testproject.lisp.special.SpecialForm;
@@ -14,6 +20,22 @@ import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 public class Playground {
 	private static List<Object> List(Object... value) {
 		return Arrays.asList(value);
+	}
+
+	private static Set<Object> Set(Object... value) {
+		return Collections.unmodifiableSet(new HashSet<>(List(value)));
+	}
+
+	private static Map<Object,Object> Map(Object... value) {
+		if (value.length % 2 != 0) {
+			throw new IllegalArgumentException("value array must have an even number of values");
+		}
+		Map<Object,Object> map = new HashMap<>();
+		Iterator<Object> it = List(value).iterator();
+		while (it.hasNext()) {
+			map.put(it.next(), it.next());
+		}
+		return Collections.unmodifiableMap(map);
 	}
 
 	private static final SpecialForm printlnForm = (args, env) -> {
@@ -96,7 +118,9 @@ public class Playground {
 		                  Seq(List(), Seq(PRINTLN, "Nothing to see.")),
 		                  Seq(List(ARG), Seq(PRINTLN, "Something to see: ", ARG)))),
 		        Seq(MULTI),
-		        Seq(MULTI, "FooBar!"));
+		        Seq(MULTI, "FooBar!"),
+		        Seq(PRINTLN, Seq(Set("Test"), "Test")),
+		        Seq(PRINTLN, Seq(Map("key", "value"), "key")));
 		// @formatter:off
 
 		run(lisp, form);
