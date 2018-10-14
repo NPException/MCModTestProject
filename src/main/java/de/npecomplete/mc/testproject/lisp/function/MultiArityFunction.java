@@ -4,10 +4,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import de.npecomplete.mc.testproject.lisp.Environment;
-import de.npecomplete.mc.testproject.lisp.Lisp;
 import de.npecomplete.mc.testproject.lisp.LispException;
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
+import de.npecomplete.mc.testproject.lisp.special.SpecialForm;
 import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 
 public class MultiArityFunction implements LispFunction {
@@ -111,7 +111,7 @@ public class MultiArityFunction implements LispFunction {
 		if (noArgsBody == null) {
 			throw new LispException("Wrong arity: 0");
 		}
-		return executeBody(noArgsBody, env);
+		return SpecialForm.DO.apply(noArgsBody, env);
 	}
 
 	@Override
@@ -121,7 +121,7 @@ public class MultiArityFunction implements LispFunction {
 		}
 		Environment localEnv = new Environment(env);
 		localEnv.bind(oneArgSymbol, par);
-		return executeBody(oneArgBody, localEnv);
+		return SpecialForm.DO.apply(oneArgBody, localEnv);
 	}
 
 	@Override
@@ -132,7 +132,7 @@ public class MultiArityFunction implements LispFunction {
 		Environment localEnv = new Environment(env);
 		localEnv.bind(twoArgSymbols[0], par1);
 		localEnv.bind(twoArgSymbols[1], par2);
-		return executeBody(twoArgBody, localEnv);
+		return SpecialForm.DO.apply(twoArgBody, localEnv);
 	}
 
 	@Override
@@ -144,7 +144,7 @@ public class MultiArityFunction implements LispFunction {
 		localEnv.bind(threeArgSymbols[0], par1);
 		localEnv.bind(threeArgSymbols[1], par2);
 		localEnv.bind(threeArgSymbols[2], par3);
-		return executeBody(threeArgBody, localEnv);
+		return SpecialForm.DO.apply(threeArgBody, localEnv);
 	}
 
 	@Override
@@ -164,15 +164,6 @@ public class MultiArityFunction implements LispFunction {
 		for (int i = 0, size = more.length; i < size; i++) {
 			localEnv.bind((Symbol) functionData[i + 5], more[i]);
 		}
-		return executeBody(multiArgBody, localEnv);
-	}
-
-	static Object executeBody(Sequence body, Environment localEnv) {
-		Object result = null;
-		while (body != null && !body.empty()) {
-			result = Lisp.eval(body.first(), localEnv);
-			body = body.next();
-		}
-		return result;
+		return SpecialForm.DO.apply(multiArgBody, localEnv);
 	}
 }

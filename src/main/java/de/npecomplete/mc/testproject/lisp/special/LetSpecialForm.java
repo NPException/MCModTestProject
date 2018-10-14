@@ -47,13 +47,6 @@ final class LetSpecialForm implements SpecialForm {
 		}
 
 		// evaluate body
-		Sequence body = args.next();
-
-		Object result = null;
-		while (body != null && !body.empty()) {
-			result = Lisp.eval(body.first(), localEnv);
-			body = body.next();
-		}
-		return result;
+		return SpecialForm.DO.apply(args.next(), localEnv);
 	}
 }
