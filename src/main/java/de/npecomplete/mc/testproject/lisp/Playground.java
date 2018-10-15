@@ -56,6 +56,11 @@ public class Playground {
 	};
 
 	public static void main(String[] arguments) throws Exception {
+		LispPrinter.print(
+				Seq(Map(Sym(":a"), "Blargh", Sym(":b"), Seq("John", "Cena")),
+						Set("A", "B", "C")),
+				System.out);
+
 		long start = System.nanoTime();
 		try {
 			start();
