@@ -1,43 +1,12 @@
 package de.npecomplete.mc.testproject.lisp;
 
-import static de.npecomplete.mc.testproject.lisp.util.LispElf.Seq;
-import static de.npecomplete.mc.testproject.lisp.util.LispElf.Sym;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
 import de.npecomplete.mc.testproject.lisp.special.SpecialForm;
 import de.npecomplete.mc.testproject.lisp.util.LispElf;
 import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
+import de.npecomplete.mc.testproject.lisp.util.LispReader;
 
 public class Playground {
-	private static List<Object> List(Object... value) {
-		return Arrays.asList(value);
-	}
-
-	private static Set<Object> Set(Object... value) {
-		return Collections.unmodifiableSet(new HashSet<>(List(value)));
-	}
-
-	private static Map<Object,Object> Map(Object... value) {
-		if (value.length % 2 != 0) {
-			throw new IllegalArgumentException("value array must have an even number of values");
-		}
-		Map<Object,Object> map = new HashMap<>();
-		Iterator<Object> it = List(value).iterator();
-		while (it.hasNext()) {
-			map.put(it.next(), it.next());
-		}
-		return Collections.unmodifiableMap(map);
-	}
-
 	private static final SpecialForm printlnForm = (args, env) -> {
 		System.out.print("> ");
 		while (args != null && !args.empty()) {
@@ -56,11 +25,6 @@ public class Playground {
 	};
 
 	public static void main(String[] arguments) throws Exception {
-		LispPrinter.print(
-				Seq(Map(Sym(":a"), "Blargh", Sym(":b"), Seq("John", "Cena")),
-						Set("A", "B", "C")),
-				System.out);
-
 		long start = System.nanoTime();
 		try {
 			start();
@@ -75,62 +39,37 @@ public class Playground {
 		Lisp lisp = new Lisp();
 		lisp.initStandardEnvironment();
 
-		Symbol DEF = Sym("def");
+		lisp.globalEnv.bind(new Symbol("println"), printlnForm);
+		lisp.globalEnv.bind(new Symbol("prn-str"), prnStrForm);
 
-		Symbol PRINTLN = Sym("println");
-		lisp.eval(Seq(DEF, PRINTLN, printlnForm));
+		String formStr ="(do\n" +
+				"  (def fn-0 (fn [] (println \"No args call!\")))\n" +
+				"  (if true (println \"Hello\\nWorld!\"))\n" +
+				"  (if null\n" +
+				"    (println \"you don't see me\")\n" +
+				"    (println (prn-str (quote (println \"I'm quoted!\")))))\n" +
+				"  (let [blarg println\n" +
+				"        println quote\n" +
+				"        fn-1 (fn [arg]\n" +
+				"               (blarg \"Passed argument: \" (prn-str arg))\n" +
+				"               arg)]\n" +
+				"    (blarg (println (let works !)))\n" +
+				"    (fn-0)\n" +
+				"    (fn-1 \"Just passing by.\"))\n" +
+				"  ((fn [do if quote let fn]\n" +
+				"     (println do if quote let fn))\n" +
+				"\t1 2 3 4 5)\n" +
+				"  (def multi\n" +
+				"    (fn ([] (println \"Nothing to see.\"))\n" +
+				"\t    ([x] (println \"Something to see: \" x))))\n" +
+				"  (multi)\n" +
+				"  (multi \"FooBar!\")\n" +
+				"  (println (#{:test} :test))\n" +
+				"  (println ({:key :value} :key)))";
 
-		Symbol PRN_STR = Sym("prn-str");
-		lisp.eval(Seq(DEF, PRN_STR, prnStrForm));
+		run(lisp, LispReader.readStr(formStr));
 
-		Symbol DO = Sym("do");
-		Symbol IF = Sym("if");
-		Symbol QUOTE = Sym("quote");
-		Symbol LET = Sym("let");
-		Symbol FN = Sym("fn");
-
-		Symbol BLARG = Sym("blarg");
-
-		Symbol FN_0 = Sym("fn-0");
-		Symbol FN_1 = Sym("fn-1");
-		Symbol ARG = Sym("arg");
-
-		Symbol MULTI = Sym("multi");
-
-		// @formatter:off
-		Object form =
-		  Seq(DO,
-		        Seq(DEF, FN_0, Seq(FN, List(),
-		                            Seq(PRINTLN, "No args call!"))),
-		        Seq(IF, true,
-		              Seq(PRINTLN, "Hello\nWorld!")),
-		        Seq(IF, null,
-		              Seq(PRINTLN, "you don't see me"),
-		              Seq(PRINTLN, Seq(PRN_STR, Seq(QUOTE, Seq(PRINTLN, "I'm quoted!"))))),
-		        Seq(LET, List(BLARG, PRINTLN,
-		                      PRINTLN, QUOTE,
-						      FN_1, Seq(FN, List(ARG),
-		                                 Seq(BLARG, "Passed argument: ", Seq(PRN_STR, ARG)),
-		                                 ARG)),
-		              Seq(BLARG, Seq(PRINTLN, "\"let\" works!")),
-		              Seq(FN_0),
-		              Seq(FN_1, "Just passing by.")),
-		        Seq(Seq(FN, List(DO, IF, QUOTE, LET, FN),
-		                 Seq(PRINTLN, DO, IF, QUOTE, LET, FN)),
-		            1, 2, 3, 4, 5),
-		        Seq(DEF, MULTI,
-		             Seq(FN,
-		                  Seq(List(), Seq(PRINTLN, "Nothing to see.")),
-		                  Seq(List(ARG), Seq(PRINTLN, "Something to see: ", ARG)))),
-		        Seq(MULTI),
-		        Seq(MULTI, "FooBar!"),
-		        Seq(PRINTLN, Seq(Set("Test"), "Test")),
-		        Seq(PRINTLN, Seq(Map("key", "value"), "key")));
-		// @formatter:off
-
-		run(lisp, form);
-
-		run(lisp, Seq(Sym("is-dead")));
+		run(lisp, LispReader.readStr("is-dead"));
 	}
 
 	private static void run(Lisp lisp, Object form) {

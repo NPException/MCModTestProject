@@ -6,16 +6,13 @@ import java.util.PrimitiveIterator.OfInt;
 import java.util.stream.IntStream;
 
 import de.npecomplete.mc.testproject.lisp.LispException;
+import de.npecomplete.mc.testproject.lisp.util.Token.Type;
 
-// TODO change to Iterator<Token> and return Tokens I can easily check against
-
-// TODO tokenize tags/set starts properly (#)
-
-class LispTokenizer implements Iterator<String> {
+class LispTokenizer implements Iterator<Token> {
 	private final OfInt chars;
 
 	private int nextChar = -1; // -1 indicates that there is no next char yet
-	private String token;
+	private Token token;
 
 	LispTokenizer(IntStream charStream) {
 		chars = charStream.iterator();
@@ -31,13 +28,13 @@ class LispTokenizer implements Iterator<String> {
 	}
 
 	@Override
-	public String next() {
+	public Token next() {
 		if (!hasNext()) {
 			throw new NoSuchElementException();
 		}
-		String s = token;
+		Token t = token;
 		token = null;
-		return s;
+		return t;
 	}
 
 	private int nextChar() {
@@ -59,7 +56,7 @@ class LispTokenizer implements Iterator<String> {
 				|| chr == '{' || chr == '}';
 	}
 
-	private String computeNext() {
+	private Token computeNext() {
 		int chr = nextChar();
 		if (chr == -1) {
 			return null; // end of character stream
@@ -74,13 +71,80 @@ class LispTokenizer implements Iterator<String> {
 
 		// data structure begin / end
 		if (isGroupToken(chr)) {
-			return Character.toString((char) chr);
+			switch (chr) {
+				case '(':
+					return Token.SEQUENCE_START;
+				case ')':
+					return Token.SEQUENCE_END;
+				case '[':
+					return Token.LIST_START;
+				case ']':
+					return Token.LIST_END;
+				case '{':
+					return Token.MAP_START;
+				case '}':
+					return Token.MAP_SET_END;
+			}
+			throw new IllegalStateException("Unhandled group token: " + Character.toString((char) chr));
 		}
 
 		if (chr == '"') {
 			return readStringToken();
 		}
 
+		if (chr == '#') {
+			if ((chr = nextChar()) == -1) {
+				throw new LispException("Encountered end of data when trying to read tagged element");
+			}
+			if (chr == '{') {
+				return Token.SET_START;
+			}
+			return new Token(Type.TAG, finishToken(chr));
+		}
+
+		if (chr == ':') {
+			if ((chr = nextChar()) == -1) {
+				throw new LispException("Encountered end of data when trying to read keyword");
+			}
+			return new Token(Type.KEYWORD, finishToken(chr));
+		}
+
+		String value = finishToken(chr);
+
+		// check booleans and null
+		if (value.equals("true")) {
+			return Token.TRUE;
+		}
+
+		if (value.equals("false")) {
+			return Token.FALSE;
+		}
+
+		if (value.equals("null")) {
+			return Token.NULL;
+		}
+
+		if (Character.isDigit(value.charAt(0))) {
+			if (value.chars().allMatch(Character::isDigit)) {
+				try {
+					long number = Long.parseLong(value);
+					return new Token(Type.NUMBER, number);
+				} catch (NumberFormatException e) {
+					throw new LispException("Could not read long: " + value, e);
+				}
+			}
+			try {
+				double number = Double.parseDouble(value);
+				return new Token(Type.NUMBER, number);
+			} catch (NumberFormatException e) {
+				throw new LispException("Could not read double: " + value, e);
+			}
+		}
+
+		return new Token(Type.SYMBOL, value);
+	}
+
+	private String finishToken(int chr) {
 		StringBuilder sb = new StringBuilder();
 		sb.appendCodePoint(chr);
 		while ((chr = nextChar()) != -1) {
@@ -93,9 +157,8 @@ class LispTokenizer implements Iterator<String> {
 		return sb.toString();
 	}
 
-	private String readStringToken() {
+	private Token readStringToken() {
 		StringBuilder sb = new StringBuilder();
-		sb.appendCodePoint('"'); // signals that this is a String to the reader
 		boolean escaped = false;
 
 		int chr;
@@ -107,7 +170,7 @@ class LispTokenizer implements Iterator<String> {
 				escaped = true;
 				continue;
 			} else if (chr == '"') {
-				return sb.toString(); // end of string
+				return new Token(Type.STRING, sb.toString()); // end of string
 			}
 			sb.appendCodePoint(chr);
 		}

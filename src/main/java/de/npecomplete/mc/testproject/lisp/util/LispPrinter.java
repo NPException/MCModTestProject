@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.npecomplete.mc.testproject.lisp.LispException;
+import de.npecomplete.mc.testproject.lisp.data.Keyword;
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
 
@@ -27,6 +28,11 @@ public final class LispPrinter {
 			}
 			if (o instanceof Symbol) {
 				out.append(((Symbol) o).name);
+				return;
+			}
+			if (o instanceof Keyword) {
+				out.append(':');
+				out.append(((Keyword) o).name);
 				return;
 			}
 			if (o instanceof Sequence) {

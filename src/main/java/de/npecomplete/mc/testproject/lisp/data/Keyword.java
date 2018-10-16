@@ -2,10 +2,10 @@ package de.npecomplete.mc.testproject.lisp.data;
 
 import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 
-public final class Symbol {
+public final class Keyword {
 	public final String name;
 
-	public Symbol(String name) {
+	public Keyword(String name) {
 		this.name = name;
 	}
 
@@ -14,15 +14,15 @@ public final class Symbol {
 		if (this == o) {
 			return true;
 		}
-		if (!(o instanceof Symbol)) {
+		if (!(o instanceof Keyword)) {
 			return false;
 		}
-		return name.equals(((Symbol) o).name);
+		return name.equals(((Keyword) o).name);
 	}
 
 	@Override
 	public int hashCode() {
-		return 31 * Symbol.class.hashCode() + name.hashCode();
+		return 31 * Keyword.class.hashCode() + name.hashCode();
 	}
 
 	@Override

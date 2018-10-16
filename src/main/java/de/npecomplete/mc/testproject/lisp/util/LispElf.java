@@ -1,26 +1,8 @@
 package de.npecomplete.mc.testproject.lisp.util;
 
-import java.util.Arrays;
-
-import de.npecomplete.mc.testproject.lisp.data.ListSequence;
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
-import de.npecomplete.mc.testproject.lisp.data.Symbol;
 
 public final class LispElf {
-
-	/**
-	 * Creates a new {@link Symbol} with the given name.
-	 */
-	public static Symbol Sym(String name) {
-		return new Symbol(name);
-	}
-
-	/**
-	 * Creates a new {@link Sequence} containing the given values.
-	 */
-	public static Sequence Seq(Object... value) {
-		return new ListSequence(Arrays.asList(value), 0);
-	}
 
 	/**
 	 * @return true if the given object
