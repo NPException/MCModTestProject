@@ -32,8 +32,36 @@ public class LispReader {
 		}));
 	}
 
+	public static Iterator<Object> readMany(Reader reader) {
+		return readMany(IntStream.generate(() -> {
+			try {
+				return reader.read();
+			} catch (IOException e) {
+				throw new LispException("Failed to read from reader", e);
+			}
+		}));
+	}
+
 	public static Object read(IntStream chars) throws LispException {
-		return build(new LispTokenizer(chars), null);
+		LispTokenizer tokenizer = new LispTokenizer(chars.iterator());
+		return tokenizer.hasNext()
+				? build(tokenizer, null)
+				: null;
+	}
+
+	public static Iterator<Object> readMany(IntStream chars) {
+		LispTokenizer tokenizer = new LispTokenizer(chars.iterator());
+		return new Iterator<Object>() {
+			@Override
+			public boolean hasNext() {
+				return tokenizer.hasNext();
+			}
+
+			@Override
+			public Object next() {
+				return build(tokenizer, null);
+			}
+		};
 	}
 
 	private static Object build(Iterator<Token> it, Token expectedEnd) {

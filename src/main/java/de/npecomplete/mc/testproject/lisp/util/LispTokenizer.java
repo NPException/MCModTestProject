@@ -3,7 +3,6 @@ package de.npecomplete.mc.testproject.lisp.util;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.PrimitiveIterator.OfInt;
-import java.util.stream.IntStream;
 
 import de.npecomplete.mc.testproject.lisp.LispException;
 import de.npecomplete.mc.testproject.lisp.util.Token.Type;
@@ -14,8 +13,8 @@ class LispTokenizer implements Iterator<Token> {
 	private int nextChar = -1; // -1 indicates that there is no next char yet
 	private Token token;
 
-	LispTokenizer(IntStream charStream) {
-		chars = charStream.iterator();
+	LispTokenizer(OfInt chars) {
+		this.chars = chars;
 	}
 
 	@Override
