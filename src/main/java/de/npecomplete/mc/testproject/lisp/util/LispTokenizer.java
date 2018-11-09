@@ -68,6 +68,13 @@ class LispTokenizer implements Iterator<Token> {
 			}
 		}
 
+		if (chr == ';') {
+			chr = nextNonCommentChar();
+			if (chr == -1) {
+				return null; // end of character stream
+			}
+		}
+
 		// data structure begin / end
 		if (isGroupToken(chr)) {
 			switch (chr) {
@@ -190,5 +197,23 @@ class LispTokenizer implements Iterator<Token> {
 		// @formatter:on
 		throw new LispException("Encountered unknown escaped character: \\"
 				+ Character.toString((char) chr));
+	}
+
+	/**
+	 * Returns the next character that is not part of a comment and not ignored,
+	 * or -1 if no more chars are available.
+	 */
+	private int nextNonCommentChar() {
+		int chr;
+		boolean isComment = true;
+		do {
+			chr = nextChar();
+			if (chr == '\n' || chr == -1) {
+				isComment = false;
+			} else if (chr == ';') {
+				isComment = true;
+			}
+		} while (isComment || isIgnored(chr));
+		return chr;
 	}
 }

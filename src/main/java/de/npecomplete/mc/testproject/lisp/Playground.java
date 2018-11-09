@@ -48,9 +48,10 @@ public class Playground {
 		lisp.globalEnv.bind(new Symbol("println"), printlnForm);
 		lisp.globalEnv.bind(new Symbol("prn-str"), prnStrForm);
 
-		// next TODO: comments, macros, recur, loop
+		// next TODO: var-arg functions, macros, recur, loop
 
-		try (InputStream in = Playground.class.getResourceAsStream("/test.lisp");
+		try (InputStream in = Playground.class.getResourceAsStream("/test.edn");
+//		try (InputStream in = System.in;
 			 Reader reader = new InputStreamReader(in)) {
 			Iterator<Object> it = LispReader.readMany(reader);
 			while (it.hasNext()) {
