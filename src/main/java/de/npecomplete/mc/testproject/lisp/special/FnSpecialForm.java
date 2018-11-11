@@ -16,7 +16,14 @@ import de.npecomplete.mc.testproject.lisp.function.TwoArgFunction;
 import de.npecomplete.mc.testproject.lisp.function.ZeroArgFunction;
 import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 
+/**
+ * Takes a parameter vector and one or more forms as arguments.
+ * Returns a function that when called, will bind the passed parameters
+ * to the symbols specified by the parameter vector and evaluate
+ * the body forms as if they are in an implicit 'do' block.
+ */
 final class FnSpecialForm implements SpecialForm {
+
 	@Override
 	public Object apply(Sequence args, Environment env) {
 		if (args.empty()) {

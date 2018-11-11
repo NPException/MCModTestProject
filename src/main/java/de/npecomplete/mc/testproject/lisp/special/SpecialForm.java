@@ -27,7 +27,12 @@ public interface SpecialForm {
 	 */
 	SpecialForm DO = new DoSpecialForm();
 
-	// TODO
+	/**
+	 * Takes a parameter vector and one or more forms as arguments.
+	 * Returns a function that when called, will bind the passed parameters
+	 * to the symbols specified by the parameter vector and evaluate
+	 * the body forms as if they are in an implicit 'do' block.
+	 */
 	SpecialForm FN = new FnSpecialForm();
 
 	/**
