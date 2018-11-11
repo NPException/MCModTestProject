@@ -11,7 +11,7 @@
      (blarg (println (let works !)))
      (fn-0)
      (fn-1 "Just passing by."))
-;a
+; a comment
 ((fn [do if quote let fn]
      (println do if quote let fn))
   1 2 3 4 5)
@@ -19,9 +19,17 @@
   (fn ([] (println "Nothing to see."))
       ([x] (println "Something to see: " x))))
 (multi)
-(multi "FooBar!"                                            ;b
-  )                                                         ;c
-;d
+(multi "FooBar!")
 (println (#{:test} :test))
 (println ({:key :value} :key))
-;e
+
+;; testing varargs functions
+
+; one-arg
+(def v (fn [& args] args))
+(v)
+(v 1)
+(v 1 2)
+(v 1 2 3)
+(v 1 2 3 4)
+(v 1 2 3 4 5)

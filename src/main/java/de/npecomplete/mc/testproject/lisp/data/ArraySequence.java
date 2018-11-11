@@ -7,6 +7,8 @@ import java.util.Objects;
 import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 
 public final class ArraySequence implements Sequence {
+	public final static ArraySequence EMPTY = new ArraySequence(new Object[0], 0);
+
 	private final Object[] array;
 	private final int index;
 	private final boolean empty;
@@ -27,6 +29,10 @@ public final class ArraySequence implements Sequence {
 		this.array = array;
 		this.index = index;
 		empty = index >= array.length;
+	}
+
+	public ArraySequence(Object ... elements) {
+		this(elements, 0);
 	}
 
 	@Override

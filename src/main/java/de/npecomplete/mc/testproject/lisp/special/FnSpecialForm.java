@@ -76,8 +76,12 @@ final class FnSpecialForm implements SpecialForm {
 		Iterator<Symbol> symbols = (Iterator<Symbol>) fnArgs.iterator();
 
 		Symbol parSym1 = symbols.next();
+		if (isVarArgsIndicator(parSym1)) {
+			parSym1 = validateVarArgs(symbols);
+			return new OneArgFunction(env, body, parSym1, true);
+		}
 		if (!symbols.hasNext()) {
-			return new OneArgFunction(env, body, parSym1);
+			return new OneArgFunction(env, body, parSym1, false);
 		}
 
 		Symbol parSym2 = symbols.next();
@@ -97,5 +101,23 @@ final class FnSpecialForm implements SpecialForm {
 			moreSym[i++] = symbols.next();
 		}
 		return new FourPlusArgFunction(env, body, parSym1, parSym2, parSym3, parSym4, moreSym);
+	}
+
+	private static boolean isVarArgsIndicator(Symbol sym) {
+		return sym.name.equals("&");
+	}
+
+	private static Symbol validateVarArgs(Iterator<Symbol> symbols) {
+		if (!symbols.hasNext()) {
+			throw new LispException("Expected symbol after '&' in 'fn' argument list");
+		}
+		Symbol varArgsSymbol = symbols.next();
+		if (isVarArgsIndicator(varArgsSymbol)) {
+			throw new LispException("Varargs binding symbol must not be '&'");
+		}
+		if (symbols.hasNext()) {
+			throw new LispException("Argument list must not continue after varargs binding symbol");
+		}
+		return varArgsSymbol;
 	}
 }
