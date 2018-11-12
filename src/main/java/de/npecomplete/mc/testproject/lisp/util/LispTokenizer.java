@@ -130,7 +130,7 @@ class LispTokenizer implements Iterator<Token> {
 			return Token.NULL;
 		}
 
-		if (Character.isDigit(value.charAt(0))) {
+		if (isNumberCandidate(value)) {
 			if (value.chars().allMatch(Character::isDigit)) {
 				try {
 					long number = Long.parseLong(value);
@@ -148,6 +148,16 @@ class LispTokenizer implements Iterator<Token> {
 		}
 
 		return new Token(Type.SYMBOL, value);
+	}
+
+	private static boolean isNumberCandidate(String value) {
+		char first = value.charAt(0);
+		if (Character.isDigit(first)) {
+			return true;
+		}
+		char second = value.length() > 1 ? value.charAt(1) : '?';
+		return (first == '-' || first == '+')
+				&& Character.isDigit(second);
 	}
 
 	private String finishToken(int chr) {
