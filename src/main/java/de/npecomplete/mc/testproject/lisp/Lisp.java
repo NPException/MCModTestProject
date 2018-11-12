@@ -1,7 +1,12 @@
 package de.npecomplete.mc.testproject.lisp;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
@@ -93,6 +98,41 @@ public class Lisp {
 			throw new LispException("Can't call " + callable + " | "
 					+ "Was returned when evaluating: " + first + " | "
 					+ "Call: " + call);
+		}
+
+		if (obj instanceof List) {
+			List<?> list = (List<?>) obj;
+			List<Object> result = new ArrayList<>();
+			for (Object o : list) {
+				result.add(eval(o, env));
+			}
+			return result;
+		}
+
+		if (obj instanceof Set) {
+			Set<?> set = (Set<?>) obj;
+			Set<Object> result = new HashSet<>(set.size() * 2);
+			for (Object o : set) {
+				Object key = eval(o, env);
+				if (result.contains(key)) {
+					throw new LispException("Set creation with duplicate key: " + key);
+				}
+				result.add(key);
+			}
+			return result;
+		}
+
+		if (obj instanceof Map) {
+			Map<?, ?> map = (Map<?, ?>) obj;
+			Map<Object, Object> result = new HashMap<>(map.size() * 2);
+			for (Entry e : map.entrySet()) {
+				Object key = eval(e.getKey(), env);
+				if (result.containsKey(key)) {
+					throw new LispException("Map creation with duplicate key: " + key);
+				}
+				result.put(key, eval(e.getValue(), env));
+			}
+			return result;
 		}
 
 		return obj;

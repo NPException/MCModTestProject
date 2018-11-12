@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import de.npecomplete.mc.testproject.lisp.LispException;
@@ -125,7 +126,9 @@ public class LispReader {
 			if (value == end) {
 				return;
 			}
-			base.add(value);
+			if (!base.add(value) && base instanceof Set) {
+				throw new LispException("Duplicate key in set literal: " + value);
+			}
 		}
 		throw new LispException("Encountered end of data while reading a collection");
 	}
@@ -139,7 +142,11 @@ public class LispReader {
 		Map<Object, Object> map = new HashMap<>(mapContents.size());
 		Iterator mapIt = mapContents.iterator();
 		while (mapIt.hasNext()) {
-			map.put(mapIt.next(), mapIt.next());
+			Object key = mapIt.next();
+			if (map.containsKey(key)) {
+				throw new LispException("Duplicate key in map literal: " + key);
+			}
+			map.put(key, mapIt.next());
 		}
 		return Collections.unmodifiableMap(map);
 	}
