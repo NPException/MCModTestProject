@@ -23,6 +23,17 @@
 (println (#{:test} :test))
 (println ({:key :value} :key))
 
+(do (def a 1)
+    (def b 2))
+
+[:list (list a b)]
+[:vector (vector a b)]
+[:vector-literal [a b]]
+[:set (hash-set a b)]
+[:set-literal #{a b}]
+[:map (hash-map :a a :b b)]
+[:map-literal {:a a :b b}]
+
 ;; testing varargs functions
 
 ; one-arg
