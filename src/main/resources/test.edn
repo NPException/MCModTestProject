@@ -53,3 +53,12 @@
 (v 1 2 3)
 (v 1 2 3 4)
 (v 1 2 3 4 5)
+
+; three-arg
+(def v (fn [a b & args] [a b args]))
+(v)
+(v 1)
+(v 1 2)
+(v 1 2 3)
+(v 1 2 3 4)
+(v 1 2 3 4 5)

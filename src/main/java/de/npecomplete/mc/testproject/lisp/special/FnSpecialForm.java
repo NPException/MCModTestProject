@@ -94,8 +94,12 @@ final class FnSpecialForm implements SpecialForm {
 		}
 
 		Symbol parSym3 = symbols.next();
+		if (isVarArgsIndicator(parSym3)) {
+			parSym3 = validateVarArgs(symbols);
+			return new ThreeArgFunction(env, body, parSym1, parSym2, parSym3, true);
+		}
 		if (!symbols.hasNext()) {
-			return new ThreeArgFunction(env, body, parSym1, parSym2, parSym3);
+			return new ThreeArgFunction(env, body, parSym1, parSym2, parSym3, false);
 		}
 
 		Symbol parSym4 = symbols.next();
