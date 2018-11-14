@@ -49,7 +49,7 @@ public class Lisp {
 		if (obj instanceof Sequence) {
 			Sequence seq = (Sequence) obj;
 			if (seq.empty()) {
-				throw new LispException("Can't eval empty sequence");
+				throw new LispException("Can't evaluate empty list");
 			}
 			// evaluate first element
 			Object callable = eval(seq.first(), env);

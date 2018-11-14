@@ -36,13 +36,13 @@ final class FnSpecialForm implements SpecialForm {
 		}
 
 		if (!(args.first() instanceof Sequence)) {
-			throw new LispException("'fn' first argument must either be a Sequence or a List");
+			throw new LispException("'fn' first argument must either be a list or a vector");
 		}
 
 		MultiArityFunction function = new MultiArityFunction(env);
 		for (Object arg : args) {
 			if (!(arg instanceof Sequence)) {
-				throw new LispException("Arity variant of 'fn' must be a Sequence");
+				throw new LispException("Arity variant of 'fn' must be a list");
 			}
 			function.addArity((Sequence) arg);
 		}
