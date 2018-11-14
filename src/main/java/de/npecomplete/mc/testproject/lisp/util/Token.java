@@ -1,10 +1,10 @@
 package de.npecomplete.mc.testproject.lisp.util;
 
 class Token {
-	static final Token SEQUENCE_START = new Token(Type.SEQUENCE_START, "(");
-	static final Token SEQUENCE_END = new Token(Type.SEQUENCE_END, ")");
-	static final Token LIST_START = new Token(Type.LIST_START, "[");
-	static final Token LIST_END = new Token(Type.LIST_END, "]");
+	static final Token LIST_START = new Token(Type.LIST_START, "(");
+	static final Token LIST_END = new Token(Type.LIST_END, ")");
+	static final Token VECTOR_START = new Token(Type.VECTOR_START, "[");
+	static final Token VECTOR_END = new Token(Type.VECTOR_END, "]");
 	static final Token SET_START = new Token(Type.SET_START, "#{");
 	static final Token MAP_START = new Token(Type.MAP_START, "{");
 	static final Token MAP_SET_END = new Token(Type.MAP_SET_END, "}");
@@ -15,10 +15,10 @@ class Token {
 	static final Token FALSE = new Token(Type.BOOLEAN, false);
 
 	enum Type {
-		SEQUENCE_START,
-		SEQUENCE_END,
 		LIST_START,
 		LIST_END,
+		VECTOR_START,
+		VECTOR_END,
 		SET_START,
 		MAP_START,
 		MAP_SET_END,

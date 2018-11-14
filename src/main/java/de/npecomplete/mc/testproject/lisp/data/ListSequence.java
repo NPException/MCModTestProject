@@ -6,8 +6,8 @@ import java.util.Objects;
 
 import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 
-public final class ArraySequence implements Sequence {
-	public final static ArraySequence EMPTY = new ArraySequence(new Object[0], 0);
+public final class ListSequence implements Sequence {
+	public final static ListSequence EMPTY = new ListSequence();
 
 	private final Object[] array;
 	private final int index;
@@ -16,10 +16,10 @@ public final class ArraySequence implements Sequence {
 	private Sequence rest;
 
 	/**
-	 * Creates a new sequence from a given array, starting at the
+	 * Creates a new list sequence from a given array, starting at the
 	 * given index. In an ideal world, the array should be immutable.
 	 */
-	public ArraySequence(Object[] array, int index) {
+	private ListSequence(Object[] array, int index) {
 		if (array == null) {
 			throw new IllegalArgumentException("array must not be null");
 		}
@@ -31,7 +31,7 @@ public final class ArraySequence implements Sequence {
 		empty = index >= array.length;
 	}
 
-	public ArraySequence(Object ... elements) {
+	public ListSequence(Object ... elements) {
 		this(elements, 0);
 	}
 
@@ -44,7 +44,7 @@ public final class ArraySequence implements Sequence {
 	public Sequence next() {
 		if (rest == null) {
 			rest = index < array.length - 1
-					? new ArraySequence(array, index + 1)
+					? new ListSequence(array, index + 1)
 					: null;
 		}
 		return rest;

@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 import de.npecomplete.mc.testproject.lisp.Environment;
 import de.npecomplete.mc.testproject.lisp.LispException;
-import de.npecomplete.mc.testproject.lisp.data.ArraySequence;
+import de.npecomplete.mc.testproject.lisp.data.ListSequence;
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
 import de.npecomplete.mc.testproject.lisp.special.SpecialForm;
@@ -32,14 +32,14 @@ public class OneArgFunction implements LispFunction {
 			throw new LispException("Wrong arity: 0");
 		}
 		Environment localEnv = new Environment(env);
-		localEnv.bind(parSym1, ArraySequence.EMPTY);
+		localEnv.bind(parSym1, ListSequence.EMPTY);
 		return SpecialForm.DO.apply(body, localEnv);
 	}
 
 	@Override
 	public Object apply(Object par1) {
 		Environment localEnv = new Environment(env);
-		localEnv.bind(parSym1, varArgs ? new ArraySequence(par1) : par1);
+		localEnv.bind(parSym1, varArgs ? new ListSequence(par1) : par1);
 		return SpecialForm.DO.apply(body, localEnv);
 	}
 
@@ -49,7 +49,7 @@ public class OneArgFunction implements LispFunction {
 			throw new LispException("Wrong arity: 2");
 		}
 		Environment localEnv = new Environment(env);
-		localEnv.bind(parSym1, new ArraySequence(par1, par2));
+		localEnv.bind(parSym1, new ListSequence(par1, par2));
 		return SpecialForm.DO.apply(body, localEnv);
 	}
 
@@ -59,7 +59,7 @@ public class OneArgFunction implements LispFunction {
 			throw new LispException("Wrong arity: 3");
 		}
 		Environment localEnv = new Environment(env);
-		localEnv.bind(parSym1, new ArraySequence(par1, par2, par3));
+		localEnv.bind(parSym1, new ListSequence(par1, par2, par3));
 		return SpecialForm.DO.apply(body, localEnv);
 	}
 
@@ -76,7 +76,7 @@ public class OneArgFunction implements LispFunction {
 		}
 
 		Environment localEnv = new Environment(env);
-		localEnv.bind(parSym1, new ArraySequence(args, 0));
+		localEnv.bind(parSym1, new ListSequence(args));
 		return SpecialForm.DO.apply(body, localEnv);
 	}
 }

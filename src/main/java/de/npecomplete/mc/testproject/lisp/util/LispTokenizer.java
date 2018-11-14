@@ -79,13 +79,13 @@ class LispTokenizer implements Iterator<Token> {
 		if (isGroupToken(chr)) {
 			switch (chr) {
 				case '(':
-					return Token.SEQUENCE_START;
-				case ')':
-					return Token.SEQUENCE_END;
-				case '[':
 					return Token.LIST_START;
-				case ']':
+				case ')':
 					return Token.LIST_END;
+				case '[':
+					return Token.VECTOR_START;
+				case ']':
+					return Token.VECTOR_END;
 				case '{':
 					return Token.MAP_START;
 				case '}':

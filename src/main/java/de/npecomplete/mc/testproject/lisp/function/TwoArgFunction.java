@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 import de.npecomplete.mc.testproject.lisp.Environment;
 import de.npecomplete.mc.testproject.lisp.LispException;
-import de.npecomplete.mc.testproject.lisp.data.ArraySequence;
+import de.npecomplete.mc.testproject.lisp.data.ListSequence;
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
 import de.npecomplete.mc.testproject.lisp.special.SpecialForm;
@@ -35,7 +35,7 @@ public class TwoArgFunction implements LispFunction {
 		}
 		Environment localEnv = new Environment(env);
 		localEnv.bind(parSym1, par1);
-		localEnv.bind(parSym2, ArraySequence.EMPTY);
+		localEnv.bind(parSym2, ListSequence.EMPTY);
 		return SpecialForm.DO.apply(body, localEnv);
 	}
 
@@ -43,7 +43,7 @@ public class TwoArgFunction implements LispFunction {
 	public Object apply(Object par1, Object par2) {
 		Environment localEnv = new Environment(env);
 		localEnv.bind(parSym1, par1);
-		localEnv.bind(parSym2, varArgs ? new ArraySequence(par2) : par2);
+		localEnv.bind(parSym2, varArgs ? new ListSequence(par2) : par2);
 		return SpecialForm.DO.apply(body, localEnv);
 	}
 
@@ -54,7 +54,7 @@ public class TwoArgFunction implements LispFunction {
 		}
 		Environment localEnv = new Environment(env);
 		localEnv.bind(parSym1, par1);
-		localEnv.bind(parSym2, new ArraySequence(par2, par3));
+		localEnv.bind(parSym2, new ListSequence(par2, par3));
 		return SpecialForm.DO.apply(body, localEnv);
 	}
 
@@ -72,7 +72,7 @@ public class TwoArgFunction implements LispFunction {
 
 		Environment localEnv = new Environment(env);
 		localEnv.bind(parSym1, par1);
-		localEnv.bind(parSym2, new ArraySequence(args, 0));
+		localEnv.bind(parSym2, new ListSequence(args));
 		return SpecialForm.DO.apply(body, localEnv);
 	}
 }

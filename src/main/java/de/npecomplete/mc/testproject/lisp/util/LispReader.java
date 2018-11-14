@@ -13,8 +13,8 @@ import java.util.Set;
 import java.util.stream.IntStream;
 
 import de.npecomplete.mc.testproject.lisp.LispException;
-import de.npecomplete.mc.testproject.lisp.data.ArraySequence;
 import de.npecomplete.mc.testproject.lisp.data.Keyword;
+import de.npecomplete.mc.testproject.lisp.data.ListSequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
 
 public class LispReader {
@@ -72,8 +72,8 @@ public class LispReader {
 		Token token = it.next();
 
 		switch (token.type) {
-			case SEQUENCE_END:
 			case LIST_END:
+			case VECTOR_END:
 			case MAP_SET_END:
 				if (token == expectedEnd) {
 					return token;
@@ -81,14 +81,14 @@ public class LispReader {
 				throw new LispException("Unexpected token while reading: "
 						+ token.type + " -> " + token.value);
 
-			case SEQUENCE_START:
-				ArrayList<Object> seqContent = new ArrayList<>();
-				buildCollection(seqContent, Token.SEQUENCE_END, it);
-				return new ArraySequence(seqContent.toArray(), 0);
-
 			case LIST_START:
+				ArrayList<Object> seqContent = new ArrayList<>();
+				buildCollection(seqContent, Token.LIST_END, it);
+				return new ListSequence(seqContent.toArray());
+
+			case VECTOR_START:
 				ArrayList<Object> list = new ArrayList<>();
-				buildCollection(list, Token.LIST_END, it);
+				buildCollection(list, Token.VECTOR_END, it);
 				list.trimToSize();
 				return list;
 

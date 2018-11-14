@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.npecomplete.mc.testproject.lisp.data.CoreLibrary;
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
 import de.npecomplete.mc.testproject.lisp.function.LispFunction;
@@ -28,6 +29,12 @@ public class Lisp {
 		globalEnv.bind(new Symbol("if"), SpecialForm.IF);
 		globalEnv.bind(new Symbol("let"), SpecialForm.LET);
 		globalEnv.bind(new Symbol("quote"), SpecialForm.QUOTE);
+
+		// TODO replace with interop in some yet-to-be-written core lisp file
+		globalEnv.bind(new Symbol("list"), CoreLibrary.FN_LIST);
+		globalEnv.bind(new Symbol("vector"), CoreLibrary.FN_VECTOR);
+		globalEnv.bind(new Symbol("hash-set"), CoreLibrary.FN_HASH_SET);
+		globalEnv.bind(new Symbol("hash-map"), CoreLibrary.FN_HASH_MAP);
 	}
 
 	public Object eval(Object obj) throws LispException {
