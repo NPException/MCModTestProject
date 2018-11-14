@@ -90,12 +90,12 @@ public class LispReader {
 				ArrayList<Object> list = new ArrayList<>();
 				buildCollection(list, Token.VECTOR_END, it);
 				list.trimToSize();
-				return list;
+				return Collections.unmodifiableList(list);
 
 			case SET_START:
 				HashSet<Object> set = new HashSet<>();
 				buildCollection(set, Token.MAP_SET_END, it);
-				return set;
+				return Collections.unmodifiableSet(set);
 
 			case MAP_START:
 				return buildMap(it);
