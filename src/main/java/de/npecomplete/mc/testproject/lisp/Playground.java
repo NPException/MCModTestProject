@@ -48,7 +48,9 @@ public class Playground {
 		lisp.globalEnv.bind(new Symbol("println"), printlnForm);
 		lisp.globalEnv.bind(new Symbol("prn-str"), prnStrForm);
 
-		// next TODO: var-arg functions, macros, recur, loop
+		// TODO: implement IteratorSequence class, which converts an iterator into a Sequence
+		// TODO: switch from using java.util.List to own Vector class
+		// TODO: var-arg functions, macros, recur, loop
 
 		try (InputStream in = Playground.class.getResourceAsStream("/test.edn");
 //		try (InputStream in = System.in;

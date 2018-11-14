@@ -35,6 +35,10 @@ public class Lisp {
 		globalEnv.bind(new Symbol("vector"), CoreLibrary.FN_VECTOR);
 		globalEnv.bind(new Symbol("hash-set"), CoreLibrary.FN_HASH_SET);
 		globalEnv.bind(new Symbol("hash-map"), CoreLibrary.FN_HASH_MAP);
+
+		globalEnv.bind(new Symbol("seq"), CoreLibrary.FN_SEQ);
+		globalEnv.bind(new Symbol("first"), CoreLibrary.FN_FIRST);
+		// TODO	globalEnv.bind(new Symbol("rest"), CoreLibrary.FN_REST);
 	}
 
 	public Object eval(Object obj) throws LispException {
