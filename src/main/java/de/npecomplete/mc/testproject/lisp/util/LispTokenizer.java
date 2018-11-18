@@ -126,8 +126,8 @@ class LispTokenizer implements Iterator<Token> {
 			return Token.FALSE;
 		}
 
-		if (value.equals("null")) {
-			return Token.NULL;
+		if (value.equals("nil")) {
+			return Token.NIL;
 		}
 
 		if (isNumberCandidate(value)) {

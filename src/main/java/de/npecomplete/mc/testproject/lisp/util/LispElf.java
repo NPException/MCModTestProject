@@ -1,5 +1,9 @@
 package de.npecomplete.mc.testproject.lisp.util;
 
+import java.util.Iterator;
+import java.util.Objects;
+import java.util.function.Function;
+
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
 
 public final class LispElf {
@@ -60,5 +64,24 @@ public final class LispElf {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Returns an iterator that maps the contents of the given iterator using the mapping function
+	 */
+	public static <T, R> Iterator<R> mapIterator(Iterator<T> it, Function<T, R> mapping) {
+		Objects.requireNonNull(it);
+		Objects.requireNonNull(mapping);
+		return new Iterator<R>() {
+			@Override
+			public boolean hasNext() {
+				return it.hasNext();
+			}
+
+			@Override
+			public R next() {
+				return mapping.apply(it.next());
+			}
+		};
 	}
 }

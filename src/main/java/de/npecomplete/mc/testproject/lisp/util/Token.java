@@ -9,7 +9,7 @@ class Token {
 	static final Token MAP_START = new Token(Type.MAP_START, "{");
 	static final Token MAP_SET_END = new Token(Type.MAP_SET_END, "}");
 
-	static final Token NULL = new Token(Type.NULL, null);
+	static final Token NIL = new Token(Type.NIL, null);
 
 	static final Token TRUE = new Token(Type.BOOLEAN, true);
 	static final Token FALSE = new Token(Type.BOOLEAN, false);
@@ -22,7 +22,7 @@ class Token {
 		SET_START,
 		MAP_START,
 		MAP_SET_END,
-		NULL,
+		NIL,
 		STRING,
 		BOOLEAN,
 		NUMBER,

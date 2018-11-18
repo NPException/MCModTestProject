@@ -38,7 +38,8 @@ public class Lisp {
 
 		globalEnv.bind(new Symbol("seq"), CoreLibrary.FN_SEQ);
 		globalEnv.bind(new Symbol("first"), CoreLibrary.FN_FIRST);
-		// TODO	globalEnv.bind(new Symbol("rest"), CoreLibrary.FN_REST);
+		globalEnv.bind(new Symbol("next"), CoreLibrary.FN_NEXT);
+		globalEnv.bind(new Symbol("rest"), CoreLibrary.FN_REST);
 	}
 
 	public Object eval(Object obj) throws LispException {

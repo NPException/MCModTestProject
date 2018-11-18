@@ -22,6 +22,10 @@ public final class LispPrinter {
 
 	public static void print(Object o, Appendable out) throws LispException {
 		try {
+			if (o == null) {
+				out.append("nil");
+				return;
+			}
 			if (o instanceof String) {
 				out.append('"').append(escapeString((String) o)).append('"');
 				return;

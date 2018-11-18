@@ -100,7 +100,7 @@ public class LispReader {
 			case MAP_START:
 				return buildMap(it);
 
-			case NULL:
+			case NIL:
 			case STRING:
 			case BOOLEAN:
 			case NUMBER:
