@@ -49,7 +49,8 @@ public class Playground {
 		lisp.globalEnv.bind(new Symbol("prn-str"), prnStrForm);
 
 		// TODO: switch from using java.util.List to own Vector class
-		// TODO: var-arg functions (3 & 4+), eval, apply, macros, recur, loop
+		// TODO: use "let" in function code for bindings and execution
+		// TODO: var-arg functions, fn names, eval, apply, macros, recur, loop
 
 		try (InputStream in = Playground.class.getResourceAsStream("/test.edn");
 //		try (InputStream in = System.in;

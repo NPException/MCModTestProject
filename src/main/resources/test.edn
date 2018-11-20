@@ -1,6 +1,6 @@
 (def fn-0 (fn [] (println "No args call!")))
 (if true (println "Hello\nWorld!"))
-(if null
+(if nil
   (println "you don't see me")
   (println (prn-str (quote (println "I'm quoted!")))))
 (let [blarg println

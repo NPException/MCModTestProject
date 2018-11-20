@@ -5,8 +5,10 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
+import de.npecomplete.mc.testproject.lisp.data.Symbol;
 
 public final class LispElf {
+	public static final Symbol[] EMPTY_SYMBOL_ARRAY = new Symbol[0];
 
 	/**
 	 * @return true if the given object

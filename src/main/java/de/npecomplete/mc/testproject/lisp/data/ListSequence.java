@@ -7,8 +7,6 @@ import java.util.Objects;
 import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 
 public final class ListSequence implements Sequence {
-	public final static ListSequence EMPTY = new ListSequence();
-
 	private final Object[] array;
 	private final int index;
 	private final boolean empty;
