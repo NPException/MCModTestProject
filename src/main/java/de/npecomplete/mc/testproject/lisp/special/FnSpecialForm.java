@@ -19,11 +19,6 @@ final class FnSpecialForm implements SpecialForm {
 
 	@Override
 	public Object apply(Sequence args, Environment env) {
-		if (args.empty()) {
-			throw new LispException("'fn' requires at least one argument: (fn name? [params*] exprs*)" +
-					" or for multiple arities: (fn name? ([params*] exprs*) +)");
-		}
-
 		Symbol name = null;
 
 		if (args.first() instanceof Symbol) {
@@ -31,23 +26,23 @@ final class FnSpecialForm implements SpecialForm {
 			args = args.more();
 		}
 
-		if (args.first() instanceof List) {
-			if (args.empty()) {
-				throw new LispException("'fn' requires at least one argument: (fn name? [params*] exprs*)");
-			}
-			Object arg1 = args.first();
-			if (!(arg1 instanceof List)) {
-				throw new LispException("'fn' first argument is not a List");
-			}
-			Sequence body = args.next();
-			return new SingleArityFunction(name, env, body, (List) arg1);
+		if (args.empty()) {
+			throw new LispException("'fn' requires at least one argument: (fn name? [params*] exprs*)" +
+					" or for multiple arities: (fn name? ([params*] exprs*) +)");
 		}
 
-		if (!(args.first() instanceof Sequence)) {
+		Object arg1 = args.first();
+		if (arg1 instanceof List) {
+			List fnArgs = (List) arg1;
+			Sequence body = args.next();
+			return new SingleArityFunction(name, env, body, fnArgs);
+		}
+
+		if (!(arg1 instanceof Sequence)) {
 			throw new LispException("'fn' first argument must either be a list or a vector");
 		}
 
-		MultiArityFunction function = new MultiArityFunction(env);
+		MultiArityFunction function = new MultiArityFunction(name, env);
 		for (Object arg : args) {
 			if (!(arg instanceof Sequence)) {
 				throw new LispException("Arity variant of 'fn' must be a list");
