@@ -53,33 +53,24 @@ public class SingleArityFunction implements LispFunction {
 
 	@Override
 	public Object apply(Object par1, Object par2, Object par3, Object par4, Object... more) {
-		// TODO seperate regular and varargs, to optimize speed in regular case
-//		if (varArgs) {
-//			// implement
-//		} else {
-//			// implement
-//		}
-
-		Object[] args = new Object[] {par1, par2, par3, par4};
-		int moreCount = more.length;
-		if (moreCount > 0) {
-			args = Arrays.copyOf(args, 4 + moreCount);
-			System.arraycopy(more, 0, args, 4, moreCount);
-		}
-		int argsCount = args.length;
-		int paramSymCount = paramSymbols.length;
-		if (paramSymCount > argsCount + 1
-				|| !varArgs && paramSymCount != argsCount) {
-			throw new LispException("Wrong arity: " + argsCount
-					+ ". Expected: " + (varArgs ? ">=" : "=") + paramSymCount);
-		}
-
 		Environment localEnv = new Environment(env);
 		if (name != null) {
 			localEnv.bind(name, this);
 		}
 
 		if (varArgs) {
+			Object[] args = new Object[] {par1, par2, par3, par4};
+			int moreCount = more.length;
+			if (moreCount > 0) {
+				args = Arrays.copyOf(args, 4 + moreCount);
+				System.arraycopy(more, 0, args, 4, moreCount);
+			}
+			int argsCount = args.length;
+			int paramSymCount = paramSymbols.length;
+			if (paramSymCount > argsCount + 1) {
+				throw new LispException("Wrong arity: " + argsCount + ". Expected: >=" + paramSymCount);
+			}
+
 			int lastParamIndex = paramSymCount - 1;
 			for (int i = 0; i < lastParamIndex; i++) {
 				localEnv.bind(paramSymbols[i], args[i]);
@@ -88,9 +79,19 @@ public class SingleArityFunction implements LispFunction {
 					? new ListSequence(Arrays.copyOfRange(args, lastParamIndex, argsCount))
 					: Sequence.EMPTY_SEQUENCE;
 			localEnv.bind(paramSymbols[lastParamIndex], varArgs);
+
 		} else {
-			for (int i = 0, size = args.length; i < size; i++) {
-				localEnv.bind(paramSymbols[i], args[i]);
+			int moreCount = more.length;
+			if (paramSymbols.length != 4 + moreCount) {
+				int argsCount = 4 + moreCount;
+				throw new LispException("Wrong arity: " + argsCount + ". Expected: =" + paramSymbols.length);
+			}
+			localEnv.bind(paramSymbols[0], par1);
+			localEnv.bind(paramSymbols[1], par2);
+			localEnv.bind(paramSymbols[2], par3);
+			localEnv.bind(paramSymbols[3], par4);
+			for (int i = 0; i < moreCount; i++) {
+				localEnv.bind(paramSymbols[i + 4], more[i]);
 			}
 		}
 
