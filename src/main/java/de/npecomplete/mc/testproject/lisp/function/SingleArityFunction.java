@@ -31,32 +31,67 @@ public class SingleArityFunction implements LispFunction {
 		this.varArgs = paramSymbols.length != fnParams.size();
 	}
 
-	@Override
-	public Object apply() {
-		throw new UnsupportedOperationException(); // TODO
-	}
-
-	@Override
-	public Object apply(Object par1) {
-		throw new UnsupportedOperationException(); // TODO
-	}
-
-	@Override
-	public Object apply(Object par1, Object par2) {
-		throw new UnsupportedOperationException(); // TODO
-	}
-
-	@Override
-	public Object apply(Object par1, Object par2, Object par3) {
-		throw new UnsupportedOperationException(); // TODO
-	}
-
-	@Override
-	public Object apply(Object par1, Object par2, Object par3, Object par4, Object... more) {
+	private Environment initLocalEnv() {
 		Environment localEnv = new Environment(env);
 		if (name != null) {
 			localEnv.bind(name, this);
 		}
+		return localEnv;
+	}
+
+	@Override
+	public Object apply() {
+		Environment localEnv = initLocalEnv();
+		if (varArgs) {
+			bindVarArgs(localEnv, LispElf.EMPTY_OBJECT_ARRAY);
+		} else {
+			assertArity(0);
+		}
+		return SpecialForm.DO.apply(body, localEnv);
+	}
+
+	@Override
+	public Object apply(Object par1) {
+		Environment localEnv = initLocalEnv();
+		if (varArgs) {
+			bindVarArgs(localEnv, par1);
+		} else {
+			assertArity(1);
+			localEnv.bind(paramSymbols[0], par1);
+		}
+		return SpecialForm.DO.apply(body, localEnv);
+	}
+
+	@Override
+	public Object apply(Object par1, Object par2) {
+		Environment localEnv = initLocalEnv();
+		if (varArgs) {
+			bindVarArgs(localEnv, par1, par2);
+		} else {
+			assertArity(2);
+			localEnv.bind(paramSymbols[0], par1);
+			localEnv.bind(paramSymbols[1], par2);
+		}
+		return SpecialForm.DO.apply(body, localEnv);
+	}
+
+	@Override
+	public Object apply(Object par1, Object par2, Object par3) {
+		Environment localEnv = initLocalEnv();
+		if (varArgs) {
+			bindVarArgs(localEnv, par1, par2, par3);
+		} else {
+			assertArity(3);
+			localEnv.bind(paramSymbols[0], par1);
+			localEnv.bind(paramSymbols[1], par2);
+			localEnv.bind(paramSymbols[2], par3);
+		}
+		return SpecialForm.DO.apply(body, localEnv);
+	}
+
+	@Override
+	public Object apply(Object par1, Object par2, Object par3, Object par4, Object... more) {
+		Environment localEnv = initLocalEnv();
 
 		if (varArgs) {
 			Object[] args = new Object[] {par1, par2, par3, par4};
@@ -65,27 +100,11 @@ public class SingleArityFunction implements LispFunction {
 				args = Arrays.copyOf(args, 4 + moreCount);
 				System.arraycopy(more, 0, args, 4, moreCount);
 			}
-			int argsCount = args.length;
-			int paramSymCount = paramSymbols.length;
-			if (paramSymCount > argsCount + 1) {
-				throw new LispException("Wrong arity: " + argsCount + ". Expected: >=" + paramSymCount);
-			}
-
-			int lastParamIndex = paramSymCount - 1;
-			for (int i = 0; i < lastParamIndex; i++) {
-				localEnv.bind(paramSymbols[i], args[i]);
-			}
-			Sequence varArgs = args.length > lastParamIndex
-					? new ListSequence(Arrays.copyOfRange(args, lastParamIndex, argsCount))
-					: Sequence.EMPTY_SEQUENCE;
-			localEnv.bind(paramSymbols[lastParamIndex], varArgs);
+			bindVarArgs(localEnv, args);
 
 		} else {
 			int moreCount = more.length;
-			if (paramSymbols.length != 4 + moreCount) {
-				int argsCount = 4 + moreCount;
-				throw new LispException("Wrong arity: " + argsCount + ". Expected: =" + paramSymbols.length);
-			}
+			assertArity(4 + moreCount);
 			localEnv.bind(paramSymbols[0], par1);
 			localEnv.bind(paramSymbols[1], par2);
 			localEnv.bind(paramSymbols[2], par3);
@@ -96,6 +115,29 @@ public class SingleArityFunction implements LispFunction {
 		}
 
 		return SpecialForm.DO.apply(body, localEnv);
+	}
+
+	private void assertArity(int arity) {
+		if (paramSymbols.length != arity) {
+			throw new LispException("Wrong arity: " + arity + ". Expected: =" + paramSymbols.length);
+		}
+	}
+
+	private void bindVarArgs(Environment localEnv, Object... args) {
+		int argsCount = args.length;
+		int paramSymCount = paramSymbols.length;
+		int lastParamIndex = paramSymCount - 1;
+		if (paramSymCount > argsCount + 1) {
+			throw new LispException("Wrong arity: " + argsCount + ". Expected: >=" + lastParamIndex);
+		}
+
+		for (int i = 0; i < lastParamIndex; i++) {
+			localEnv.bind(paramSymbols[i], args[i]);
+		}
+		Sequence varArgs = args.length > lastParamIndex
+				? new ListSequence(Arrays.copyOfRange(args, lastParamIndex, argsCount))
+				: Sequence.EMPTY_SEQUENCE;
+		localEnv.bind(paramSymbols[lastParamIndex], varArgs);
 	}
 
 	private static boolean isVarArgsIndicator(Symbol sym) {

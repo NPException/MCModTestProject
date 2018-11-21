@@ -8,6 +8,7 @@ import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
 
 public final class LispElf {
+	public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 	public static final Symbol[] EMPTY_SYMBOL_ARRAY = new Symbol[0];
 
 	/**
