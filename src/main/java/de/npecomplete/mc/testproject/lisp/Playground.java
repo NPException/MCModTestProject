@@ -15,9 +15,15 @@ import de.npecomplete.mc.testproject.lisp.util.LispReader;
 public class Playground {
 	private static final SpecialForm printlnForm = (args, env) -> {
 		System.out.print("> ");
-		while (args != null && !args.empty()) {
+		if (args != null && !args.empty()) {
 			System.out.print(Lisp.eval(args.first(), env));
 			args = args.next();
+			while (args != null) {
+				System.out.print(' ');
+				Object val = Lisp.eval(args.first(), env);
+				System.out.print(val == null ? "nil" : val);
+				args = args.next();
+			}
 		}
 		System.out.println();
 		return null;
@@ -50,9 +56,9 @@ public class Playground {
 
 		// TODO: switch from using java.util.List to own Vector class
 		// TODO: use "let" in function code for bindings and execution
-		// TODO: var-arg functions, fn names, eval, apply, macros, recur, loop
+		// TODO: eval, apply, macros, recur, loop
 
-		try (InputStream in = Playground.class.getResourceAsStream("/test2.edn");
+		try (InputStream in = Playground.class.getResourceAsStream("/test.edn");
 //		try (InputStream in = System.in;
 			 Reader reader = new InputStreamReader(in)) {
 			Iterator<Object> it = LispReader.readMany(reader);
