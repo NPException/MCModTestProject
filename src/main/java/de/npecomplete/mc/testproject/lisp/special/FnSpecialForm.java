@@ -6,7 +6,9 @@ import de.npecomplete.mc.testproject.lisp.Environment;
 import de.npecomplete.mc.testproject.lisp.LispException;
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
+import de.npecomplete.mc.testproject.lisp.function.LispFunction;
 import de.npecomplete.mc.testproject.lisp.function.MultiArityFunction;
+import de.npecomplete.mc.testproject.lisp.function.MultiArityFunction.Builder;
 import de.npecomplete.mc.testproject.lisp.function.SingleArityFunction;
 
 /**
@@ -18,7 +20,7 @@ import de.npecomplete.mc.testproject.lisp.function.SingleArityFunction;
 final class FnSpecialForm implements SpecialForm {
 
 	@Override
-	public Object apply(Sequence args, Environment env) {
+	public LispFunction apply(Sequence args, Environment env) {
 		Symbol name = null;
 
 		if (args.first() instanceof Symbol) {
@@ -42,14 +44,14 @@ final class FnSpecialForm implements SpecialForm {
 			throw new LispException("'fn' first argument must either be a list or a vector");
 		}
 
-		MultiArityFunction function = new MultiArityFunction(name, env);
+		Builder fnBuilder = new MultiArityFunction.Builder(name, env);
 		for (Object arg : args) {
 			if (!(arg instanceof Sequence)) {
 				throw new LispException("Arity variant of 'fn' must be a list");
 			}
-			function.addArity((Sequence) arg);
+			fnBuilder.addArity((Sequence) arg);
 		}
-		return function;
+		return fnBuilder.build();
 	}
 
 }

@@ -1,7 +1,7 @@
 (def multi
   (fn
-    ([a b] [a b])
-    ([& args] [args])
+    ([a] [a])
+    ([a & args] [a args])
     ))
 
 ;(do

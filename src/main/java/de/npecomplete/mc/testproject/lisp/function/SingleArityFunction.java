@@ -12,7 +12,7 @@ import de.npecomplete.mc.testproject.lisp.special.SpecialForm;
 import de.npecomplete.mc.testproject.lisp.util.LispElf;
 import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 
-public class SingleArityFunction implements LispFunction {
+public final class SingleArityFunction implements LispFunction {
 
 	private final Symbol name;
 	private final boolean variadic;
