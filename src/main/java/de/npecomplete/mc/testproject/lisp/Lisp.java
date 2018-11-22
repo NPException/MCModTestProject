@@ -30,6 +30,13 @@ public class Lisp {
 		globalEnv.bind(new Symbol("let"), SpecialForm.LET);
 		globalEnv.bind(new Symbol("quote"), SpecialForm.QUOTE);
 
+		globalEnv.bind(new Symbol("eval"), new LispFunction() {
+			@Override
+			public Object apply(Object par1) {
+				return eval(par1);
+			}
+		});
+
 		// TODO replace with interop in some yet-to-be-written core lisp file
 		globalEnv.bind(new Symbol("list"), CoreLibrary.FN_LIST);
 		globalEnv.bind(new Symbol("vector"), CoreLibrary.FN_VECTOR);

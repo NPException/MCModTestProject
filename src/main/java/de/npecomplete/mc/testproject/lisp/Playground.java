@@ -56,7 +56,7 @@ public class Playground {
 
 		// TODO: switch from using java.util.List to own Vector class
 		// TODO: use "let" in function code for bindings and execution
-		// TODO: eval, apply, macros, recur, loop
+		// TODO: apply, macros, recur, loop
 
 		try (InputStream in = Playground.class.getResourceAsStream("/test.edn");
 //		try (InputStream in = System.in;
