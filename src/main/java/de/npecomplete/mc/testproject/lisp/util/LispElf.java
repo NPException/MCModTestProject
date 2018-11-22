@@ -1,8 +1,20 @@
 package de.npecomplete.mc.testproject.lisp.util;
 
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+
+import de.npecomplete.mc.testproject.lisp.Environment;
+import de.npecomplete.mc.testproject.lisp.LispException;
+import de.npecomplete.mc.testproject.lisp.data.ListSequence;
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
+import de.npecomplete.mc.testproject.lisp.data.Symbol;
 
 public final class LispElf {
+	public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+	public static final Symbol[] EMPTY_SYMBOL_ARRAY = new Symbol[0];
 
 	/**
 	 * @return true if the given object
@@ -60,5 +72,85 @@ public final class LispElf {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Returns an iterator that maps the contents of the given iterator using the mapping function
+	 */
+	public static <T, R> Iterator<R> mapIterator(Iterator<T> it, Function<T, R> mapping) {
+		Objects.requireNonNull(it);
+		Objects.requireNonNull(mapping);
+		return new Iterator<R>() {
+			@Override
+			public boolean hasNext() {
+				return it.hasNext();
+			}
+
+			@Override
+			public R next() {
+				return mapping.apply(it.next());
+			}
+		};
+	}
+
+	public static void bindVarArgs(Environment localEnv, Symbol[] paramSymbols, Object... args) {
+		int argsCount = args.length;
+		int paramSymCount = paramSymbols.length;
+		int lastParamIndex = paramSymCount - 1;
+		if (paramSymCount > argsCount + 1) {
+			throw new LispException("Wrong arity: " + argsCount + ". Expected: >=" + lastParamIndex);
+		}
+
+		for (int i = 0; i < lastParamIndex; i++) {
+			localEnv.bind(paramSymbols[i], args[i]);
+		}
+		Sequence varArgs = args.length > lastParamIndex
+				? new ListSequence(Arrays.copyOfRange(args, lastParamIndex, argsCount))
+				: Sequence.EMPTY_SEQUENCE;
+		localEnv.bind(paramSymbols[lastParamIndex], varArgs);
+	}
+
+	/**
+	 * Validates the function arguments and returns a Symbol array to be used
+	 * by the function. If the array has a different size than the input list,
+	 * the function is a varargs function.
+	 */
+	public static Symbol[] validateFnParams(List<?> fnArgs) {
+		int length = fnArgs.size();
+		if (length == 0) {
+			return EMPTY_SYMBOL_ARRAY;
+		}
+
+		// verify function argument list
+		for (Object sym : fnArgs) {
+			if (!(sym instanceof Symbol)) {
+				String s = LispPrinter.printStr(sym);
+				throw new LispException("'fn' argument is not a symbol: " + s);
+			}
+		}
+
+		@SuppressWarnings("SuspiciousToArrayCall")
+		Symbol[] symbols = fnArgs.toArray(new Symbol[0]);
+
+		int varArgsIndex = length - 2; // indicator expected as second to last symbol
+		boolean varArgs = false;
+
+		for (int i = 0; i < length; i++) {
+			if (symbols[i].name.equals("&")) { // indicator check
+				varArgs = true;
+				if (i != varArgsIndex) {
+					throw new LispException("Varargs indicator '&' must be in second to last position.");
+				}
+			}
+		}
+
+		if (varArgs) {
+			// cut out indicator
+			Symbol last = symbols[length - 1];
+			symbols[length - 2] = last;
+			symbols = Arrays.copyOf(symbols, length - 1);
+		}
+
+		return symbols;
 	}
 }

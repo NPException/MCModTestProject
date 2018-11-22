@@ -1,44 +1,48 @@
 package de.npecomplete.mc.testproject.lisp.data;
 
 import java.util.Iterator;
-import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 
 public final class ListSequence implements Sequence {
-	private final List<?> backingList;
+	private final Object[] array;
 	private final int index;
 	private final boolean empty;
 
 	private Sequence rest;
 
 	/**
-	 * Creates a new sequence from a given list, starting at the
-	 * given index. The list is assumed to be immutable.
+	 * Creates a new list sequence from a given array, starting at the
+	 * given index. In an ideal world, the array should be immutable.
 	 */
-	public ListSequence(List<?> backingList, int index) {
-		if (backingList == null) {
-			throw new IllegalArgumentException("backingList must not be null");
+	private ListSequence(Object[] array, int index) {
+		if (array == null) {
+			throw new IllegalArgumentException("array must not be null");
 		}
 		if (index < 0) {
 			throw new IllegalArgumentException("index must be >= 0");
 		}
-		this.backingList = backingList;
+		this.array = array;
 		this.index = index;
-		empty = index >= backingList.size();
+		empty = index >= array.length;
+	}
+
+	public ListSequence(Object ... elements) {
+		this(elements, 0);
 	}
 
 	@Override
 	public Object first() {
-		return empty ? null : backingList.get(index);
+		return empty ? null : array[index];
 	}
 
 	@Override
 	public Sequence next() {
 		if (rest == null) {
-			rest = index < backingList.size() - 1
-					? new ListSequence(backingList, index + 1)
+			rest = index < array.length - 1
+					? new ListSequence(array, index + 1)
 					: null;
 		}
 		return rest;
@@ -52,7 +56,7 @@ public final class ListSequence implements Sequence {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Iterator<Object> iterator() {
-		return (Iterator<Object>) backingList.listIterator(index);
+		return new ArrayIterator(index, array);
 	}
 
 	@Override
@@ -95,5 +99,28 @@ public final class ListSequence implements Sequence {
 	@Override
 	public String toString() {
 		return LispPrinter.printStr(this);
+	}
+
+	private static class ArrayIterator implements Iterator<Object> {
+		private final Object[] array;
+		private int index;
+
+		ArrayIterator(int index, Object[] array) {
+			this.index = index;
+			this.array = array;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return index < array.length;
+		}
+
+		@Override
+		public Object next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			return array[index++];
+		}
 	}
 }

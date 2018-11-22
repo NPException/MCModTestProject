@@ -79,13 +79,13 @@ class LispTokenizer implements Iterator<Token> {
 		if (isGroupToken(chr)) {
 			switch (chr) {
 				case '(':
-					return Token.SEQUENCE_START;
-				case ')':
-					return Token.SEQUENCE_END;
-				case '[':
 					return Token.LIST_START;
-				case ']':
+				case ')':
 					return Token.LIST_END;
+				case '[':
+					return Token.VECTOR_START;
+				case ']':
+					return Token.VECTOR_END;
 				case '{':
 					return Token.MAP_START;
 				case '}':
@@ -126,11 +126,11 @@ class LispTokenizer implements Iterator<Token> {
 			return Token.FALSE;
 		}
 
-		if (value.equals("null")) {
-			return Token.NULL;
+		if (value.equals("nil")) {
+			return Token.NIL;
 		}
 
-		if (Character.isDigit(value.charAt(0))) {
+		if (isNumberCandidate(value)) {
 			if (value.chars().allMatch(Character::isDigit)) {
 				try {
 					long number = Long.parseLong(value);
@@ -148,6 +148,16 @@ class LispTokenizer implements Iterator<Token> {
 		}
 
 		return new Token(Type.SYMBOL, value);
+	}
+
+	private static boolean isNumberCandidate(String value) {
+		char first = value.charAt(0);
+		if (Character.isDigit(first)) {
+			return true;
+		}
+		char second = value.length() > 1 ? value.charAt(1) : '?';
+		return (first == '-' || first == '+')
+				&& Character.isDigit(second);
 	}
 
 	private String finishToken(int chr) {

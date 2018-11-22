@@ -8,6 +8,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import de.npecomplete.mc.testproject.lisp.LispException;
+import de.npecomplete.mc.testproject.lisp.data.Keyword;
 
 @SuppressWarnings("unchecked")
 public interface LispFunction {
@@ -37,6 +38,14 @@ public interface LispFunction {
 	static LispFunction from(Object o) {
 		if (o instanceof LispFunction) {
 			return (LispFunction) o;
+		}
+		if (o instanceof Keyword) {
+			return new LispFunction() {
+				@Override
+				public Object apply(Object par) {
+					return par instanceof Map ? ((Map) par).get(o) : null;
+				}
+			};
 		}
 		if (o instanceof Set) {
 			return new LispFunction() {

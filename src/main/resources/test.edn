@@ -1,6 +1,6 @@
 (def fn-0 (fn [] (println "No args call!")))
 (if true (println "Hello\nWorld!"))
-(if null
+(if nil
   (println "you don't see me")
   (println (prn-str (quote (println "I'm quoted!")))))
 (let [blarg println
@@ -11,7 +11,7 @@
      (blarg (println (let works !)))
      (fn-0)
      (fn-1 "Just passing by."))
-;a
+; a comment
 ((fn [do if quote let fn]
      (println do if quote let fn))
   1 2 3 4 5)
@@ -19,9 +19,77 @@
   (fn ([] (println "Nothing to see."))
       ([x] (println "Something to see: " x))))
 (multi)
-(multi "FooBar!"                                            ;b
-  )                                                         ;c
-;d
+(multi "FooBar!")
 (println (#{:test} :test))
 (println ({:key :value} :key))
-;e
+(println (:key {:key :value}))
+
+(do (def a 1)
+    (def b 2))
+
+[:list (list a b)]
+[:vector (vector a b)]
+[:vector-literal [a b]]
+[:set (hash-set a b)]
+[:set-literal #{a b}]
+[:map (hash-map :a a :b b)]
+[:map-literal {:a a :b b}]
+
+;; testing varargs functions
+
+; one-arg
+(def va-1 (fn [& args] [args]))
+(va-1)
+(va-1 1)
+(va-1 1 2)
+(va-1 1 2 3)
+(va-1 1 2 3 4)
+(va-1 1 2 3 4 5)
+
+; two-arg
+(def va-2 (fn [a & args] [a args]))
+(va-2)
+(va-2 1)
+(va-2 1 2)
+(va-2 1 2 3)
+(va-2 1 2 3 4)
+(va-2 1 2 3 4 5)
+
+; three-arg
+(def va-3 (fn [a b & args] [a b args]))
+(va-3)
+(va-3 1)
+(va-3 1 2)
+(va-3 1 2 3)
+(va-3 1 2 3 4)
+(va-3 1 2 3 4 5)
+
+(seq #{1 2})
+(seq {:a 1 :b 2})
+(seq nil)
+
+(first (quote (1 2 3)))
+(first [1 2 3])
+(first #{1 2 3})
+(first {:a 1 :b 2 :c 3})
+(first nil)
+(first [])
+
+(next (quote (1 2 3)))
+(next [1 2 3])
+(next #{1 2 3})
+(next {:a 1 :b 2 :c 3})
+(next nil)
+(next [])
+
+(rest (quote (1 2 3)))
+(rest [1 2 3])
+(rest #{1 2 3})
+(rest {:a 1 :b 2 :c 3})
+(rest nil)
+(rest [])
+
+(eval (quote a))
+(def q (quote (first [(println a b) :fail])))
+(eval q)
+(println "asd" nil)

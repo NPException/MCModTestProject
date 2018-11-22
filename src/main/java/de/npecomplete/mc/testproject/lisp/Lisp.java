@@ -1,8 +1,14 @@
 package de.npecomplete.mc.testproject.lisp;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
+import de.npecomplete.mc.testproject.lisp.data.CoreLibrary;
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
 import de.npecomplete.mc.testproject.lisp.function.LispFunction;
@@ -23,6 +29,24 @@ public class Lisp {
 		globalEnv.bind(new Symbol("if"), SpecialForm.IF);
 		globalEnv.bind(new Symbol("let"), SpecialForm.LET);
 		globalEnv.bind(new Symbol("quote"), SpecialForm.QUOTE);
+
+		globalEnv.bind(new Symbol("eval"), new LispFunction() {
+			@Override
+			public Object apply(Object par1) {
+				return eval(par1);
+			}
+		});
+
+		// TODO replace with interop in some yet-to-be-written core lisp file
+		globalEnv.bind(new Symbol("list"), CoreLibrary.FN_LIST);
+		globalEnv.bind(new Symbol("vector"), CoreLibrary.FN_VECTOR);
+		globalEnv.bind(new Symbol("hash-set"), CoreLibrary.FN_HASH_SET);
+		globalEnv.bind(new Symbol("hash-map"), CoreLibrary.FN_HASH_MAP);
+
+		globalEnv.bind(new Symbol("seq"), CoreLibrary.FN_SEQ);
+		globalEnv.bind(new Symbol("first"), CoreLibrary.FN_FIRST);
+		globalEnv.bind(new Symbol("next"), CoreLibrary.FN_NEXT);
+		globalEnv.bind(new Symbol("rest"), CoreLibrary.FN_REST);
 	}
 
 	public Object eval(Object obj) throws LispException {
@@ -37,7 +61,7 @@ public class Lisp {
 		if (obj instanceof Sequence) {
 			Sequence seq = (Sequence) obj;
 			if (seq.empty()) {
-				throw new LispException("Can't eval empty sequence");
+				throw new LispException("Can't evaluate empty list");
 			}
 			// evaluate first element
 			Object callable = eval(seq.first(), env);
@@ -93,6 +117,41 @@ public class Lisp {
 			throw new LispException("Can't call " + callable + " | "
 					+ "Was returned when evaluating: " + first + " | "
 					+ "Call: " + call);
+		}
+
+		if (obj instanceof List) {
+			List<?> list = (List<?>) obj;
+			List<Object> result = new ArrayList<>();
+			for (Object o : list) {
+				result.add(eval(o, env));
+			}
+			return result;
+		}
+
+		if (obj instanceof Set) {
+			Set<?> set = (Set<?>) obj;
+			Set<Object> result = new HashSet<>(set.size() * 2);
+			for (Object o : set) {
+				Object key = eval(o, env);
+				if (result.contains(key)) {
+					throw new LispException("Set creation with duplicate key: " + key);
+				}
+				result.add(key);
+			}
+			return result;
+		}
+
+		if (obj instanceof Map) {
+			Map<?, ?> map = (Map<?, ?>) obj;
+			Map<Object, Object> result = new HashMap<>(map.size() * 2);
+			for (Entry e : map.entrySet()) {
+				Object key = eval(e.getKey(), env);
+				if (result.containsKey(key)) {
+					throw new LispException("Map creation with duplicate key: " + key);
+				}
+				result.put(key, eval(e.getValue(), env));
+			}
+			return result;
 		}
 
 		return obj;

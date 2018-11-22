@@ -8,162 +8,195 @@ import de.npecomplete.mc.testproject.lisp.LispException;
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
 import de.npecomplete.mc.testproject.lisp.special.SpecialForm;
-import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
+import de.npecomplete.mc.testproject.lisp.util.LispElf;
 
-public class MultiArityFunction implements LispFunction {
+public final class MultiArityFunction implements LispFunction {
+
+	private final Symbol name;
+	// First array index is function arity. The resulting Object array
+	// has the function body at index 0 and the argument symbols at index 1.
+	private final Object[][] functions;
+	private final Object[] variadicFnData;
 
 	// The environment with which the function was created
 	private final Environment env;
 
-	// Function body for calls without arguments
-	private Sequence noArgsBody;
-
-	// Function body and argument symbol for calls with one argument
-	private Sequence oneArgBody;
-	private Symbol oneArgSymbol;
-
-	// Function body and argument symbols for calls with two arguments
-	private Sequence twoArgBody;
-	private Symbol[] twoArgSymbols;
-
-	// Function body and argument symbols for calls with three arguments
-	private Sequence threeArgBody;
-	private Symbol[] threeArgSymbols;
-
-	// Function body and argument symbols for calls with 4 or more arguments.
-	// First array index is function arity. The resulting Object array
-	// has the function body as it's first argument, and the argument
-	// symbols after it.
-	private Object[][] multiArgFunctions;
-
-	public MultiArityFunction(Environment env) {
+	private MultiArityFunction(Symbol name, boolean variadic, Object[][] functions, Environment env) {
+		this.name = name;
+		this.functions = functions;
+		variadicFnData = variadic ? functions[functions.length - 1] : null;
 		this.env = env;
 	}
 
-	public void addArity(Sequence args) {
-		if (args.empty()) {
-			throw new LispException("'fn' arity definition requires at least one element: ([ARGS] *&BODY*)");
+	private Environment initLocalEnv() {
+		Environment localEnv = new Environment(env);
+		if (name != null) {
+			localEnv.bind(name, this);
 		}
-		Object arg1 = args.first();
-		if (!(arg1 instanceof List)) {
-			throw new LispException("'fn' arity definition first element is not a List");
-		}
-		List<?> fnArgs = (List) arg1;
-		// verify function argument list
-		for (Object sym : fnArgs) {
-			if (!(sym instanceof Symbol)) {
-				String s = LispPrinter.printStr(sym);
-				throw new LispException("'fn' arity definition argument is not a symbol: " + s);
-			}
-		}
+		return localEnv;
+	}
 
-		Sequence body = args.next();
-		Symbol[] symbols = fnArgs.toArray(new Symbol[0]);
-		switch (symbols.length) {
-			case 0:
-				if (noArgsBody == null) {
-					noArgsBody = body;
-					return;
-				}
-				break;
-			case 1:
-				if (oneArgBody == null) {
-					oneArgBody = body;
-					oneArgSymbol = symbols[0];
-					return;
-				}
-				break;
-			case 2:
-				if (twoArgBody == null) {
-					twoArgBody = body;
-					twoArgSymbols = symbols;
-					return;
-				}
-				break;
-			case 3:
-				if (threeArgBody == null) {
-					threeArgBody = body;
-					threeArgSymbols = symbols;
-					return;
-				}
-				break;
-			default:
-				int multiArgIndex = symbols.length - 4;
-				if (multiArgFunctions == null) {
-					multiArgFunctions = new Object[multiArgIndex + 1][];
-				}
-				if (multiArgIndex >= multiArgFunctions.length) {
-					multiArgFunctions = Arrays.copyOf(multiArgFunctions, multiArgIndex + 1);
-				}
-				if (multiArgFunctions[multiArgIndex] == null) {
-					Object[] functionData = new Object[symbols.length + 1];
-					functionData[0] = body;
-					System.arraycopy(symbols, 0, functionData, 1, symbols.length);
-					multiArgFunctions[multiArgIndex] = functionData;
-					return;
-				}
+	private Object[] fnData(int arity) {
+		Object[] fnData = functions.length > arity
+				? functions[arity]
+				: variadicFnData;
+		if (fnData == null) {
+			if (variadicFnData != null && arity == functions.length - 2) {
+				return variadicFnData;
+			}
+			throw new LispException("Wrong arity: " + arity);
 		}
-		throw new LispException("Function body with arity " + symbols.length + " already exists");
+		return fnData;
 	}
 
 	@Override
 	public Object apply() {
-		if (noArgsBody == null) {
-			throw new LispException("Wrong arity: 0");
+		Environment localEnv = initLocalEnv();
+		Object[] fnData = fnData(0);
+		Sequence body = (Sequence) fnData[0];
+
+		if (fnData == variadicFnData) {
+			Symbol[] paramSymbols = (Symbol[]) fnData[1];
+			LispElf.bindVarArgs(localEnv, paramSymbols, LispElf.EMPTY_OBJECT_ARRAY);
 		}
-		return SpecialForm.DO.apply(noArgsBody, env);
+		return SpecialForm.DO.apply(body, localEnv);
 	}
 
 	@Override
-	public Object apply(Object par) {
-		if (oneArgBody == null) {
-			throw new LispException("Wrong arity: 1");
+	public Object apply(Object par1) {
+		Environment localEnv = initLocalEnv();
+		Object[] fnData = fnData(1);
+		Sequence body = (Sequence) fnData[0];
+		Symbol[] paramSymbols = (Symbol[]) fnData[1];
+
+		if (fnData == variadicFnData) {
+			LispElf.bindVarArgs(localEnv, paramSymbols, par1);
+		} else {
+			localEnv.bind(paramSymbols[0], par1);
 		}
-		Environment localEnv = new Environment(env);
-		localEnv.bind(oneArgSymbol, par);
-		return SpecialForm.DO.apply(oneArgBody, localEnv);
+		return SpecialForm.DO.apply(body, localEnv);
 	}
 
 	@Override
 	public Object apply(Object par1, Object par2) {
-		if (twoArgBody == null) {
-			throw new LispException("Wrong arity: 2");
+		Environment localEnv = initLocalEnv();
+		Object[] fnData = fnData(2);
+		Sequence body = (Sequence) fnData[0];
+		Symbol[] paramSymbols = (Symbol[]) fnData[1];
+
+		if (fnData == variadicFnData) {
+			LispElf.bindVarArgs(localEnv, paramSymbols, par1, par2);
+		} else {
+			localEnv.bind(paramSymbols[0], par1);
+			localEnv.bind(paramSymbols[1], par2);
 		}
-		Environment localEnv = new Environment(env);
-		localEnv.bind(twoArgSymbols[0], par1);
-		localEnv.bind(twoArgSymbols[1], par2);
-		return SpecialForm.DO.apply(twoArgBody, localEnv);
+		return SpecialForm.DO.apply(body, localEnv);
 	}
 
 	@Override
 	public Object apply(Object par1, Object par2, Object par3) {
-		if (threeArgBody == null) {
-			throw new LispException("Wrong arity: 3");
+		Environment localEnv = initLocalEnv();
+		Object[] fnData = fnData(3);
+		Sequence body = (Sequence) fnData[0];
+		Symbol[] paramSymbols = (Symbol[]) fnData[1];
+
+		if (fnData == variadicFnData) {
+			LispElf.bindVarArgs(localEnv, paramSymbols, par1, par2, par3);
+		} else {
+			localEnv.bind(paramSymbols[0], par1);
+			localEnv.bind(paramSymbols[1], par2);
+			localEnv.bind(paramSymbols[2], par3);
 		}
-		Environment localEnv = new Environment(env);
-		localEnv.bind(threeArgSymbols[0], par1);
-		localEnv.bind(threeArgSymbols[1], par2);
-		localEnv.bind(threeArgSymbols[2], par3);
-		return SpecialForm.DO.apply(threeArgBody, localEnv);
+		return SpecialForm.DO.apply(body, localEnv);
 	}
 
 	@Override
 	public Object apply(Object par1, Object par2, Object par3, Object par4, Object... more) {
-		Object[] functionData = multiArgFunctions != null
-				? multiArgFunctions[more.length]
-				: null;
-		if (functionData == null) {
-			throw new LispException("Wrong arity: " + (4 + more.length));
+		Environment localEnv = initLocalEnv();
+		int moreCount = more.length;
+		Object[] fnData = fnData(4 + moreCount);
+		Sequence body = (Sequence) fnData[0];
+		Symbol[] paramSymbols = (Symbol[]) fnData[1];
+
+		if (fnData == variadicFnData) {
+			Object[] args = new Object[] {par1, par2, par3, par4};
+			if (moreCount > 0) {
+				args = Arrays.copyOf(args, 4 + moreCount);
+				System.arraycopy(more, 0, args, 4, moreCount);
+			}
+			LispElf.bindVarArgs(localEnv, paramSymbols, args);
+
+		} else {
+			localEnv.bind(paramSymbols[0], par1);
+			localEnv.bind(paramSymbols[1], par2);
+			localEnv.bind(paramSymbols[2], par3);
+			localEnv.bind(paramSymbols[3], par4);
+			for (int i = 0; i < moreCount; i++) {
+				localEnv.bind(paramSymbols[i + 4], more[i]);
+			}
 		}
-		Sequence multiArgBody = (Sequence) functionData[0];
-		Environment localEnv = new Environment(env);
-		localEnv.bind((Symbol) functionData[1], par1);
-		localEnv.bind((Symbol) functionData[2], par2);
-		localEnv.bind((Symbol) functionData[3], par3);
-		localEnv.bind((Symbol) functionData[4], par4);
-		for (int i = 0, size = more.length; i < size; i++) {
-			localEnv.bind((Symbol) functionData[i + 5], more[i]);
+
+		return SpecialForm.DO.apply(body, localEnv);
+	}
+
+	public static class Builder {
+		private static final Object[][] NO_FUNCTIONS = new Object[0][];
+
+		private final Symbol name;
+		private boolean variadic;
+
+		// The environment with which the function was created
+		private final Environment env;
+
+		// First array index is function arity. The resulting Object array
+		// has the function body at index 0 and the argument symbols at index 1.
+		private Object[][] functions = NO_FUNCTIONS;
+
+		public Builder(Symbol name, Environment env) {
+			this.name = name;
+			this.env = env;
 		}
-		return SpecialForm.DO.apply(multiArgBody, localEnv);
+
+		public void addArity(Sequence args) {
+			if (args.empty()) {
+				throw new LispException("'fn' arity definition requires at least one element: ([ARGS] *&BODY*)");
+			}
+			Object arg1 = args.first();
+			if (!(arg1 instanceof List)) {
+				throw new LispException("'fn' arity definition first element is not a List");
+			}
+			List fnArgs = (List) arg1;
+
+			Sequence body = args.next();
+			Symbol[] paramSymbols = LispElf.validateFnParams(fnArgs);
+			int arity = paramSymbols.length;
+			boolean newVariadic = arity != fnArgs.size();
+
+			if (variadic && newVariadic) {
+				throw new LispException("Can only have one variadic arity definition");
+			}
+
+			if (arity >= functions.length) {
+				if (variadic) {
+					throw new LispException("Can't have fixed arity function with more params than variadic function");
+				}
+				functions = Arrays.copyOf(functions, arity + 1);
+			} else if (newVariadic) {
+				throw new LispException("Can't have fixed arity function with more params than variadic function");
+			}
+			if (functions[arity] != null) {
+				throw new LispException("Function body definition with arity " + arity + " already exists");
+			}
+			Object[] functionData = functions[arity] = new Object[2];
+			functionData[0] = body;
+			functionData[1] = paramSymbols;
+			if (newVariadic) {
+				variadic = true;
+			}
+		}
+
+		public MultiArityFunction build() {
+			return new MultiArityFunction(name, variadic, functions, env);
+		}
 	}
 }
