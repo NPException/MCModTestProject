@@ -52,7 +52,7 @@ public class Playground {
 		// TODO: use "let" in function code for bindings and execution
 		// TODO: var-arg functions, fn names, eval, apply, macros, recur, loop
 
-		try (InputStream in = Playground.class.getResourceAsStream("/test.edn");
+		try (InputStream in = Playground.class.getResourceAsStream("/test2.edn");
 //		try (InputStream in = System.in;
 			 Reader reader = new InputStreamReader(in)) {
 			Iterator<Object> it = LispReader.readMany(reader);
@@ -62,8 +62,6 @@ public class Playground {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		run(lisp, LispReader.readStr("is-dead"));
 	}
 
 	private static void run(Lisp lisp, Object form) {

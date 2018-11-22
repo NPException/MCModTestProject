@@ -15,7 +15,7 @@ import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 public class SingleArityFunction implements LispFunction {
 
 	private final Symbol name;
-	private final boolean varArgs;
+	private final boolean variadic;
 
 	// The environment with which the function was created
 	private final Environment env;
@@ -28,7 +28,7 @@ public class SingleArityFunction implements LispFunction {
 		this.env = env;
 		this.body = body;
 		this.paramSymbols = validateFnParams(fnParams);
-		this.varArgs = paramSymbols.length != fnParams.size();
+		this.variadic = paramSymbols.length != fnParams.size();
 	}
 
 	private Environment initLocalEnv() {
@@ -42,7 +42,7 @@ public class SingleArityFunction implements LispFunction {
 	@Override
 	public Object apply() {
 		Environment localEnv = initLocalEnv();
-		if (varArgs) {
+		if (variadic) {
 			bindVarArgs(localEnv, LispElf.EMPTY_OBJECT_ARRAY);
 		} else {
 			assertArity(0);
@@ -53,7 +53,7 @@ public class SingleArityFunction implements LispFunction {
 	@Override
 	public Object apply(Object par1) {
 		Environment localEnv = initLocalEnv();
-		if (varArgs) {
+		if (variadic) {
 			bindVarArgs(localEnv, par1);
 		} else {
 			assertArity(1);
@@ -65,7 +65,7 @@ public class SingleArityFunction implements LispFunction {
 	@Override
 	public Object apply(Object par1, Object par2) {
 		Environment localEnv = initLocalEnv();
-		if (varArgs) {
+		if (variadic) {
 			bindVarArgs(localEnv, par1, par2);
 		} else {
 			assertArity(2);
@@ -78,7 +78,7 @@ public class SingleArityFunction implements LispFunction {
 	@Override
 	public Object apply(Object par1, Object par2, Object par3) {
 		Environment localEnv = initLocalEnv();
-		if (varArgs) {
+		if (variadic) {
 			bindVarArgs(localEnv, par1, par2, par3);
 		} else {
 			assertArity(3);
@@ -93,7 +93,7 @@ public class SingleArityFunction implements LispFunction {
 	public Object apply(Object par1, Object par2, Object par3, Object par4, Object... more) {
 		Environment localEnv = initLocalEnv();
 
-		if (varArgs) {
+		if (variadic) {
 			Object[] args = new Object[] {par1, par2, par3, par4};
 			int moreCount = more.length;
 			if (moreCount > 0) {

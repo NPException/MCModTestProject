@@ -1,0 +1,10 @@
+(def multi
+  (fn
+    ([a b] [a b])
+    ([& args] [args])
+    ))
+
+;(do
+;  (println (multi 1))
+;  (println (multi 1 2))
+;  )
