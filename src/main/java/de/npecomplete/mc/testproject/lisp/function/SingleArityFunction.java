@@ -87,13 +87,14 @@ public final class SingleArityFunction implements LispFunction {
 		return SpecialForm.DO.apply(body, localEnv);
 	}
 
+	@SuppressWarnings("Duplicates")
 	@Override
 	public Object apply(Object par1, Object par2, Object par3, Object par4, Object... more) {
 		Environment localEnv = initLocalEnv();
+		int moreCount = more.length;
 
 		if (variadic) {
 			Object[] args = new Object[] {par1, par2, par3, par4};
-			int moreCount = more.length;
 			if (moreCount > 0) {
 				args = Arrays.copyOf(args, 4 + moreCount);
 				System.arraycopy(more, 0, args, 4, moreCount);
@@ -101,7 +102,6 @@ public final class SingleArityFunction implements LispFunction {
 			LispElf.bindVarArgs(localEnv, paramSymbols, args);
 
 		} else {
-			int moreCount = more.length;
 			assertArity(4 + moreCount);
 			localEnv.bind(paramSymbols[0], par1);
 			localEnv.bind(paramSymbols[1], par2);

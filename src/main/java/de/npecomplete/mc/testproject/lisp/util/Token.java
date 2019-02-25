@@ -14,6 +14,8 @@ class Token {
 	static final Token TRUE = new Token(Type.BOOLEAN, true);
 	static final Token FALSE = new Token(Type.BOOLEAN, false);
 
+	static final Token QUOTE = new Token(Type.QUOTE, "'");
+
 	enum Type {
 		LIST_START,
 		LIST_END,
@@ -28,6 +30,7 @@ class Token {
 		NUMBER,
 		SYMBOL,
 		KEYWORD,
+		QUOTE,
 		TAG
 	}
 

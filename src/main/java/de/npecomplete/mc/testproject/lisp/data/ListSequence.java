@@ -53,7 +53,6 @@ public final class ListSequence implements Sequence {
 		return empty;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public Iterator<Object> iterator() {
 		return new ArrayIterator(index, array);

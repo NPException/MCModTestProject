@@ -141,6 +141,7 @@ public final class CoreLibrary {
 			return applyVarArgs(new Object[] {par1, par2, par3});
 		}
 
+		@SuppressWarnings("Duplicates")
 		@Override
 		default Object apply(Object par1, Object par2, Object par3, Object par4, Object... more) {
 			int moreCount = more.length;

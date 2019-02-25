@@ -110,6 +110,7 @@ public final class MultiArityFunction implements LispFunction {
 		return SpecialForm.DO.apply(body, localEnv);
 	}
 
+	@SuppressWarnings("Duplicates")
 	@Override
 	public Object apply(Object par1, Object par2, Object par3, Object par4, Object... more) {
 		Environment localEnv = initLocalEnv();

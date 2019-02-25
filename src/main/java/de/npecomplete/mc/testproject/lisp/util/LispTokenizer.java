@@ -75,6 +75,10 @@ class LispTokenizer implements Iterator<Token> {
 			}
 		}
 
+		if (chr == '\'') {
+			return Token.QUOTE;
+		}
+
 		// data structure begin / end
 		if (isGroupToken(chr)) {
 			switch (chr) {
@@ -164,7 +168,7 @@ class LispTokenizer implements Iterator<Token> {
 		StringBuilder sb = new StringBuilder();
 		sb.appendCodePoint(chr);
 		while ((chr = nextChar()) != -1) {
-			if (isIgnored(chr) || isGroupToken(chr)) {
+			if (isIgnored(chr) || isGroupToken(chr) || chr == '"') {
 				nextChar = chr;
 				break;
 			}
@@ -205,8 +209,7 @@ class LispTokenizer implements Iterator<Token> {
 			case '"' : return '"';
 		}
 		// @formatter:on
-		throw new LispException("Encountered unknown escaped character: \\"
-				+ Character.toString((char) chr));
+		throw new LispException("Encountered unknown escaped character: \\" + (char) chr);
 	}
 
 	/**

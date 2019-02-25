@@ -112,6 +112,10 @@ public class LispReader {
 			case KEYWORD:
 				return new Keyword((String) token.value);
 
+			case QUOTE:
+				Object[] quoted = {new Symbol("quote"), build(it, null)};
+				return new ListSequence(quoted);
+
 			case TAG:
 				// NOT YET SUPPORTED
 		}
