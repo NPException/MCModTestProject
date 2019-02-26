@@ -1,5 +1,6 @@
 package de.npecomplete.mc.testproject.lisp.function;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -9,6 +10,7 @@ import java.util.function.Supplier;
 
 import de.npecomplete.mc.testproject.lisp.LispException;
 import de.npecomplete.mc.testproject.lisp.data.Keyword;
+import de.npecomplete.mc.testproject.lisp.data.Sequence;
 
 @SuppressWarnings("unchecked")
 public interface LispFunction {
@@ -30,6 +32,40 @@ public interface LispFunction {
 
 	default Object apply(Object par1, Object par2, Object par3, Object par4, Object... more) {
 		throw new LispException("Wrong arity: " + (4 + more.length));
+	}
+
+	default Object applyTo(Sequence args) {
+		if (args == null || args.empty()) {
+			return apply();
+		}
+		Object par1 = args.first();
+		args = args.next();
+		if (args == null) {
+			return apply(par1);
+		}
+		Object par2 = args.first();
+		args = args.next();
+		if (args == null) {
+			return apply(par1, par2);
+		}
+		Object par3 = args.first();
+		args = args.next();
+		if (args == null) {
+			return apply(par1, par2, par3);
+		}
+		Object par4 = args.first();
+		args = args.next();
+
+		if (args == null) {
+			return apply(par1, par2, par3, par4);
+		}
+
+		ArrayList<Object> rest = new ArrayList<>();
+		do {
+			rest.add(args.first());
+		} while ((args = args.next()) != null);
+
+		return apply(par1, par2, par3, par4, rest.toArray());
 	}
 
 	/**

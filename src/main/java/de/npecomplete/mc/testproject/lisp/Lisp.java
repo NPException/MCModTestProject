@@ -23,6 +23,7 @@ public class Lisp {
 	}
 
 	public void initStandardEnvironment() {
+		// SPECIAL FORMS
 		globalEnv.bind(new Symbol("def"), SpecialForm.DEF);
 		globalEnv.bind(new Symbol("do"), SpecialForm.DO);
 		globalEnv.bind(new Symbol("fn"), SpecialForm.FN);
@@ -30,23 +31,30 @@ public class Lisp {
 		globalEnv.bind(new Symbol("let"), SpecialForm.LET);
 		globalEnv.bind(new Symbol("quote"), SpecialForm.QUOTE);
 
+		// EVAL & APPLY
 		globalEnv.bind(new Symbol("eval"), new LispFunction() {
 			@Override
 			public Object apply(Object par1) {
 				return eval(par1);
 			}
 		});
+		globalEnv.bind(new Symbol("apply"), CoreLibrary.FN_APPLY);
 
+		// DATA STRUCTURE CREATION
 		// TODO replace with interop in some yet-to-be-written core lisp file
 		globalEnv.bind(new Symbol("list"), CoreLibrary.FN_LIST);
 		globalEnv.bind(new Symbol("vector"), CoreLibrary.FN_VECTOR);
 		globalEnv.bind(new Symbol("hash-set"), CoreLibrary.FN_HASH_SET);
 		globalEnv.bind(new Symbol("hash-map"), CoreLibrary.FN_HASH_MAP);
 
+		// SEQUENCE INTERACTION
 		globalEnv.bind(new Symbol("seq"), CoreLibrary.FN_SEQ);
 		globalEnv.bind(new Symbol("first"), CoreLibrary.FN_FIRST);
 		globalEnv.bind(new Symbol("next"), CoreLibrary.FN_NEXT);
 		globalEnv.bind(new Symbol("rest"), CoreLibrary.FN_REST);
+
+		// MATHS
+		globalEnv.bind(new Symbol("+"), CoreLibrary.FN_PLUS);
 	}
 
 	public Object eval(Object obj) throws LispException {

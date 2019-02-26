@@ -4,7 +4,6 @@ import static de.npecomplete.mc.testproject.lisp.util.LispElf.mapIterator;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,6 +14,7 @@ import java.util.Set;
 
 import de.npecomplete.mc.testproject.lisp.LispException;
 import de.npecomplete.mc.testproject.lisp.function.LispFunction;
+import de.npecomplete.mc.testproject.lisp.function.VarArgsFunction;
 
 public final class CoreLibrary {
 	private CoreLibrary() {
@@ -117,40 +117,60 @@ public final class CoreLibrary {
 		}
 	};
 
-	@FunctionalInterface
-	private interface VarArgsFunction extends LispFunction {
-		Object applyVarArgs(Object[] args);
+	// TODO: replace with interop like clojure (https://github.com/clojure/clojure/blob/clojure-1.9.0/src/clj/clojure/core.clj#L652)
+	public static final LispFunction FN_APPLY = new LispFunction() {
 
 		@Override
-		default Object apply() {
-			return applyVarArgs(new Object[0]);
-		}
-
-		@Override
-		default Object apply(Object par1) {
-			return applyVarArgs(new Object[] {par1});
-		}
-
-		@Override
-		default Object apply(Object par1, Object par2) {
-			return applyVarArgs(new Object[] {par1, par2});
-		}
-
-		@Override
-		default Object apply(Object par1, Object par2, Object par3) {
-			return applyVarArgs(new Object[] {par1, par2, par3});
-		}
-
-		@SuppressWarnings("Duplicates")
-		@Override
-		default Object apply(Object par1, Object par2, Object par3, Object par4, Object... more) {
-			int moreCount = more.length;
-			Object[] args = new Object[] {par1, par2, par3, par4};
-			if (moreCount > 0) {
-				args = Arrays.copyOf(args, 4 + moreCount);
-				System.arraycopy(more, 0, args, 4, moreCount);
+		public Object apply(Object par1, Object par2) {
+			if (!(par1 instanceof LispFunction)) {
+				throw new LispException("First parameter must be a function");
 			}
-			return applyVarArgs(args);
+			LispFunction f = (LispFunction) par1;
+			return f.applyTo(seq(par2));
 		}
-	}
+
+		@Override
+		public Object apply(Object par1, Object par2, Object par3) {
+			if (!(par1 instanceof LispFunction)) {
+				throw new LispException("First parameter must be a function");
+			}
+			LispFunction f = (LispFunction) par1;
+			return f.applyTo(new Cons(par2, seq(par3)));
+		}
+
+		@Override
+		public Object apply(Object par1, Object par2, Object par3, Object par4, Object... more) {
+			if (!(par1 instanceof LispFunction)) {
+				throw new LispException("First parameter must be a function");
+			}
+			LispFunction f = (LispFunction) par1;
+			if (more.length == 0) {
+				return f.applyTo(new Cons(par2, new Cons(par3, seq(par4))));
+			}
+
+			Sequence rest = seq(more[more.length - 1]);
+
+			Object[] args = new Object[3 + more.length - 1];
+			args[0] = par2;
+			args[1] = par3;
+			args[2] = par4;
+			System.arraycopy(more, 0, args, 3, more.length - 1);
+
+			Cons argsSeq = new Cons(args[args.length - 1], rest);
+			for (int i = args.length - 2; i>=0; i--) {
+				argsSeq = new Cons(args[i], argsSeq);
+			}
+			return f.applyTo(argsSeq);
+		}
+	};
+
+	// TODO: implement properly
+	public static final LispFunction FN_PLUS = (VarArgsFunction) args -> {
+		double sum = 0.0;
+		for (Object o : args) {
+			sum += ((Number) o).doubleValue();
+		}
+		return sum;
+	};
+
 }
