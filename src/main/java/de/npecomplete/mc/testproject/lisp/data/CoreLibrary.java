@@ -215,4 +215,22 @@ public final class CoreLibrary {
 		}
 		return result;
 	};
+
+	public static final LispFunction FN_MULTIPLY = (VarArgsFunction) args -> {
+		if (args.length < 2) {
+			return args.length == 0 ? 1L : args[0];
+		}
+		if (allIntegers(args)) {
+			long result = ((Number) args[0]).longValue();
+			for (int i = 1, length = args.length; i < length; i++) {
+				result *= ((Number) args[i]).longValue();
+			}
+			return result;
+		}
+		double result = ((Number) args[0]).doubleValue();
+		for (int i = 1, length = args.length; i < length; i++) {
+			result *= ((Number) args[i]).doubleValue();
+		}
+		return result;
+	};
 }
