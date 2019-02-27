@@ -157,29 +157,38 @@ public final class CoreLibrary {
 			System.arraycopy(more, 0, args, 3, more.length - 1);
 
 			Cons argsSeq = new Cons(args[args.length - 1], rest);
-			for (int i = args.length - 2; i>=0; i--) {
+			for (int i = args.length - 2; i >= 0; i--) {
 				argsSeq = new Cons(args[i], argsSeq);
 			}
 			return f.applyTo(argsSeq);
 		}
 	};
 
-	public static final LispFunction FN_ADD = (VarArgsFunction) args -> {
-		long sum = 0;
-		for (int i=0, length=args.length; i<length; i++) {
-			Number n = (Number) args[i];
-			if (!(n instanceof Long || n instanceof Integer)) {
-				// switch to double and finish operation
-				double doubleSum = sum + n.doubleValue();
-				while (++i < length) {
-					n = (Number) args[i];
-					doubleSum += n.doubleValue();
-				}
-				return doubleSum;
+	private static boolean allIntegers(Object[] args) {
+		for (Object o : args) {
+			if (!(o instanceof Long || o instanceof Integer)) {
+				return false;
 			}
-			sum += n.longValue();
 		}
-		return sum;
+		return true;
+	}
+
+	public static final LispFunction FN_ADD = (VarArgsFunction) args -> {
+		if (args.length < 2) {
+			return args.length == 0 ? 0L : args[0];
+		}
+		if (allIntegers(args)) {
+			long result = ((Number) args[0]).longValue();
+			for (int i = 1, length = args.length; i < length; i++) {
+				result += ((Number) args[i]).longValue();
+			}
+			return result;
+		}
+		double result = ((Number) args[0]).doubleValue();
+		for (int i = 1, length = args.length; i < length; i++) {
+			result += ((Number) args[i]).doubleValue();
+		}
+		return result;
 	};
 
 }
