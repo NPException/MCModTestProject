@@ -15,6 +15,10 @@ import de.npecomplete.mc.testproject.lisp.function.LispFunction;
 import de.npecomplete.mc.testproject.lisp.special.SpecialForm;
 import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 
+// TODO: switch from using java.util.List to own Vector class
+// TODO: destructuring
+// TODO: macros, loop, recur
+
 public class Lisp {
 	public final Environment globalEnv;
 
@@ -58,6 +62,8 @@ public class Lisp {
 		globalEnv.bind(new Symbol("-"), CoreLibrary.FN_SUBTRACT);
 		globalEnv.bind(new Symbol("*"), CoreLibrary.FN_MULTIPLY);
 		globalEnv.bind(new Symbol("/"), CoreLibrary.FN_DIVIDE);
+
+		// TODO: COMPARISONS
 	}
 
 	public Object eval(Object obj) throws LispException {
