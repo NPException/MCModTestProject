@@ -233,4 +233,26 @@ public final class CoreLibrary {
 		}
 		return result;
 	};
+
+	public static final LispFunction FN_DIVIDE = (VarArgsFunction) args -> {
+		if (args.length < 2) {
+			if (args.length == 0) {
+				throw new LispException("Wrong arity: 0");
+			}
+			return 1.0 / ((Number) args[0]).doubleValue();
+		}
+		double result = ((Number) args[0]).doubleValue();
+		for (int i = 1, length = args.length; i < length; i++) {
+			double div = ((Number) args[i]).doubleValue();
+			if (div == 0) {
+				throw new ArithmeticException("Divide by zero");
+			}
+			result /= div;
+		}
+
+		if (Math.floor(result) == result && !Double.isInfinite(result) && allIntegers(args)) {
+			return (long) result;
+		}
+		return result;
+	};
 }

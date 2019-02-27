@@ -57,6 +57,7 @@ public class Lisp {
 		globalEnv.bind(new Symbol("+"), CoreLibrary.FN_ADD);
 		globalEnv.bind(new Symbol("-"), CoreLibrary.FN_SUBTRACT);
 		globalEnv.bind(new Symbol("*"), CoreLibrary.FN_MULTIPLY);
+		globalEnv.bind(new Symbol("/"), CoreLibrary.FN_DIVIDE);
 	}
 
 	public Object eval(Object obj) throws LispException {
