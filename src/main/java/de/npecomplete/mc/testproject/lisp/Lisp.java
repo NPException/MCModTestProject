@@ -55,6 +55,7 @@ public class Lisp {
 
 		// MATHS
 		globalEnv.bind(new Symbol("+"), CoreLibrary.FN_ADD);
+		globalEnv.bind(new Symbol("-"), CoreLibrary.FN_SUBTRACT);
 	}
 
 	public Object eval(Object obj) throws LispException {

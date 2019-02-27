@@ -191,4 +191,28 @@ public final class CoreLibrary {
 		return result;
 	};
 
+	public static final LispFunction FN_SUBTRACT = (VarArgsFunction) args -> {
+		if (args.length < 2) {
+			if (args.length == 0) {
+				throw new LispException("Wrong arity: 0");
+			}
+			Number n = (Number) args[0];
+			if (!(n instanceof Long || n instanceof Integer)) {
+				return -n.doubleValue();
+			}
+			return -n.longValue();
+		}
+		if (allIntegers(args)) {
+			long result = ((Number) args[0]).longValue();
+			for (int i = 1, length = args.length; i < length; i++) {
+				result -= ((Number) args[i]).longValue();
+			}
+			return result;
+		}
+		double result = ((Number) args[0]).doubleValue();
+		for (int i = 1, length = args.length; i < length; i++) {
+			result -= ((Number) args[i]).doubleValue();
+		}
+		return result;
+	};
 }
