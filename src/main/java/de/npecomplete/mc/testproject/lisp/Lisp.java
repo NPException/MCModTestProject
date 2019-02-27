@@ -54,7 +54,7 @@ public class Lisp {
 		globalEnv.bind(new Symbol("rest"), CoreLibrary.FN_REST);
 
 		// MATHS
-		globalEnv.bind(new Symbol("+"), CoreLibrary.FN_PLUS);
+		globalEnv.bind(new Symbol("+"), CoreLibrary.FN_ADD);
 	}
 
 	public Object eval(Object obj) throws LispException {

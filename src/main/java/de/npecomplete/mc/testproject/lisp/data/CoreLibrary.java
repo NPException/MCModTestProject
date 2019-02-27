@@ -164,11 +164,20 @@ public final class CoreLibrary {
 		}
 	};
 
-	// TODO: implement properly
-	public static final LispFunction FN_PLUS = (VarArgsFunction) args -> {
-		double sum = 0.0;
-		for (Object o : args) {
-			sum += ((Number) o).doubleValue();
+	public static final LispFunction FN_ADD = (VarArgsFunction) args -> {
+		long sum = 0;
+		for (int i=0, length=args.length; i<length; i++) {
+			Number n = (Number) args[i];
+			if (!(n instanceof Long || n instanceof Integer)) {
+				// switch to double and finish operation
+				double doubleSum = sum + n.doubleValue();
+				while (++i < length) {
+					n = (Number) args[i];
+					doubleSum += n.doubleValue();
+				}
+				return doubleSum;
+			}
+			sum += n.longValue();
 		}
 		return sum;
 	};
