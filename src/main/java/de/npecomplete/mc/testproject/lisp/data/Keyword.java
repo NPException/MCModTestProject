@@ -27,6 +27,6 @@ public final class Keyword {
 
 	@Override
 	public String toString() {
-		return LispPrinter.printStr(this);
+		return LispPrinter.prStr(this);
 	}
 }

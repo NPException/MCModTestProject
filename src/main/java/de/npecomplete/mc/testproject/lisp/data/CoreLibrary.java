@@ -15,6 +15,7 @@ import java.util.Set;
 import de.npecomplete.mc.testproject.lisp.LispException;
 import de.npecomplete.mc.testproject.lisp.function.LispFunction;
 import de.npecomplete.mc.testproject.lisp.function.VarArgsFunction;
+import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 
 public final class CoreLibrary {
 	private CoreLibrary() {
@@ -300,5 +301,39 @@ public final class CoreLibrary {
 			}
 			return new Keyword((String) FN_NAME.apply(arg));
 		}
+	};
+
+	private static void pr(Object[] args, Appendable out) {
+		if (args.length > 0) {
+			LispPrinter.pr(args[0], out);
+			for (int i = 1, length = args.length; i < length; i++) {
+				LispPrinter.pr(" ", out);
+				LispPrinter.pr(args[i], out);
+			}
+		}
+	}
+
+	public static final VarArgsFunction FN_PR = args -> {
+		pr(args, System.out);
+		return null;
+	};
+
+	public static final LispFunction FN_PRN = (VarArgsFunction) args -> {
+		pr(args, System.out);
+		System.out.print('\n');
+		return null;
+	};
+
+	public static final VarArgsFunction FN_PR_STR = args -> {
+		StringBuilder sb = new StringBuilder();
+		pr(args, sb);
+		return sb.toString();
+	};
+
+	public static final LispFunction FN_PRN_STR = (VarArgsFunction) args -> {
+		StringBuilder sb = new StringBuilder();
+		pr(args, sb);
+		sb.append('\n');
+		return sb.toString();
 	};
 }

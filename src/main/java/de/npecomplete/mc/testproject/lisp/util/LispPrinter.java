@@ -14,13 +14,13 @@ import de.npecomplete.mc.testproject.lisp.data.Symbol;
 
 public final class LispPrinter {
 
-	public static String printStr(Object o) throws LispException {
+	public static String prStr(Object o) throws LispException {
 		StringBuilder sb = new StringBuilder();
-		print(o, sb);
+		pr(o, sb);
 		return sb.toString();
 	}
 
-	public static void print(Object o, Appendable out) throws LispException {
+	public static void pr(Object o, Appendable out) throws LispException {
 		try {
 			if (o == null) {
 				out.append("nil");
@@ -42,21 +42,21 @@ public final class LispPrinter {
 			if (o instanceof Sequence) {
 				out.append('(');
 				Iterable<?> i = (Iterable) o;
-				printIterable(out, i, " ", LispPrinter::print);
+				printIterable(out, i, " ", LispPrinter::pr);
 				out.append(')');
 				return;
 			}
 			if (o instanceof List) {
 				out.append('[');
 				Iterable<?> i = (Iterable) o;
-				printIterable(out, i, " ", LispPrinter::print);
+				printIterable(out, i, " ", LispPrinter::pr);
 				out.append(']');
 				return;
 			}
 			if (o instanceof Set) {
 				out.append("#{");
 				Iterable<?> i = (Iterable) o;
-				printIterable(out, i, " ", LispPrinter::print);
+				printIterable(out, i, " ", LispPrinter::pr);
 				out.append('}');
 				return;
 			}
@@ -65,9 +65,9 @@ public final class LispPrinter {
 				@SuppressWarnings("unchecked")
 				Iterable<Entry> i = ((Map) o).entrySet();
 				printIterable(out, i, ", ", (e, a) -> {
-					print(e.getKey(), a);
+					pr(e.getKey(), a);
 					a.append(' ');
-					print(e.getValue(), a);
+					pr(e.getValue(), a);
 				});
 				out.append('}');
 				return;

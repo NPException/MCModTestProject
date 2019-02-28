@@ -69,6 +69,13 @@ public class Lisp {
 		globalEnv.bind(new Symbol("symbol"), CoreLibrary.FN_SYMBOL);
 		globalEnv.bind(new Symbol("keyword"), CoreLibrary.FN_KEYWORD);
 
+		// PRINTING
+		globalEnv.bind(new Symbol("pr"), CoreLibrary.FN_PR);
+		globalEnv.bind(new Symbol("prn"), CoreLibrary.FN_PRN);
+		globalEnv.bind(new Symbol("pr-str"), CoreLibrary.FN_PR_STR);
+		globalEnv.bind(new Symbol("prn-str"), CoreLibrary.FN_PRN_STR);
+
+
 		// TODO: COMPARISONS
 	}
 
@@ -135,8 +142,8 @@ public class Lisp {
 				return fn.apply(arg1, arg2, arg3, arg4, moreArgs.toArray());
 			}
 
-			String call = LispPrinter.printStr(seq);
-			String first = LispPrinter.printStr(seq.first());
+			String call = LispPrinter.prStr(seq);
+			String first = LispPrinter.prStr(seq.first());
 			throw new LispException("Can't call " + callable + " | "
 					+ "Was returned when evaluating: " + first + " | "
 					+ "Call: " + call);

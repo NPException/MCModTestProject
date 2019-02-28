@@ -97,7 +97,7 @@ public final class ListSequence implements Sequence {
 
 	@Override
 	public String toString() {
-		return LispPrinter.printStr(this);
+		return LispPrinter.prStr(this);
 	}
 
 	private static class ArrayIterator implements Iterator<Object> {

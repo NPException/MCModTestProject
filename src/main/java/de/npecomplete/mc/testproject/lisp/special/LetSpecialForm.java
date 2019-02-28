@@ -39,7 +39,7 @@ final class LetSpecialForm implements SpecialForm {
 		while (it.hasNext()) {
 			Object sym = it.next();
 			if (!(sym instanceof Symbol)) {
-				String s = LispPrinter.printStr(sym);
+				String s = LispPrinter.prStr(sym);
 				throw new LispException("'let' binding target is not a symbol: " + s);
 			}
 			Object value = Lisp.eval(it.next(), localEnv);

@@ -27,6 +27,6 @@ public final class Symbol {
 
 	@Override
 	public String toString() {
-		return LispPrinter.printStr(this);
+		return LispPrinter.prStr(this);
 	}
 }

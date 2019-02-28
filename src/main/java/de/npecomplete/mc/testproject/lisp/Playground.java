@@ -33,7 +33,7 @@ public class Playground {
 		if (!LispElf.matchSize(args, 1, 1)) {
 			throw new LispException("'prn-str' function requires exactly 1 argument: (prn-str ARG)");
 		}
-		return LispPrinter.printStr(Lisp.eval(args.first(), env));
+		return LispPrinter.prStr(Lisp.eval(args.first(), env));
 	};
 
 	public static void main(String[] arguments) throws Exception {
@@ -69,11 +69,11 @@ public class Playground {
 	private static void run(Lisp lisp, Object form) {
 		System.out.println();
 		System.out.print("~: ");
-		System.out.println(LispPrinter.printStr(form));
+		System.out.println(LispPrinter.prStr(form));
 		try {
 			Object result = lisp.eval(form);
 			System.out.print("~>");
-			System.out.println(LispPrinter.printStr(result));
+			System.out.println(LispPrinter.prStr(result));
 		} catch (Exception e) {
 			System.out.println("Failed");
 			e.printStackTrace(System.out);

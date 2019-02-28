@@ -24,7 +24,7 @@ final class DefSpecialForm implements SpecialForm {
 		}
 		Object sym = args.first();
 		if (!(sym instanceof Symbol)) {
-			String s = LispPrinter.printStr(sym);
+			String s = LispPrinter.prStr(sym);
 			throw new LispException("'def' binding target is not a symbol: " + s);
 		}
 		Object form = args.next().first();
