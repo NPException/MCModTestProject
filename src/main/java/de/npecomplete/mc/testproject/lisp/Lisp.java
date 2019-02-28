@@ -75,6 +75,10 @@ public class Lisp {
 		globalEnv.bind(new Symbol("pr-str"), CoreLibrary.FN_PR_STR);
 		globalEnv.bind(new Symbol("prn-str"), CoreLibrary.FN_PRN_STR);
 
+		globalEnv.bind(new Symbol("print"), CoreLibrary.FN_PRINT);
+		globalEnv.bind(new Symbol("println"), CoreLibrary.FN_PRINTLN);
+		globalEnv.bind(new Symbol("print-str"), CoreLibrary.FN_PRINT_STR);
+		globalEnv.bind(new Symbol("println-str"), CoreLibrary.FN_PRINTLN_STR);
 
 		// TODO: COMPARISONS
 	}

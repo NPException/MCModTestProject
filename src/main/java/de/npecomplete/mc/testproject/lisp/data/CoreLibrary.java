@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import de.npecomplete.mc.testproject.lisp.LispException;
 import de.npecomplete.mc.testproject.lisp.function.LispFunction;
@@ -303,36 +304,60 @@ public final class CoreLibrary {
 		}
 	};
 
-	private static void pr(Object[] args, Appendable out) {
+	private static void print(Object[] args, Appendable out, BiConsumer<Object, Appendable> printFunction) {
 		if (args.length > 0) {
-			LispPrinter.pr(args[0], out);
+			printFunction.accept(args[0], out);
 			for (int i = 1, length = args.length; i < length; i++) {
-				LispPrinter.pr(" ", out);
-				LispPrinter.pr(args[i], out);
+				LispPrinter.print(" ", out);
+				printFunction.accept(args[i], out);
 			}
 		}
 	}
 
 	public static final VarArgsFunction FN_PR = args -> {
-		pr(args, System.out);
+		print(args, System.out, LispPrinter::pr);
 		return null;
 	};
 
 	public static final LispFunction FN_PRN = (VarArgsFunction) args -> {
-		pr(args, System.out);
+		print(args, System.out, LispPrinter::pr);
 		System.out.print('\n');
 		return null;
 	};
 
 	public static final VarArgsFunction FN_PR_STR = args -> {
 		StringBuilder sb = new StringBuilder();
-		pr(args, sb);
+		print(args, sb, LispPrinter::pr);
 		return sb.toString();
 	};
 
 	public static final LispFunction FN_PRN_STR = (VarArgsFunction) args -> {
 		StringBuilder sb = new StringBuilder();
-		pr(args, sb);
+		print(args, sb, LispPrinter::pr);
+		sb.append('\n');
+		return sb.toString();
+	};
+
+	public static final VarArgsFunction FN_PRINT = args -> {
+		print(args, System.out, LispPrinter::print);
+		return null;
+	};
+
+	public static final LispFunction FN_PRINTLN = (VarArgsFunction) args -> {
+		print(args, System.out, LispPrinter::print);
+		System.out.print('\n');
+		return null;
+	};
+
+	public static final VarArgsFunction FN_PRINT_STR = args -> {
+		StringBuilder sb = new StringBuilder();
+		print(args, sb, LispPrinter::print);
+		return sb.toString();
+	};
+
+	public static final LispFunction FN_PRINTLN_STR = (VarArgsFunction) args -> {
+		StringBuilder sb = new StringBuilder();
+		print(args, sb, LispPrinter::print);
 		sb.append('\n');
 		return sb.toString();
 	};

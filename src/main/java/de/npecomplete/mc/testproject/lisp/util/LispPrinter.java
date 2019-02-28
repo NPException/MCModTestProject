@@ -78,6 +78,70 @@ public final class LispPrinter {
 		}
 	}
 
+	public static String printStr(Object o) throws LispException {
+		StringBuilder sb = new StringBuilder();
+		print(o, sb);
+		return sb.toString();
+	}
+
+	public static void print(Object o, Appendable out) throws LispException {
+		try {
+			if (o == null) {
+				out.append("nil");
+				return;
+			}
+			if (o instanceof String) {
+				out.append((String) o);
+				return;
+			}
+			if (o instanceof Symbol) {
+				out.append(((Symbol) o).name);
+				return;
+			}
+			if (o instanceof Keyword) {
+				out.append(':');
+				out.append(((Keyword) o).name);
+				return;
+			}
+			if (o instanceof Sequence) {
+				out.append('(');
+				Iterable<?> i = (Iterable) o;
+				printIterable(out, i, " ", LispPrinter::print);
+				out.append(')');
+				return;
+			}
+			if (o instanceof List) {
+				out.append('[');
+				Iterable<?> i = (Iterable) o;
+				printIterable(out, i, " ", LispPrinter::print);
+				out.append(']');
+				return;
+			}
+			if (o instanceof Set) {
+				out.append("#{");
+				Iterable<?> i = (Iterable) o;
+				printIterable(out, i, " ", LispPrinter::print);
+				out.append('}');
+				return;
+			}
+			if (o instanceof Map) {
+				out.append('{');
+				@SuppressWarnings("unchecked")
+				Iterable<Entry> i = ((Map) o).entrySet();
+				printIterable(out, i, ", ", (e, a) -> {
+					print(e.getKey(), a);
+					a.append(' ');
+					print(e.getValue(), a);
+				});
+				out.append('}');
+				return;
+			}
+			out.append(String.valueOf(o));
+		} catch (IOException e) {
+			throw new LispException("IO Exception when trying to print", e);
+		}
+	}
+
 	private static <T> void printIterable(Appendable out, Iterable<T> iterable,
 			String seperator, ElementPrinter<T> elementPrinter)
 			throws IOException {

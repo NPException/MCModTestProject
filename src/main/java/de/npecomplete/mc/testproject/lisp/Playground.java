@@ -6,35 +6,10 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Iterator;
 
-import de.npecomplete.mc.testproject.lisp.data.Symbol;
-import de.npecomplete.mc.testproject.lisp.special.SpecialForm;
-import de.npecomplete.mc.testproject.lisp.util.LispElf;
 import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 import de.npecomplete.mc.testproject.lisp.util.LispReader;
 
 public class Playground {
-	private static final SpecialForm printlnForm = (args, env) -> {
-		System.out.print("> ");
-		if (args != null && !args.empty()) {
-			System.out.print(Lisp.eval(args.first(), env));
-			args = args.next();
-			while (args != null) {
-				System.out.print(' ');
-				Object val = Lisp.eval(args.first(), env);
-				System.out.print(val == null ? "nil" : val);
-				args = args.next();
-			}
-		}
-		System.out.println();
-		return null;
-	};
-
-	private static final SpecialForm prnStrForm = (args, env) -> {
-		if (!LispElf.matchSize(args, 1, 1)) {
-			throw new LispException("'prn-str' function requires exactly 1 argument: (prn-str ARG)");
-		}
-		return LispPrinter.prStr(Lisp.eval(args.first(), env));
-	};
 
 	public static void main(String[] arguments) throws Exception {
 		long start = System.nanoTime();
@@ -50,9 +25,6 @@ public class Playground {
 	private static void start() {
 		Lisp lisp = new Lisp();
 		lisp.initStandardEnvironment();
-
-		lisp.globalEnv.bind(new Symbol("println"), printlnForm);
-		lisp.globalEnv.bind(new Symbol("prn-str"), prnStrForm);
 
 		try (InputStream in = Playground.class.getResourceAsStream("/test.edn");
 //		try (InputStream in = System.in;
