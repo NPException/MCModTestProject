@@ -63,6 +63,12 @@ public class Lisp {
 		globalEnv.bind(new Symbol("*"), CoreLibrary.FN_MULTIPLY);
 		globalEnv.bind(new Symbol("/"), CoreLibrary.FN_DIVIDE);
 
+		// STRING, SYMBOL, AND KEYWORD INTERACTION
+		globalEnv.bind(new Symbol("str"), CoreLibrary.FN_STR);
+		globalEnv.bind(new Symbol("name"), CoreLibrary.FN_NAME);
+		globalEnv.bind(new Symbol("symbol"), CoreLibrary.FN_SYMBOL);
+		globalEnv.bind(new Symbol("keyword"), CoreLibrary.FN_KEYWORD);
+
 		// TODO: COMPARISONS
 	}
 

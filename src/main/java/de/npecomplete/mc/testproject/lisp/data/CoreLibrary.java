@@ -255,4 +255,50 @@ public final class CoreLibrary {
 		}
 		return result;
 	};
+
+	public static final LispFunction FN_STR = (VarArgsFunction) args -> {
+		StringBuilder sb = new StringBuilder();
+		for (Object o : args) {
+			if (o != null) {
+				sb.append(o);
+			}
+		}
+		return sb.toString();
+	};
+
+	public static final LispFunction FN_NAME = new LispFunction() {
+		@Override
+		public Object apply(Object arg) {
+			if (arg instanceof String) {
+				return arg;
+			}
+			if (arg instanceof Symbol) {
+				return ((Symbol) arg).name;
+			}
+			if (arg instanceof Keyword) {
+				return ((Keyword) arg).name;
+			}
+			throw new LispException("Doesn't support name: " + FN_STR.apply(arg));
+		}
+	};
+
+	public static final LispFunction FN_SYMBOL = new LispFunction() {
+		@Override
+		public Object apply(Object arg) {
+			if (arg instanceof Symbol) {
+				return arg;
+			}
+			return new Symbol((String) FN_NAME.apply(arg));
+		}
+	};
+
+	public static final LispFunction FN_KEYWORD = new LispFunction() {
+		@Override
+		public Object apply(Object arg) {
+			if (arg instanceof Keyword) {
+				return arg;
+			}
+			return new Keyword((String) FN_NAME.apply(arg));
+		}
+	};
 }
