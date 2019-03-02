@@ -54,4 +54,13 @@ public interface SpecialForm {
 	 * Takes a single argument. Returns that argument unevaluated.
 	 */
 	SpecialForm QUOTE = new QuoteSpecialForm();
+
+	/**
+	 * Takes at least 2 arguments (a symbol and an argument vector),
+	 * and and ideally one or more body forms.<br>
+	 * <code>(defmacro name [params*] body*)</code><br>
+	 * Returns a macro which will transform the provided arguments
+	 * as specified by the body.
+	 */
+	SpecialForm DEFMACRO = new DefmacroSpecialForm();
 }

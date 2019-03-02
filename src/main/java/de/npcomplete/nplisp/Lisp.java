@@ -16,7 +16,7 @@ import de.npcomplete.nplisp.data.CoreLibrary;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.LispFunction;
-import de.npcomplete.nplisp.function.VarArgsFunction;
+import de.npcomplete.nplisp.function.Macro;
 import de.npcomplete.nplisp.special.SpecialForm;
 import de.npcomplete.nplisp.util.LispPrinter;
 import de.npcomplete.nplisp.util.LispReader;
@@ -24,7 +24,9 @@ import de.npcomplete.nplisp.util.LispReader;
 // TODO: javadoc in CoreLibrary
 // TODO: switch from using java.util.List to own Vector class
 // TODO: destructuring
-// TODO: macros, loop
+// TODO: proper macro expansion
+// TODO: syntax-quote / unquote
+// TODO: loop
 
 public class Lisp {
 	public final Environment globalEnv;
@@ -44,6 +46,7 @@ public class Lisp {
 		globalEnv.bind(new Symbol("if"), SpecialForm.IF);
 		globalEnv.bind(new Symbol("let"), SpecialForm.LET);
 		globalEnv.bind(new Symbol("quote"), SpecialForm.QUOTE);
+		globalEnv.bind(new Symbol("defmacro"), SpecialForm.DEFMACRO);
 
 		// LOOP (TODO)
 		globalEnv.bind(new Symbol("recur"), CoreLibrary.FN_RECUR);
@@ -97,10 +100,6 @@ public class Lisp {
 
 		// UTILITY
 		globalEnv.bind(new Symbol("time"), CoreLibrary.MACRO_TIME);
-		globalEnv.bind(new Symbol("exit"), (VarArgsFunction) args -> {
-			System.exit(0);
-			return null;
-		});
 
 		// bootstrap rest of core library
 
@@ -139,6 +138,13 @@ public class Lisp {
 			if (callable instanceof SpecialForm) {
 				Sequence args = seq.more();
 				return check(allowRecur, ((SpecialForm) callable).apply(args, env, allowRecur));
+			}
+
+			// TODO: proper macro expansion phase
+			if (callable instanceof Macro) {
+				Sequence args = seq.more();
+				Object expansion = ((Macro) callable).expand(args);
+				return eval(expansion, env, allowRecur);
 			}
 
 			// call to function

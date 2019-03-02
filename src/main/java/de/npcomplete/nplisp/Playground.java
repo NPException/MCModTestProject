@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Iterator;
 
+import de.npcomplete.nplisp.data.Symbol;
+import de.npcomplete.nplisp.function.LispFunction;
 import de.npcomplete.nplisp.util.LispPrinter;
 import de.npcomplete.nplisp.util.LispReader;
 
@@ -25,6 +27,30 @@ public class Playground {
 	private static void start(InputStream in) {
 		Lisp lisp = new Lisp();
 		lisp.initStandardEnvironment();
+
+		// add test helper functions
+
+		lisp.globalEnv.bind(new Symbol("exit"), new LispFunction() {
+			@Override
+			public Object apply() {
+				System.exit(0);
+				return null;
+			}
+
+			@Override
+			public Object apply(Object par1) {
+				System.exit(((Number) par1).intValue());
+				return null;
+			}
+		});
+
+		lisp.globalEnv.bind(new Symbol("reload!"), new LispFunction() {
+			@Override
+			public Object apply() {
+				lisp.initStandardEnvironment();
+				return null;
+			}
+		});
 
 		try (Reader reader = new InputStreamReader(in)) {
 			Iterator<Object> it = LispReader.readMany(reader);
