@@ -12,11 +12,13 @@ import de.npecomplete.mc.testproject.lisp.data.Sequence;
 final class DoSpecialForm implements SpecialForm {
 
 	@Override
-	public Object apply(Sequence body, Environment env) {
+	public Object apply(Sequence body, Environment env, boolean allowRecur) {
 		Object result = null;
 		while (body != null && !body.empty()) {
-			result = Lisp.eval(body.first(), env);
+			Object expr = body.first();
 			body = body.next();
+			boolean allowTailCall = allowRecur && body == null;
+			result = Lisp.eval(expr, env, allowTailCall);
 		}
 		return result;
 	}

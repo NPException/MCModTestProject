@@ -13,15 +13,27 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
+import de.npecomplete.mc.testproject.lisp.Lisp;
 import de.npecomplete.mc.testproject.lisp.LispException;
 import de.npecomplete.mc.testproject.lisp.function.LispFunction;
 import de.npecomplete.mc.testproject.lisp.function.VarArgsFunction;
+import de.npecomplete.mc.testproject.lisp.special.SpecialForm;
 import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 
 public final class CoreLibrary {
 	private CoreLibrary() {
 		throw new IllegalStateException("No instance allowed.");
 	}
+
+	public static final class TailCall {
+		public final Object[] args;
+
+		TailCall(Object[] args) {
+			this.args = args;
+		}
+	}
+
+	public static final LispFunction FN_RECUR = (VarArgsFunction) TailCall::new;
 
 	public static final LispFunction FN_LIST = (VarArgsFunction) ListSequence::new;
 
@@ -116,6 +128,16 @@ public final class CoreLibrary {
 		public Object apply(Object par1) {
 			Sequence s = seq(par1);
 			return s != null ? s.more() : Sequence.EMPTY_SEQUENCE;
+		}
+	};
+
+	/**
+	 * Constructs a new sequence with the new element prepended to the given sequence
+	 */
+	public static final LispFunction FN_CONS = new LispFunction() {
+		@Override
+		public Object apply(Object par1, Object par2) {
+			return new Cons(par1, seq(par2));
 		}
 	};
 
@@ -360,5 +382,16 @@ public final class CoreLibrary {
 		print(args, sb, LispPrinter::print);
 		sb.append('\n');
 		return sb.toString();
+	};
+
+	public static final SpecialForm MACRO_TIME = (args, env, allowRecur) -> {
+		if (args.empty() || args.next() != null) {
+			throw new LispException("'time' requires exactly one argument");
+		}
+		long start = System.nanoTime();
+		Object val = Lisp.eval(args.first(), env, allowRecur);
+		long time = System.nanoTime() - start;
+		FN_PRN.apply("Elapsed time: " + time / 1_000_000.0 + " msecs");
+		return val;
 	};
 }

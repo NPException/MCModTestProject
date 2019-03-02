@@ -1,0 +1,11 @@
+;; core library functions
+
+(def concat
+  (fn
+    ([] '())
+    ([x] x)
+    ([x y]
+      (let [s (seq x)]
+        (if s
+          (cons (first s) (concat (rest s) y))
+          (seq y))))))

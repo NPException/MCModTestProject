@@ -7,7 +7,6 @@ import de.npecomplete.mc.testproject.lisp.Environment;
 import de.npecomplete.mc.testproject.lisp.LispException;
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
-import de.npecomplete.mc.testproject.lisp.special.SpecialForm;
 import de.npecomplete.mc.testproject.lisp.util.LispElf;
 
 public final class MultiArityFunction implements LispFunction {
@@ -54,12 +53,12 @@ public final class MultiArityFunction implements LispFunction {
 		Environment localEnv = initLocalEnv();
 		Object[] fnData = fnData(0);
 		Sequence body = (Sequence) fnData[0];
+		Symbol[] paramSymbols = (Symbol[]) fnData[1];
 
 		if (fnData == variadicFnData) {
-			Symbol[] paramSymbols = (Symbol[]) fnData[1];
 			LispElf.bindVarArgs(localEnv, paramSymbols, LispElf.EMPTY_OBJECT_ARRAY);
 		}
-		return SpecialForm.DO.apply(body, localEnv);
+		return SingleArityFunction.call(body, paramSymbols, localEnv);
 	}
 
 	@Override
@@ -74,7 +73,7 @@ public final class MultiArityFunction implements LispFunction {
 		} else {
 			localEnv.bind(paramSymbols[0], par1);
 		}
-		return SpecialForm.DO.apply(body, localEnv);
+		return SingleArityFunction.call(body, paramSymbols, localEnv);
 	}
 
 	@Override
@@ -90,7 +89,7 @@ public final class MultiArityFunction implements LispFunction {
 			localEnv.bind(paramSymbols[0], par1);
 			localEnv.bind(paramSymbols[1], par2);
 		}
-		return SpecialForm.DO.apply(body, localEnv);
+		return SingleArityFunction.call(body, paramSymbols, localEnv);
 	}
 
 	@Override
@@ -107,7 +106,7 @@ public final class MultiArityFunction implements LispFunction {
 			localEnv.bind(paramSymbols[1], par2);
 			localEnv.bind(paramSymbols[2], par3);
 		}
-		return SpecialForm.DO.apply(body, localEnv);
+		return SingleArityFunction.call(body, paramSymbols, localEnv);
 	}
 
 	@SuppressWarnings("Duplicates")
@@ -137,7 +136,7 @@ public final class MultiArityFunction implements LispFunction {
 			}
 		}
 
-		return SpecialForm.DO.apply(body, localEnv);
+		return SingleArityFunction.call(body, paramSymbols, localEnv);
 	}
 
 	public static class Builder {

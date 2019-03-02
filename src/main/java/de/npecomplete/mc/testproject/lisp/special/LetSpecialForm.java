@@ -19,7 +19,7 @@ import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 final class LetSpecialForm implements SpecialForm {
 
 	@Override
-	public Object apply(Sequence args, Environment env) {
+	public Object apply(Sequence args, Environment env, boolean allowRecur) {
 		if (args.empty()) {
 			throw new LispException("'let' requires at least one argument: (let BINDINGS *&FORMS*)");
 		}
@@ -42,11 +42,11 @@ final class LetSpecialForm implements SpecialForm {
 				String s = LispPrinter.prStr(sym);
 				throw new LispException("'let' binding target is not a symbol: " + s);
 			}
-			Object value = Lisp.eval(it.next(), localEnv);
+			Object value = Lisp.eval(it.next(), localEnv, false);
 			localEnv.bind((Symbol) sym, value);
 		}
 
 		// evaluate body
-		return SpecialForm.DO.apply(args.next(), localEnv);
+		return SpecialForm.DO.apply(args.next(), localEnv, allowRecur);
 	}
 }

@@ -5,6 +5,7 @@ import java.util.List;
 
 import de.npecomplete.mc.testproject.lisp.Environment;
 import de.npecomplete.mc.testproject.lisp.LispException;
+import de.npecomplete.mc.testproject.lisp.data.CoreLibrary.TailCall;
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
 import de.npecomplete.mc.testproject.lisp.special.SpecialForm;
@@ -45,7 +46,7 @@ public final class SingleArityFunction implements LispFunction {
 		} else {
 			assertArity(0);
 		}
-		return SpecialForm.DO.apply(body, localEnv);
+		return call(body, paramSymbols, localEnv);
 	}
 
 	@Override
@@ -57,7 +58,7 @@ public final class SingleArityFunction implements LispFunction {
 			assertArity(1);
 			localEnv.bind(paramSymbols[0], par1);
 		}
-		return SpecialForm.DO.apply(body, localEnv);
+		return call(body, paramSymbols, localEnv);
 	}
 
 	@Override
@@ -70,7 +71,7 @@ public final class SingleArityFunction implements LispFunction {
 			localEnv.bind(paramSymbols[0], par1);
 			localEnv.bind(paramSymbols[1], par2);
 		}
-		return SpecialForm.DO.apply(body, localEnv);
+		return call(body, paramSymbols, localEnv);
 	}
 
 	@Override
@@ -84,7 +85,7 @@ public final class SingleArityFunction implements LispFunction {
 			localEnv.bind(paramSymbols[1], par2);
 			localEnv.bind(paramSymbols[2], par3);
 		}
-		return SpecialForm.DO.apply(body, localEnv);
+		return call(body, paramSymbols, localEnv);
 	}
 
 	@SuppressWarnings("Duplicates")
@@ -112,7 +113,28 @@ public final class SingleArityFunction implements LispFunction {
 			}
 		}
 
-		return SpecialForm.DO.apply(body, localEnv);
+		return call(body, paramSymbols, localEnv);
+	}
+
+	/**
+	 * Runs the function body, with the prepared local environment
+	 * and handles explicit recursive tail calls.
+	 */
+	static Object call(Sequence body, Symbol[] paramSymbols, Environment preparedLocalEnv) {
+		Object val;
+		while ((val = SpecialForm.DO.apply(body, preparedLocalEnv, true)) instanceof TailCall) {
+			TailCall tailCall = (TailCall) val;
+			Object[] tcArgs = tailCall.args;
+			int length = tcArgs.length;
+			if (length != paramSymbols.length) {
+				throw new LispException("'recur' did not match required arity." +
+						" Expected: " + paramSymbols.length + ". Actual: " + length);
+			}
+			for (int i = 0; i < length; i++) {
+				preparedLocalEnv.bind(paramSymbols[i], tcArgs[i]);
+			}
+		}
+		return val;
 	}
 
 	private void assertArity(int arity) {

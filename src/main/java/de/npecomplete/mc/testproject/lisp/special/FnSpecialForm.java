@@ -20,7 +20,7 @@ import de.npecomplete.mc.testproject.lisp.function.SingleArityFunction;
 final class FnSpecialForm implements SpecialForm {
 
 	@Override
-	public LispFunction apply(Sequence args, Environment env) {
+	public LispFunction apply(Sequence args, Environment env, boolean allowRecur) {
 		Symbol name = null;
 
 		if (args.first() instanceof Symbol) {

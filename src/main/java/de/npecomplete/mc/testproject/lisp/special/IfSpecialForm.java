@@ -14,13 +14,13 @@ import de.npecomplete.mc.testproject.lisp.util.LispElf;
 final class IfSpecialForm implements SpecialForm {
 
 	@Override
-	public Object apply(Sequence args, Environment env) {
+	public Object apply(Sequence args, Environment env, boolean allowRecur) {
 		if (!LispElf.matchSize(args, 2, 3)) {
 			throw new LispException("'if' requires 2 or 3 arguments: (if TEST THEN *ELSE*)");
 		}
-		Object test = Lisp.eval(args.first(), env);
+		Object test = Lisp.eval(args.first(), env, false);
 		return LispElf.truthy(test)
-				? Lisp.eval(args.next().first(), env)
-				: Lisp.eval(args.next().more().first(), env);
+				? Lisp.eval(args.next().first(), env, allowRecur)
+				: Lisp.eval(args.next().more().first(), env, allowRecur);
 	}
 }

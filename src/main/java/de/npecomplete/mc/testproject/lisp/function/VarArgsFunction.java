@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
+import de.npecomplete.mc.testproject.lisp.util.LispElf;
 
 @FunctionalInterface
 public interface VarArgsFunction extends LispFunction {
@@ -11,7 +12,7 @@ public interface VarArgsFunction extends LispFunction {
 
 	@Override
 	default Object apply() {
-		return applyVarArgs();
+		return applyVarArgs(LispElf.EMPTY_OBJECT_ARRAY);
 	}
 
 	@Override

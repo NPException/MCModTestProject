@@ -105,7 +105,7 @@ public final class LispElf {
 			localEnv.bind(paramSymbols[i], args[i]);
 		}
 		Sequence varArgs = args.length > lastParamIndex
-				? new ListSequence(Arrays.copyOfRange(args, lastParamIndex, argsCount))
+				? new ListSequence(lastParamIndex == 0 ? args : Arrays.copyOfRange(args, lastParamIndex, argsCount))
 				: Sequence.EMPTY_SEQUENCE;
 		localEnv.bind(paramSymbols[lastParamIndex], varArgs);
 	}

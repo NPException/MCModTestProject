@@ -7,7 +7,7 @@ import de.npecomplete.mc.testproject.lisp.data.Sequence;
 
 public interface SpecialForm {
 
-	Object apply(Sequence args, Environment env);
+	Object apply(Sequence args, Environment env, boolean allowRecur);
 
 	// BASE IMPLEMENTATIONS //
 

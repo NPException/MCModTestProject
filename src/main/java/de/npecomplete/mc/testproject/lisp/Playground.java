@@ -14,7 +14,7 @@ public class Playground {
 	public static void main(String[] arguments) throws Exception {
 		long start = System.nanoTime();
 		try {
-			start();
+			start(Playground.class.getResourceAsStream("/test.edn"));
 		} finally {
 			long time = System.nanoTime() - start;
 			System.out.println("Runtime: " + time + " ns");
@@ -22,13 +22,11 @@ public class Playground {
 		Thread.sleep(100);
 	}
 
-	private static void start() {
+	private static void start(InputStream in) {
 		Lisp lisp = new Lisp();
 		lisp.initStandardEnvironment();
 
-		try (InputStream in = Playground.class.getResourceAsStream("/test.edn");
-//		try (InputStream in = System.in;
-			 Reader reader = new InputStreamReader(in)) {
+		try (Reader reader = new InputStreamReader(in)) {
 			Iterator<Object> it = LispReader.readMany(reader);
 			while (it.hasNext()) {
 				run(lisp, it.next());
@@ -47,8 +45,13 @@ public class Playground {
 			System.out.print("~>");
 			System.out.println(LispPrinter.prStr(result));
 		} catch (Exception e) {
-			System.out.println("Failed");
-			e.printStackTrace(System.out);
+			System.out.println("Failed - " + e.getClass().getName() + ": " + e.getMessage());
+		}
+	}
+
+	public static final class REPL {
+		public static void main(String[] args) {
+			start(System.in);
 		}
 	}
 }

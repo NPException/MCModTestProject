@@ -11,7 +11,7 @@ import de.npecomplete.mc.testproject.lisp.util.LispElf;
 final class QuoteSpecialForm implements SpecialForm {
 
 	@Override
-	public Object apply(Sequence args, Environment env) {
+	public Object apply(Sequence args, Environment env, boolean allowRecur) {
 		if (!LispElf.matchSize(args, 1, 1)) {
 			throw new LispException("'quote' requires exactly 1 argument: (quote FORM)");
 		}

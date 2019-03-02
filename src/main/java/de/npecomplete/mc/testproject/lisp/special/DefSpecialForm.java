@@ -18,7 +18,7 @@ import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
 final class DefSpecialForm implements SpecialForm {
 
 	@Override
-	public Object apply(Sequence args, Environment env) {
+	public Object apply(Sequence args, Environment env, boolean allowRecur) {
 		if (!LispElf.matchSize(args, 2, 2)) {
 			throw new LispException("'def' requires 2 arguments: (def SYMBOL FORM)");
 		}
@@ -28,7 +28,7 @@ final class DefSpecialForm implements SpecialForm {
 			throw new LispException("'def' binding target is not a symbol: " + s);
 		}
 		Object form = args.next().first();
-		Object value = Lisp.eval(form, env);
+		Object value = Lisp.eval(form, env, false);
 		env.top().bind((Symbol) sym, value);
 		return value;
 	}

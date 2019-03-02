@@ -1,8 +1,12 @@
 package de.npecomplete.mc.testproject.lisp;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,12 +16,15 @@ import de.npecomplete.mc.testproject.lisp.data.CoreLibrary;
 import de.npecomplete.mc.testproject.lisp.data.Sequence;
 import de.npecomplete.mc.testproject.lisp.data.Symbol;
 import de.npecomplete.mc.testproject.lisp.function.LispFunction;
+import de.npecomplete.mc.testproject.lisp.function.VarArgsFunction;
 import de.npecomplete.mc.testproject.lisp.special.SpecialForm;
 import de.npecomplete.mc.testproject.lisp.util.LispPrinter;
+import de.npecomplete.mc.testproject.lisp.util.LispReader;
 
+// TODO: javadoc in CoreLibrary
 // TODO: switch from using java.util.List to own Vector class
 // TODO: destructuring
-// TODO: macros, loop, recur
+// TODO: macros, loop
 
 public class Lisp {
 	public final Environment globalEnv;
@@ -27,6 +34,9 @@ public class Lisp {
 	}
 
 	public void initStandardEnvironment() {
+		System.out.println("Initializing core library");
+		long start = System.nanoTime();
+
 		// SPECIAL FORMS
 		globalEnv.bind(new Symbol("def"), SpecialForm.DEF);
 		globalEnv.bind(new Symbol("do"), SpecialForm.DO);
@@ -34,6 +44,9 @@ public class Lisp {
 		globalEnv.bind(new Symbol("if"), SpecialForm.IF);
 		globalEnv.bind(new Symbol("let"), SpecialForm.LET);
 		globalEnv.bind(new Symbol("quote"), SpecialForm.QUOTE);
+
+		// LOOP (TODO)
+		globalEnv.bind(new Symbol("recur"), CoreLibrary.FN_RECUR);
 
 		// EVAL & APPLY
 		globalEnv.bind(new Symbol("eval"), new LispFunction() {
@@ -45,7 +58,6 @@ public class Lisp {
 		globalEnv.bind(new Symbol("apply"), CoreLibrary.FN_APPLY);
 
 		// DATA STRUCTURE CREATION
-		// TODO replace with interop in some yet-to-be-written core lisp file
 		globalEnv.bind(new Symbol("list"), CoreLibrary.FN_LIST);
 		globalEnv.bind(new Symbol("vector"), CoreLibrary.FN_VECTOR);
 		globalEnv.bind(new Symbol("hash-set"), CoreLibrary.FN_HASH_SET);
@@ -56,6 +68,7 @@ public class Lisp {
 		globalEnv.bind(new Symbol("first"), CoreLibrary.FN_FIRST);
 		globalEnv.bind(new Symbol("next"), CoreLibrary.FN_NEXT);
 		globalEnv.bind(new Symbol("rest"), CoreLibrary.FN_REST);
+		globalEnv.bind(new Symbol("cons"), CoreLibrary.FN_CONS);
 
 		// MATHS
 		globalEnv.bind(new Symbol("+"), CoreLibrary.FN_ADD);
@@ -81,13 +94,35 @@ public class Lisp {
 		globalEnv.bind(new Symbol("println-str"), CoreLibrary.FN_PRINTLN_STR);
 
 		// TODO: COMPARISONS
+
+		// UTILITY
+		globalEnv.bind(new Symbol("time"), CoreLibrary.MACRO_TIME);
+		globalEnv.bind(new Symbol("exit"), (VarArgsFunction) args -> {
+			System.exit(0);
+			return null;
+		});
+
+		// bootstrap rest of core library
+
+		try (InputStream in = Lisp.class.getResourceAsStream("core.edn");
+				Reader reader = new InputStreamReader(in)) {
+			Iterator<Object> it = LispReader.readMany(reader);
+			while (it.hasNext()) {
+				eval(it.next());
+			}
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to load core library", e);
+		}
+
+		long time = System.nanoTime() - start;
+		System.out.println("Done in " + time / 1_000_000.0 + " msecs");
 	}
 
 	public Object eval(Object obj) throws LispException {
-		return eval(obj, globalEnv);
+		return eval(obj, globalEnv, false);
 	}
 
-	public static Object eval(Object obj, Environment env) throws LispException {
+	public static Object eval(Object obj, Environment env, boolean allowRecur) throws LispException {
 		if (obj instanceof Symbol) {
 			return env.lookup((Symbol) obj);
 		}
@@ -98,12 +133,12 @@ public class Lisp {
 				throw new LispException("Can't evaluate empty list");
 			}
 			// evaluate first element
-			Object callable = eval(seq.first(), env);
+			Object callable = eval(seq.first(), env, false);
 
 			// call to special form
 			if (callable instanceof SpecialForm) {
 				Sequence args = seq.more();
-				return ((SpecialForm) callable).apply(args, env);
+				return check(allowRecur, ((SpecialForm) callable).apply(args, env, allowRecur));
 			}
 
 			// call to function
@@ -111,39 +146,39 @@ public class Lisp {
 			if (fn != null) {
 				Sequence args = seq.more();
 				if (args.empty()) {
-					return fn.apply(); // no arguments
+					return check(allowRecur, fn.apply()); // no arguments
 				}
 
-				Object arg1 = eval(args.first(), env);
+				Object arg1 = eval(args.first(), env, false);
 				args = args.next();
 				if (args == null) {
-					return fn.apply(arg1); // one argument
+					return check(allowRecur, fn.apply(arg1)); // one argument
 				}
 
-				Object arg2 = eval(args.first(), env);
+				Object arg2 = eval(args.first(), env, false);
 				args = args.next();
 				if (args == null) {
-					return fn.apply(arg1, arg2); // two arguments
+					return check(allowRecur, fn.apply(arg1, arg2)); // two arguments
 				}
 
-				Object arg3 = eval(args.first(), env);
+				Object arg3 = eval(args.first(), env, false);
 				args = args.next();
 				if (args == null) {
-					return fn.apply(arg1, arg2, arg3); // three arguments
+					return check(allowRecur, fn.apply(arg1, arg2, arg3)); // three arguments
 				}
 
-				Object arg4 = eval(args.first(), env);
+				Object arg4 = eval(args.first(), env, false);
 				args = args.next();
 				if (args == null) {
-					return fn.apply(arg1, arg2, arg3, arg4); // four arguments
+					return check(allowRecur, fn.apply(arg1, arg2, arg3, arg4)); // four arguments
 				}
 
 				// more than four arguments
 				List<Object> moreArgs = new ArrayList<>(3);
 				do {
-					moreArgs.add(eval(args.first(), env));
+					moreArgs.add(eval(args.first(), env, false));
 				} while ((args = args.next()) != null);
-				return fn.apply(arg1, arg2, arg3, arg4, moreArgs.toArray());
+				return check(allowRecur, fn.apply(arg1, arg2, arg3, arg4, moreArgs.toArray()));
 			}
 
 			String call = LispPrinter.prStr(seq);
@@ -157,7 +192,7 @@ public class Lisp {
 			List<?> list = (List<?>) obj;
 			List<Object> result = new ArrayList<>();
 			for (Object o : list) {
-				result.add(eval(o, env));
+				result.add(eval(o, env, false));
 			}
 			return result;
 		}
@@ -166,7 +201,7 @@ public class Lisp {
 			Set<?> set = (Set<?>) obj;
 			Set<Object> result = new HashSet<>(set.size() * 2);
 			for (Object o : set) {
-				Object key = eval(o, env);
+				Object key = eval(o, env, false);
 				if (result.contains(key)) {
 					throw new LispException("Set creation with duplicate key: " + key);
 				}
@@ -179,15 +214,22 @@ public class Lisp {
 			Map<?, ?> map = (Map<?, ?>) obj;
 			Map<Object, Object> result = new HashMap<>(map.size() * 2);
 			for (Entry e : map.entrySet()) {
-				Object key = eval(e.getKey(), env);
+				Object key = eval(e.getKey(), env, false);
 				if (result.containsKey(key)) {
 					throw new LispException("Map creation with duplicate key: " + key);
 				}
-				result.put(key, eval(e.getValue(), env));
+				result.put(key, eval(e.getValue(), env, false));
 			}
 			return result;
 		}
 
 		return obj;
+	}
+
+	private static Object check(boolean allowRecur, Object val) {
+		if (allowRecur || !(val instanceof CoreLibrary.TailCall)) {
+			return val;
+		}
+		throw new LispException("Illegal call to 'recur'. Can only be used in function tail position.");
 	}
 }
