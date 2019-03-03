@@ -1,5 +1,6 @@
 package de.npcomplete.nplisp;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -16,7 +17,7 @@ public class Playground {
 	public static void main(String[] arguments) throws Exception {
 		long start = System.nanoTime();
 		try {
-			start(Playground.class.getResourceAsStream("/test.edn"));
+			start(new FileInputStream("test.edn"));
 		} finally {
 			long time = System.nanoTime() - start;
 			System.out.println("Runtime: " + time + " ns");
