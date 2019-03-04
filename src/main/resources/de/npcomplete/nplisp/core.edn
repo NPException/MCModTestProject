@@ -30,6 +30,8 @@
       (cons 'and next))))
 
 
+;; CONDITIONALS
+
 (defmacro if-not
   ([test then]
     (list 'if test nil then))
@@ -52,6 +54,8 @@
       (first (next clauses))
       (cons 'cond (next (next clauses))))))
 
+
+;; DATA STRUCTURE MANIPULATION
 
 (defn concat
   ([] '())
