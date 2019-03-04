@@ -27,6 +27,7 @@ import de.npcomplete.nplisp.util.LispReader;
 // TODO: proper macro expansion
 // TODO: syntax-quote / unquote
 // TODO: loop
+// TODO: doc-strings
 
 public class Lisp {
 	public final Environment globalEnv;

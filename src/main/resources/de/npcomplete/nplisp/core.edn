@@ -1,9 +1,36 @@
-;; core library functions
+;; core library
 
 (defmacro defn [name & fn-declaration]
   (cons 'def
     (list name
       (apply list 'fn name fn-declaration))))
+
+
+(defn not [x]
+  (if x false true))
+
+
+(defmacro if-not
+  ([test then]
+    (list 'if test nil then))
+  ([test then else]
+    (list 'if test else then)))
+
+
+(defmacro when [test & body]
+  (list 'if test (cons 'do body)))
+
+
+(defmacro when-not [test & body]
+  (list 'if test nil (cons 'do body)))
+
+
+(defmacro cond
+  [& clauses]
+  (if clauses
+    (list 'if (first clauses)
+      (first (next clauses))
+      (cons 'cond (next (next clauses))))))
 
 
 (defn concat
