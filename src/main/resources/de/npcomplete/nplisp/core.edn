@@ -6,8 +6,28 @@
       (apply list 'fn name fn-declaration))))
 
 
+;; LOGIC FUNCTIONS AND MACROS
+
 (defn not [x]
   (if x false true))
+
+
+(defmacro and
+  ([] true)
+  ([x] x)
+  ([x & next]
+    (list 'if x
+      (cons 'and next)
+      x)))
+
+
+(defmacro or
+  ([] nil)
+  ([x] x)
+  ([x & next]
+    (list 'if x
+      x
+      (cons 'and next))))
 
 
 (defmacro if-not
@@ -41,21 +61,3 @@
       (if s
         (cons (first s) (concat (rest s) y))
         (seq y)))))
-
-
-(defmacro and
-  ([] true)
-  ([x] x)
-  ([x & next]
-   (list 'if x
-     (cons 'and next)
-     x)))
-
-
-(defmacro or
-  ([] nil)
-  ([x] x)
-  ([x & next]
-   (list 'if x
-     x
-     (cons 'and next))))
