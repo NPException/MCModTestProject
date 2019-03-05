@@ -12,7 +12,7 @@ import de.npcomplete.nplisp.function.LispFunction;
 import de.npcomplete.nplisp.util.LispPrinter;
 import de.npcomplete.nplisp.util.LispReader;
 
-public class Playground {
+public final class Playground {
 
 	public static void main(String[] arguments) throws Exception {
 		long start = System.nanoTime();

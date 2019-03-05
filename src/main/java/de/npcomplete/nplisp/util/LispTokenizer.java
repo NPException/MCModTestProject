@@ -95,7 +95,7 @@ class LispTokenizer implements Iterator<Token> {
 				case '}':
 					return Token.MAP_SET_END;
 			}
-			throw new IllegalStateException("Unhandled group token: " + Character.toString((char) chr));
+			throw new IllegalStateException("Unhandled group token: " + (char) chr);
 		}
 
 		if (chr == '"') {

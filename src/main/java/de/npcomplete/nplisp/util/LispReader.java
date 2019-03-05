@@ -17,7 +17,7 @@ import de.npcomplete.nplisp.data.Keyword;
 import de.npcomplete.nplisp.data.ListSequence;
 import de.npcomplete.nplisp.data.Symbol;
 
-public class LispReader {
+public final class LispReader {
 
 	public static Object readStr(String s) {
 		return read(s.chars());

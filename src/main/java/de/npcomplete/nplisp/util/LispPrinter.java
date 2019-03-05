@@ -20,6 +20,7 @@ public final class LispPrinter {
 		return sb.toString();
 	}
 
+	@SuppressWarnings("Duplicates")
 	public static void pr(Object o, Appendable out) throws LispException {
 		try {
 			if (o == null) {
@@ -84,6 +85,7 @@ public final class LispPrinter {
 		return sb.toString();
 	}
 
+	@SuppressWarnings("Duplicates")
 	public static void print(Object o, Appendable out) throws LispException {
 		try {
 			if (o == null) {
