@@ -1,7 +1,6 @@
 package de.npcomplete.nplisp.function;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.util.LispElf;
@@ -32,13 +31,13 @@ public interface VarArgsFunction extends LispFunction {
 
 	@SuppressWarnings("Duplicates")
 	@Override
-	default Object apply(Object par1, Object par2, Object par3, Object par4, Object... more) {
+	default Object apply(Object par1, Object par2, Object par3, Object... more) {
 		int moreCount = more.length;
-		Object[] args = new Object[] {par1, par2, par3, par4};
-		if (moreCount > 0) {
-			args = Arrays.copyOf(args, 4 + moreCount);
-			System.arraycopy(more, 0, args, 4, moreCount);
-		}
+		Object[] args = new Object[3 + moreCount];
+		args[0] = par1;
+		args[1] = par2;
+		args[2] = par3;
+		System.arraycopy(more, 0, args, 3, moreCount);
 		return applyVarArgs(args);
 	}
 

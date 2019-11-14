@@ -63,10 +63,6 @@ public final class CoreLibrary {
 			Sequence s = (Sequence) o;
 			return s.empty() ? null : s;
 		}
-		if (o instanceof Iterable) {
-			Iterator it = ((Iterable) o).iterator();
-			return it.hasNext() ? new IteratorSequence(it) : null;
-		}
 		if (o instanceof Map) {
 			@SuppressWarnings("unchecked")
 			Set<Entry> entries = ((Map) o).entrySet();
@@ -74,6 +70,10 @@ public final class CoreLibrary {
 			return it.hasNext()
 					? new IteratorSequence(mapIterator(it, e -> unmodifiableList(asList(e.getKey(), e.getValue()))))
 					: null;
+		}
+		if (o instanceof Iterable) {
+			Iterator it = ((Iterable) o).iterator();
+			return it.hasNext() ? new IteratorSequence(it) : null;
 		}
 		if (o instanceof Object[]) {
 			Object[] array = (Object[]) o;
@@ -163,22 +163,18 @@ public final class CoreLibrary {
 		}
 
 		@Override
-		public Object apply(Object par1, Object par2, Object par3, Object par4, Object... more) {
+		public Object apply(Object par1, Object par2, Object par3, Object... more) {
 			if (!(par1 instanceof LispFunction)) {
 				throw new LispException("First parameter must be a function");
 			}
 			LispFunction f = (LispFunction) par1;
-			if (more.length == 0) {
-				return f.applyTo(new Cons(par2, new Cons(par3, seq(par4))));
-			}
 
-			Sequence rest = seq(more[more.length - 1]);
-
-			Object[] args = new Object[3 + more.length - 1];
+			Object[] args = new Object[2 + more.length - 1];
 			args[0] = par2;
 			args[1] = par3;
-			args[2] = par4;
-			System.arraycopy(more, 0, args, 3, more.length - 1);
+			System.arraycopy(more, 0, args, 2, more.length - 1);
+
+			Sequence rest = seq(more[more.length - 1]);
 
 			Cons argsSeq = new Cons(args[args.length - 1], rest);
 			for (int i = args.length - 2; i >= 0; i--) {

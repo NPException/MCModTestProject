@@ -55,8 +55,8 @@ public final class Var implements LispFunction, Deref {
 	}
 
 	@Override
-	public Object apply(Object par1, Object par2, Object par3, Object par4, Object... more) {
-		return fn().apply(par1, par2, par3, par4, more);
+	public Object apply(Object par1, Object par2, Object par3, Object... more) {
+		return fn().apply(par1, par2, par3, more);
 	}
 
 	@Override

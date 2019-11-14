@@ -29,8 +29,8 @@ public interface LispFunction {
 		throw new LispException("Wrong arity: 3");
 	}
 
-	default Object apply(Object par1, Object par2, Object par3, Object par4, Object... more) {
-		throw new LispException("Wrong arity: " + (4 + more.length));
+	default Object apply(Object par1, Object par2, Object par3, Object... more) {
+		throw new LispException("Wrong arity: " + (3 + more.length));
 	}
 
 	default Object applyTo(Sequence args) {
@@ -52,19 +52,13 @@ public interface LispFunction {
 		if (args == null) {
 			return apply(par1, par2, par3);
 		}
-		Object par4 = args.first();
-		args = args.next();
-
-		if (args == null) {
-			return apply(par1, par2, par3, par4);
-		}
 
 		ArrayList<Object> rest = new ArrayList<>();
 		do {
 			rest.add(args.first());
 		} while ((args = args.next()) != null);
 
-		return apply(par1, par2, par3, par4, rest.toArray());
+		return apply(par1, par2, par3, rest.toArray());
 	}
 
 	/**

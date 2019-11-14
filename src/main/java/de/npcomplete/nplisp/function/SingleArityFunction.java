@@ -1,6 +1,5 @@
 package de.npcomplete.nplisp.function;
 
-import java.util.Arrays;
 import java.util.List;
 
 import de.npcomplete.nplisp.Environment;
@@ -90,26 +89,25 @@ public final class SingleArityFunction implements LispFunction {
 
 	@SuppressWarnings("Duplicates")
 	@Override
-	public Object apply(Object par1, Object par2, Object par3, Object par4, Object... more) {
+	public Object apply(Object par1, Object par2, Object par3, Object... more) {
 		Environment localEnv = initLocalEnv();
 		int moreCount = more.length;
 
 		if (variadic) {
-			Object[] args = new Object[] {par1, par2, par3, par4};
-			if (moreCount > 0) {
-				args = Arrays.copyOf(args, 4 + moreCount);
-				System.arraycopy(more, 0, args, 4, moreCount);
-			}
+			Object[] args = new Object[3 + moreCount];
+			args[0] = par1;
+			args[1] = par2;
+			args[2] = par3;
+			System.arraycopy(more, 0, args, 3, moreCount);
 			LispElf.bindVarArgs(localEnv, paramSymbols, args);
 
 		} else {
-			assertArity(4 + moreCount);
+			assertArity(3 + moreCount);
 			localEnv.bind(paramSymbols[0], par1);
 			localEnv.bind(paramSymbols[1], par2);
 			localEnv.bind(paramSymbols[2], par3);
-			localEnv.bind(paramSymbols[3], par4);
 			for (int i = 0; i < moreCount; i++) {
-				localEnv.bind(paramSymbols[i + 4], more[i]);
+				localEnv.bind(paramSymbols[i + 3], more[i]);
 			}
 		}
 

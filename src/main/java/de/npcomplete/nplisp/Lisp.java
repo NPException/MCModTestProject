@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.npcomplete.nplisp.data.CoreLibrary;
 import de.npcomplete.nplisp.data.Sequence;
@@ -53,12 +54,7 @@ public class Lisp {
 		globalEnv.bind(new Symbol("recur"), CoreLibrary.FN_RECUR);
 
 		// EVAL & APPLY
-		globalEnv.bind(new Symbol("eval"), new LispFunction() {
-			@Override
-			public Object apply(Object par1) {
-				return eval(par1);
-			}
-		});
+		globalEnv.bind(new Symbol("eval"), LispFunction.from((Function) this::eval));
 		globalEnv.bind(new Symbol("apply"), CoreLibrary.FN_APPLY);
 
 		// DATA STRUCTURE CREATION
@@ -174,18 +170,12 @@ public class Lisp {
 					return check(allowRecur, fn.apply(arg1, arg2, arg3)); // three arguments
 				}
 
-				Object arg4 = eval(args.first(), env, false);
-				args = args.next();
-				if (args == null) {
-					return check(allowRecur, fn.apply(arg1, arg2, arg3, arg4)); // four arguments
-				}
-
-				// more than four arguments
+				// more than three arguments
 				List<Object> moreArgs = new ArrayList<>(3);
 				do {
 					moreArgs.add(eval(args.first(), env, false));
 				} while ((args = args.next()) != null);
-				return check(allowRecur, fn.apply(arg1, arg2, arg3, arg4, moreArgs.toArray()));
+				return check(allowRecur, fn.apply(arg1, arg2, arg3, moreArgs.toArray()));
 			}
 
 			String call = LispPrinter.prStr(seq);
