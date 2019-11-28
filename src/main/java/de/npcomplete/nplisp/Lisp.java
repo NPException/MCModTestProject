@@ -18,7 +18,7 @@ import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.LispFunction;
 import de.npcomplete.nplisp.function.Macro;
-import de.npcomplete.nplisp.special.SpecialForm;
+import de.npcomplete.nplisp.function.SpecialForm;
 import de.npcomplete.nplisp.util.LispPrinter;
 import de.npcomplete.nplisp.util.LispReader;
 
@@ -42,19 +42,19 @@ public class Lisp {
 		long start = System.nanoTime();
 
 		// SPECIAL FORMS
-		globalEnv.bind(new Symbol("def"), SpecialForm.DEF);
-		globalEnv.bind(new Symbol("do"), SpecialForm.DO);
-		globalEnv.bind(new Symbol("fn"), SpecialForm.FN);
-		globalEnv.bind(new Symbol("if"), SpecialForm.IF);
-		globalEnv.bind(new Symbol("let"), SpecialForm.LET);
-		globalEnv.bind(new Symbol("quote"), SpecialForm.QUOTE);
-		globalEnv.bind(new Symbol("defmacro"), SpecialForm.DEFMACRO);
+		globalEnv.bind(new Symbol("def"), (SpecialForm) SpecialForm::DEF);
+		globalEnv.bind(new Symbol("do"), (SpecialForm) SpecialForm::DO);
+		globalEnv.bind(new Symbol("fn"), (SpecialForm) SpecialForm::FN);
+		globalEnv.bind(new Symbol("if"), (SpecialForm) SpecialForm::IF);
+		globalEnv.bind(new Symbol("let"), (SpecialForm) SpecialForm::LET);
+		globalEnv.bind(new Symbol("quote"), (SpecialForm) SpecialForm::QUOTE);
+		globalEnv.bind(new Symbol("defmacro"), (SpecialForm) SpecialForm::DEFMACRO);
 
 		// LOOP (TODO)
 		globalEnv.bind(new Symbol("recur"), CoreLibrary.FN_RECUR);
 
 		// EVAL & APPLY
-		globalEnv.bind(new Symbol("eval"), LispFunction.from((Function) this::eval));
+		globalEnv.bind(new Symbol("eval"), LispFunction.from((Function<?,?>) this::eval));
 		globalEnv.bind(new Symbol("apply"), CoreLibrary.FN_APPLY);
 
 		// DATA STRUCTURE CREATION
@@ -210,7 +210,7 @@ public class Lisp {
 		if (obj instanceof Map) {
 			Map<?, ?> map = (Map<?, ?>) obj;
 			Map<Object, Object> result = new HashMap<>(map.size() * 2);
-			for (Entry e : map.entrySet()) {
+			for (Entry<?,?> e : map.entrySet()) {
 				Object key = eval(e.getKey(), env, false);
 				if (result.containsKey(key)) {
 					throw new LispException("Map creation with duplicate key: " + key);

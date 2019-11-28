@@ -17,7 +17,7 @@ import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.function.LispFunction;
 import de.npcomplete.nplisp.function.VarArgsFunction;
-import de.npcomplete.nplisp.special.SpecialForm;
+import de.npcomplete.nplisp.function.SpecialForm;
 import de.npcomplete.nplisp.util.LispPrinter;
 
 public final class CoreLibrary {

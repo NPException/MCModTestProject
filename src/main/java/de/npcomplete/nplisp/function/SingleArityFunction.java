@@ -7,7 +7,6 @@ import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.data.CoreLibrary.TailCall;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
-import de.npcomplete.nplisp.special.SpecialForm;
 import de.npcomplete.nplisp.util.LispElf;
 
 public final class SingleArityFunction implements LispFunction {
@@ -120,7 +119,7 @@ public final class SingleArityFunction implements LispFunction {
 	 */
 	static Object call(Sequence body, Symbol[] paramSymbols, Environment preparedLocalEnv) {
 		Object val;
-		while ((val = SpecialForm.DO.apply(body, preparedLocalEnv, true)) instanceof TailCall) {
+		while ((val = SpecialForm.DO(body, preparedLocalEnv, true)) instanceof TailCall) {
 			TailCall tailCall = (TailCall) val;
 			Object[] tcArgs = tailCall.args;
 			int length = tcArgs.length;
