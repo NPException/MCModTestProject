@@ -163,8 +163,8 @@ public interface SpecialForm {
 	 * and and ideally one or more body forms.<br>
 	 * <code>(defmacro name [params*] body*)</code><br>
 	 * <code>(defmacro name ([params*] body*) +)</code><br>
-	 * Returns a macro which will transform the provided arguments
-	 * as specified by the body.
+	 * Creates a macro which will transform the provided arguments
+	 * as specified by the body. The macro is bound to the symbol and then returned.
 	 */
 	static Macro DEFMACRO(Sequence args, Environment env, boolean allowRecur) {
 		if (!LispElf.minSize(args, 2)) {
@@ -178,6 +178,6 @@ public interface SpecialForm {
 		LispFunction macroFunction = FN(args, env, false /*not used in FN*/);
 		Macro macro = macroFunction::applyTo;
 		env.top().bind((Symbol) sym, macro);
-		return null;
+		return macro;
 	}
 }
