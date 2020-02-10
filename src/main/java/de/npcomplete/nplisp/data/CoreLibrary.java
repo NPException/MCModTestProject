@@ -308,7 +308,14 @@ public final class CoreLibrary {
 			if (arg instanceof Symbol) {
 				return arg;
 			}
-			return new Symbol((String) FN_NAME.apply(arg));
+			if (arg instanceof Keyword) {
+				Keyword kw = (Keyword) arg;
+				return new Symbol(kw.namespaceName, kw.name);
+			}
+			if (arg instanceof String) {
+				return new Symbol((String) arg);
+			}
+			throw new LispException("Can't create symbol from: " + FN_STR.apply(arg));
 		}
 	};
 
@@ -318,7 +325,14 @@ public final class CoreLibrary {
 			if (arg instanceof Keyword) {
 				return arg;
 			}
-			return new Keyword((String) FN_NAME.apply(arg));
+			if (arg instanceof Symbol) {
+				Symbol sym = (Symbol) arg;
+				return new Keyword(sym.namespaceName, sym.name);
+			}
+			if (arg instanceof String) {
+				return new Keyword((String) arg);
+			}
+			throw new LispException("Can't create keyword from: " + FN_STR.apply(arg));
 		}
 	};
 

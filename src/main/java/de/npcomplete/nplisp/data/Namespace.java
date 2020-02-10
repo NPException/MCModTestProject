@@ -2,17 +2,18 @@ package de.npcomplete.nplisp.data;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public final class Namespace {
-	private static final ConcurrentHashMap<String, Namespace> namespaces = new ConcurrentHashMap<>();
-
 	public final String name;
 
-	public final Map<Symbol, Var> bindings = new HashMap<>();
+	private final Map<Symbol, Var> bindings = new HashMap<>();
 
 	public Namespace(String name) {
 		this.name = name;
+	}
+
+	public Var intern(String name) {
+		return bindings.computeIfAbsent(new Symbol(name), k -> new Var(this, name));
 	}
 
 	// TODO: literally everything

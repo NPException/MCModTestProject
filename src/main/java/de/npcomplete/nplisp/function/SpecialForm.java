@@ -1,13 +1,18 @@
 package de.npcomplete.nplisp.function;
 
+import static de.npcomplete.nplisp.Environment.SYM_CURRENT_NAMESPACE;
+
 import java.util.Iterator;
 import java.util.List;
 
 import de.npcomplete.nplisp.Environment;
 import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.LispException;
+import de.npcomplete.nplisp.data.Cons;
+import de.npcomplete.nplisp.data.Namespace;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
+import de.npcomplete.nplisp.data.Var;
 import de.npcomplete.nplisp.function.MultiArityFunction.Builder;
 import de.npcomplete.nplisp.util.LispElf;
 import de.npcomplete.nplisp.util.LispPrinter;
@@ -19,25 +24,40 @@ public interface SpecialForm {
 	// BASE IMPLEMENTATIONS //
 
 	/**
-	 * Takes two arguments, a symbol and a form:
-	 * <code>(def SYMBOL FORM)</code><br>
+	 * Takes one or two arguments, a symbol and a form:
+	 * <code>(def SYMBOL ?FORM)</code><br>
 	 * The form is evaluated and the resulting value
-	 * bound to the symbol in the global environment
-	 * and then returned.
+	 * bound to the var in the current namespace.
+	 * Returns the var.
 	 */
-	static Object DEF(Sequence args, Environment env, boolean allowRecur) {
-		if (!LispElf.matchSize(args, 2, 2)) {
-			throw new LispException("'def' requires 2 arguments: (def SYMBOL FORM)");
+	static Var DEF(Sequence args, Environment env, boolean allowRecur) {
+		if (!LispElf.matchSize(args, 1, 2)) {
+			throw new LispException("'def' requires at least 1 argument: (def SYMBOL ?INIT)");
 		}
-		Object sym = args.first();
-		if (!(sym instanceof Symbol)) {
-			String s = LispPrinter.prStr(sym);
+		Object o = args.first();
+		if (!(o instanceof Symbol)) {
+			String s = LispPrinter.prStr(o);
 			throw new LispException("'def' binding target is not a symbol: " + s);
 		}
-		Object form = args.next().first();
-		Object value = Lisp.eval(form, env, false);
-		env.top().bind((Symbol) sym, value);
-		return value;
+		Symbol sym = (Symbol) o;
+		if (sym.namespaceName != null) {
+			throw new LispException("Can't 'def' fully qualified symbols: " + sym);
+		}
+		Environment currentNsEnv = env.currentNamespaceEnv();
+		Namespace ns = (Namespace) currentNsEnv.lookup(SYM_CURRENT_NAMESPACE).deref();
+		Var v = ns.intern(sym.name);
+
+		// FIXME: There may be edge cases where this overrides a local binding. Need to check that.
+		currentNsEnv.bindVar(sym, v);
+
+		Sequence nextArgs = args.next();
+		if (nextArgs != null) {
+			Object initForm = nextArgs.first();
+			Object value = Lisp.eval(initForm, env, false);
+			v.bindValue(value);
+		}
+
+		return v;
 	}
 
 	/**
@@ -149,6 +169,18 @@ public interface SpecialForm {
 	}
 
 	/**
+	 * Takes a single symbol as an argument. Returns the var designated by that symbol,
+	 * not its value.
+	 */
+	static Object VAR(Sequence args, Environment env, boolean allowRecur) {
+		Object o = args.first();
+		if (!(o instanceof  Symbol)) {
+			throw new LispException("Argument to 'var' must be a symbol");
+		}
+		return env.lookup((Symbol) o);
+	}
+
+	/**
 	 * Takes a single form as an argument. Returns that argument unevaluated.
 	 */
 	static Object QUOTE(Sequence args, Environment env, boolean allowRecur) {
@@ -166,7 +198,7 @@ public interface SpecialForm {
 	 * Creates a macro which will transform the provided arguments
 	 * as specified by the body. The macro is bound to the symbol and then returned.
 	 */
-	static Macro DEFMACRO(Sequence args, Environment env, boolean allowRecur) {
+	static Var DEFMACRO(Sequence args, Environment env, boolean allowRecur) {
 		if (!LispElf.minSize(args, 2)) {
 			throw new LispException("'defmacro' requires at least 2 arguments: (defmacro name [params*] body*)");
 		}
@@ -177,7 +209,7 @@ public interface SpecialForm {
 		}
 		LispFunction macroFunction = FN(args, env, false /*not used in FN*/);
 		Macro macro = macroFunction::applyTo;
-		env.top().bind((Symbol) sym, macro);
-		return macro;
+
+		return DEF(new Cons(sym, new Cons(macro, null)), env, allowRecur);
 	}
 }

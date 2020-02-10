@@ -129,3 +129,6 @@
 (keyword 'test)
 (name 'bruno)
 (name :what)
+
+(def my-var :value)
+(var my-var)

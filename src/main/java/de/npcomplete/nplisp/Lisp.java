@@ -1,5 +1,7 @@
 package de.npcomplete.nplisp;
 
+import static de.npcomplete.nplisp.Environment.SYM_CURRENT_NAMESPACE;
+
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -13,15 +15,38 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 
+import de.npcomplete.nplisp.data.Cons;
 import de.npcomplete.nplisp.data.CoreLibrary;
+import de.npcomplete.nplisp.data.Namespace;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
+import de.npcomplete.nplisp.data.Var;
 import de.npcomplete.nplisp.function.LispFunction;
 import de.npcomplete.nplisp.function.Macro;
 import de.npcomplete.nplisp.function.SpecialForm;
 import de.npcomplete.nplisp.util.LispPrinter;
 import de.npcomplete.nplisp.util.LispReader;
 
+/*
+
+Maybe require entire namespace to be within a namespace form. That would give a cleaner option for
+multiple namespaces in the same file.
+Example:
+
+(ns my-project.core
+  (require '[vector.math :as vm])
+
+  ...
+  regular code here
+  ...
+  )
+
+ */
+
+// TODO: fix equals/hashcode of Symbol and Keyword (include namespace)
+// TODO: read namespaced symbols and keywords
+// TODO: finish namespaces
+// TODO: reader macro for vars: #'my-symbol
 // TODO: javadoc in CoreLibrary
 // TODO: switch from using java.util.List to own Vector class
 // TODO: destructuring
@@ -31,6 +56,7 @@ import de.npcomplete.nplisp.util.LispReader;
 // TODO: doc-strings
 
 public class Lisp {
+	private final Map<String, Namespace> namespaces = new HashMap<>();
 	public final Environment globalEnv;
 
 	public Lisp() {
@@ -38,70 +64,80 @@ public class Lisp {
 	}
 
 	public void initStandardEnvironment() {
+		// INIT CORE LIBRARY //
+
 		System.out.println("Initializing core library");
 		long start = System.nanoTime();
 
+		// TODO: Use dummy env when building core to avoid global env bindings to all core functions.
+		//       Or (perhaps better) give root environment to every namespace.
+		//       We may be able to completely remove the bindings map in Namespace.
+		//       Will need to enforce fully qualified symbols for Var though.
+
+		setNamespace(globalEnv, "core");
+
 		// SPECIAL FORMS
-		globalEnv.bind(new Symbol("def"), (SpecialForm) SpecialForm::DEF);
-		globalEnv.bind(new Symbol("do"), (SpecialForm) SpecialForm::DO);
-		globalEnv.bind(new Symbol("fn"), (SpecialForm) SpecialForm::FN);
-		globalEnv.bind(new Symbol("if"), (SpecialForm) SpecialForm::IF);
-		globalEnv.bind(new Symbol("let"), (SpecialForm) SpecialForm::LET);
-		globalEnv.bind(new Symbol("quote"), (SpecialForm) SpecialForm::QUOTE);
-		globalEnv.bind(new Symbol("defmacro"), (SpecialForm) SpecialForm::DEFMACRO);
+		def(globalEnv, "def", (SpecialForm) SpecialForm::DEF);
+		def(globalEnv, "do", (SpecialForm) SpecialForm::DO);
+		def(globalEnv, "fn", (SpecialForm) SpecialForm::FN);
+		def(globalEnv, "if", (SpecialForm) SpecialForm::IF);
+		def(globalEnv, "let", (SpecialForm) SpecialForm::LET);
+		def(globalEnv, "var", (SpecialForm) SpecialForm::VAR);
+		def(globalEnv, "quote", (SpecialForm) SpecialForm::QUOTE);
+		def(globalEnv, "defmacro", (SpecialForm) SpecialForm::DEFMACRO);
 
 		// LOOP (TODO)
-		globalEnv.bind(new Symbol("recur"), CoreLibrary.FN_RECUR);
+		def(globalEnv, "recur", CoreLibrary.FN_RECUR);
 
 		// EVAL & APPLY
-		globalEnv.bind(new Symbol("eval"), LispFunction.from((Function<?,?>) this::eval));
-		globalEnv.bind(new Symbol("apply"), CoreLibrary.FN_APPLY);
+		def(globalEnv, "eval", LispFunction.from((Function<?, ?>) this::eval));
+		def(globalEnv, "apply", CoreLibrary.FN_APPLY);
 
 		// DATA STRUCTURE CREATION
-		globalEnv.bind(new Symbol("list"), CoreLibrary.FN_LIST);
-		globalEnv.bind(new Symbol("vector"), CoreLibrary.FN_VECTOR);
-		globalEnv.bind(new Symbol("hash-set"), CoreLibrary.FN_HASH_SET);
-		globalEnv.bind(new Symbol("hash-map"), CoreLibrary.FN_HASH_MAP);
+		def(globalEnv, "list", CoreLibrary.FN_LIST);
+		def(globalEnv, "vector", CoreLibrary.FN_VECTOR);
+		def(globalEnv, "hash-set", CoreLibrary.FN_HASH_SET);
+		def(globalEnv, "hash-map", CoreLibrary.FN_HASH_MAP);
 
 		// SEQUENCE INTERACTION
-		globalEnv.bind(new Symbol("seq"), CoreLibrary.FN_SEQ);
-		globalEnv.bind(new Symbol("first"), CoreLibrary.FN_FIRST);
-		globalEnv.bind(new Symbol("next"), CoreLibrary.FN_NEXT);
-		globalEnv.bind(new Symbol("rest"), CoreLibrary.FN_REST);
-		globalEnv.bind(new Symbol("cons"), CoreLibrary.FN_CONS);
+		def(globalEnv, "seq", CoreLibrary.FN_SEQ);
+		def(globalEnv, "first", CoreLibrary.FN_FIRST);
+		def(globalEnv, "next", CoreLibrary.FN_NEXT);
+		def(globalEnv, "rest", CoreLibrary.FN_REST);
+		def(globalEnv, "cons", CoreLibrary.FN_CONS);
 
 		// MATHS
-		globalEnv.bind(new Symbol("+"), CoreLibrary.FN_ADD);
-		globalEnv.bind(new Symbol("-"), CoreLibrary.FN_SUBTRACT);
-		globalEnv.bind(new Symbol("*"), CoreLibrary.FN_MULTIPLY);
-		globalEnv.bind(new Symbol("/"), CoreLibrary.FN_DIVIDE);
+		def(globalEnv, "+", CoreLibrary.FN_ADD);
+		def(globalEnv, "-", CoreLibrary.FN_SUBTRACT);
+		def(globalEnv, "*", CoreLibrary.FN_MULTIPLY);
+		def(globalEnv, "/", CoreLibrary.FN_DIVIDE);
 
 		// STRING, SYMBOL, AND KEYWORD INTERACTION
-		globalEnv.bind(new Symbol("str"), CoreLibrary.FN_STR);
-		globalEnv.bind(new Symbol("name"), CoreLibrary.FN_NAME);
-		globalEnv.bind(new Symbol("symbol"), CoreLibrary.FN_SYMBOL);
-		globalEnv.bind(new Symbol("keyword"), CoreLibrary.FN_KEYWORD);
+		def(globalEnv, "str", CoreLibrary.FN_STR);
+		def(globalEnv, "name", CoreLibrary.FN_NAME);
+		def(globalEnv, "symbol", CoreLibrary.FN_SYMBOL);
+		def(globalEnv, "keyword", CoreLibrary.FN_KEYWORD);
 
 		// PRINTING
-		globalEnv.bind(new Symbol("pr"), CoreLibrary.FN_PR);
-		globalEnv.bind(new Symbol("prn"), CoreLibrary.FN_PRN);
-		globalEnv.bind(new Symbol("pr-str"), CoreLibrary.FN_PR_STR);
-		globalEnv.bind(new Symbol("prn-str"), CoreLibrary.FN_PRN_STR);
+		def(globalEnv, "pr", CoreLibrary.FN_PR);
+		def(globalEnv, "prn", CoreLibrary.FN_PRN);
+		def(globalEnv, "pr-str", CoreLibrary.FN_PR_STR);
+		def(globalEnv, "prn-str", CoreLibrary.FN_PRN_STR);
 
-		globalEnv.bind(new Symbol("print"), CoreLibrary.FN_PRINT);
-		globalEnv.bind(new Symbol("println"), CoreLibrary.FN_PRINTLN);
-		globalEnv.bind(new Symbol("print-str"), CoreLibrary.FN_PRINT_STR);
-		globalEnv.bind(new Symbol("println-str"), CoreLibrary.FN_PRINTLN_STR);
+		def(globalEnv, "print", CoreLibrary.FN_PRINT);
+		def(globalEnv, "println", CoreLibrary.FN_PRINTLN);
+		def(globalEnv, "print-str", CoreLibrary.FN_PRINT_STR);
+		def(globalEnv, "println-str", CoreLibrary.FN_PRINTLN_STR);
 
 		// TODO: COMPARISONS
 
 		// UTILITY
-		globalEnv.bind(new Symbol("time"), CoreLibrary.MACRO_TIME);
+		def(globalEnv, "time", CoreLibrary.MACRO_TIME);
 
 		// bootstrap rest of core library
 
 		try (InputStream in = Lisp.class.getResourceAsStream("core.edn");
-				Reader reader = new InputStreamReader(in)) {
+			 Reader reader = new InputStreamReader(in)) {
 			Iterator<Object> it = LispReader.readMany(reader);
 			while (it.hasNext()) {
 				eval(it.next());
@@ -120,7 +156,7 @@ public class Lisp {
 
 	public static Object eval(Object obj, Environment env, boolean allowRecur) throws LispException {
 		if (obj instanceof Symbol) {
-			return env.lookup((Symbol) obj);
+			return env.lookup((Symbol) obj).deref();
 		}
 
 		if (obj instanceof Sequence) {
@@ -137,7 +173,8 @@ public class Lisp {
 				return check(allowRecur, ((SpecialForm) callable).apply(args, env, allowRecur));
 			}
 
-			// TODO: proper macro expansion phase
+			// TODO: proper macro expansion phase (try to expand macros after reading)
+			// TODO: alternatively replace current sequence in code after expansion
 			if (callable instanceof Macro) {
 				Sequence args = seq.more();
 				Object expansion = ((Macro) callable).expand(args);
@@ -210,7 +247,7 @@ public class Lisp {
 		if (obj instanceof Map) {
 			Map<?, ?> map = (Map<?, ?>) obj;
 			Map<Object, Object> result = new HashMap<>(map.size() * 2);
-			for (Entry<?,?> e : map.entrySet()) {
+			for (Entry<?, ?> e : map.entrySet()) {
 				Object key = eval(e.getKey(), env, false);
 				if (result.containsKey(key)) {
 					throw new LispException("Map creation with duplicate key: " + key);
@@ -228,5 +265,18 @@ public class Lisp {
 			return val;
 		}
 		throw new LispException("Illegal call to 'recur'. Can only be used in function tail position.");
+	}
+
+	private Namespace setNamespace(Environment env, String name) {
+		Namespace ns = namespaces.computeIfAbsent(name, Namespace::new);
+		Var currentNsVar = new Var(null, SYM_CURRENT_NAMESPACE.name).bindValue(ns);
+		env.bindVar(SYM_CURRENT_NAMESPACE, currentNsVar);
+		return ns;
+	}
+
+	private static void def(Environment env, String name, Object value) {
+		// replace with manual code that does not bind the value to a the environment which holds *ns*
+		Sequence args = new Cons(new Symbol(name), new Cons(value, null));
+		SpecialForm.DEF(args, env, false);
 	}
 }

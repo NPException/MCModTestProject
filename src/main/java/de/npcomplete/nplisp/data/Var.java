@@ -2,32 +2,39 @@ package de.npcomplete.nplisp.data;
 
 import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.function.LispFunction;
-import de.npcomplete.nplisp.function.VarArgsFunction;
+import de.npcomplete.nplisp.util.LispPrinter;
 
 public final class Var implements LispFunction, Deref {
-	private final Symbol name; // fully qualified symbol
-	private Object value;
+	private static final Object UNBOUND = new Object();
 
-	Var(Symbol name) {
+	public final Namespace ns;
+	public final String name;
+	private Object value = UNBOUND;
+
+	public Var(Namespace ns, String name) {
+		this.ns = ns;
 		this.name = name;
-		value = new Unbound(this);
 	}
 
-	public void bind(Object value) {
+	public Var bindValue(Object value) {
 		this.value = value;
+		return this;
 	}
 
 	public Object deref() {
+		if (value == UNBOUND) {
+			throw new LispException("Var " + name + " is unbound.");
+		}
 		return value;
 	}
 
 	@Override
 	public String toString() {
-		return "#'" + name.toString();
+		return LispPrinter.printStr(this);
 	}
 
 	private LispFunction fn() {
-		LispFunction f = LispFunction.from(value);
+		LispFunction f = LispFunction.from(deref());
 		if (f == null) {
 			throw new LispException("Can't create function from var " + name);
 		}
@@ -62,23 +69,5 @@ public final class Var implements LispFunction, Deref {
 	@Override
 	public Object applyTo(Sequence args) {
 		return fn().applyTo(args);
-	}
-
-	private static final class Unbound implements VarArgsFunction {
-		private final Var v;
-
-		Unbound(Var v) {
-			this.v = v;
-		}
-
-		@Override
-		public Object applyVarArgs(Object... args) {
-			throw new LispException("Attempting to call unbound fn: " + v.toString());
-		}
-
-		@Override
-		public String toString() {
-			return "Unbound " + v.toString();
-		}
 	}
 }

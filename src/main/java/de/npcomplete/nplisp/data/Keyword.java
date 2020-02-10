@@ -6,9 +6,15 @@ import de.npcomplete.nplisp.function.LispFunction;
 import de.npcomplete.nplisp.util.LispPrinter;
 
 public final class Keyword implements LispFunction {
+	public final String namespaceName;
 	public final String name;
 
 	public Keyword(String name) {
+		this(null, name);
+	}
+
+	public Keyword(String namespaceName, String name) {
+		this.namespaceName = namespaceName;
 		this.name = name;
 	}
 

@@ -11,6 +11,7 @@ import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.data.Keyword;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
+import de.npcomplete.nplisp.data.Var;
 
 public final class LispPrinter {
 
@@ -32,12 +33,20 @@ public final class LispPrinter {
 				return;
 			}
 			if (o instanceof Symbol) {
-				out.append(((Symbol) o).name);
+				Symbol sym = (Symbol) o;
+				if (sym.namespaceName != null) {
+					out.append(sym.namespaceName).append('/');
+				}
+				out.append(sym.name);
 				return;
 			}
 			if (o instanceof Keyword) {
+				Keyword kw = (Keyword) o;
 				out.append(':');
-				out.append(((Keyword) o).name);
+				if (kw.namespaceName != null) {
+					out.append(kw.namespaceName).append('/');
+				}
+				out.append(kw.name);
 				return;
 			}
 			if (o instanceof Sequence) {
@@ -103,6 +112,15 @@ public final class LispPrinter {
 			if (o instanceof Keyword) {
 				out.append(':');
 				out.append(((Keyword) o).name);
+				return;
+			}
+			if (o instanceof Var) {
+				Var v = (Var) o;
+				out.append("#'");
+				if (v.ns != null) {
+					out.append(v.ns.name).append('/');
+				}
+				out.append(v.name);
 				return;
 			}
 			if (o instanceof Sequence) {
