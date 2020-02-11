@@ -40,7 +40,7 @@ public interface SpecialForm {
 			throw new LispException("'def' binding target is not a symbol: " + s);
 		}
 		Symbol sym = (Symbol) o;
-		if (sym.namespaceName != null) {
+		if (sym.nsName != null) {
 			throw new LispException("Can't 'def' fully qualified symbols: " + sym);
 		}
 		Environment currentNsEnv = env.currentNamespaceEnv();

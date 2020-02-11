@@ -1,20 +1,23 @@
 package de.npcomplete.nplisp.data;
 
 import java.util.Map;
+import java.util.Objects;
 
 import de.npcomplete.nplisp.function.LispFunction;
 import de.npcomplete.nplisp.util.LispPrinter;
 
 public final class Keyword implements LispFunction {
-	public final String namespaceName;
+	private int hash = 0;
+
+	public final String nsName;
 	public final String name;
 
 	public Keyword(String name) {
 		this(null, name);
 	}
 
-	public Keyword(String namespaceName, String name) {
-		this.namespaceName = namespaceName;
+	public Keyword(String nsName, String name) {
+		this.nsName = nsName;
 		this.name = name;
 	}
 
@@ -41,12 +44,17 @@ public final class Keyword implements LispFunction {
 		if (!(o instanceof Keyword)) {
 			return false;
 		}
-		return name.equals(((Keyword) o).name);
+		Keyword other = (Keyword) o;
+		return Objects.equals(nsName, other.nsName)
+				&& name.equals(other.name);
 	}
 
 	@Override
 	public int hashCode() {
-		return 31 * Keyword.class.hashCode() + name.hashCode();
+		int h = hash;
+		return h == 0
+				? hash = Objects.hash(nsName, name)
+				: h;
 	}
 
 	@Override

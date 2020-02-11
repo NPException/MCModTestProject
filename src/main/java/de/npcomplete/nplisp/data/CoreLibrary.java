@@ -310,7 +310,7 @@ public final class CoreLibrary {
 			}
 			if (arg instanceof Keyword) {
 				Keyword kw = (Keyword) arg;
-				return new Symbol(kw.namespaceName, kw.name);
+				return new Symbol(kw.nsName, kw.name);
 			}
 			if (arg instanceof String) {
 				return new Symbol((String) arg);
@@ -327,7 +327,7 @@ public final class CoreLibrary {
 			}
 			if (arg instanceof Symbol) {
 				Symbol sym = (Symbol) arg;
-				return new Keyword(sym.namespaceName, sym.name);
+				return new Keyword(sym.nsName, sym.name);
 			}
 			if (arg instanceof String) {
 				return new Keyword((String) arg);

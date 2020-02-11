@@ -1,20 +1,23 @@
 package de.npcomplete.nplisp.data;
 
 import java.util.Map;
+import java.util.Objects;
 
 import de.npcomplete.nplisp.function.LispFunction;
 import de.npcomplete.nplisp.util.LispPrinter;
 
 public final class Symbol implements LispFunction {
-	public final String namespaceName;
+	private int hash = 0;
+
+	public final String nsName;
 	public final String name;
 
 	public Symbol(String name) {
 		this(null, name);
 	}
 
-	public Symbol(String namespaceName, String name) {
-		this.namespaceName = namespaceName;
+	public Symbol(String nsName, String name) {
+		this.nsName = nsName;
 		this.name = name;
 	}
 
@@ -41,12 +44,17 @@ public final class Symbol implements LispFunction {
 		if (!(o instanceof Symbol)) {
 			return false;
 		}
-		return name.equals(((Symbol) o).name);
+		Symbol other = (Symbol) o;
+		return Objects.equals(nsName, other.nsName)
+				&& name.equals(other.name);
 	}
 
 	@Override
 	public int hashCode() {
-		return 31 * Symbol.class.hashCode() + name.hashCode();
+		int h = hash;
+		return h == 0
+				? hash = Objects.hash(nsName, name)
+				: h;
 	}
 
 	@Override

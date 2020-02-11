@@ -34,8 +34,8 @@ public final class LispPrinter {
 			}
 			if (o instanceof Symbol) {
 				Symbol sym = (Symbol) o;
-				if (sym.namespaceName != null) {
-					out.append(sym.namespaceName).append('/');
+				if (sym.nsName != null) {
+					out.append(sym.nsName).append('/');
 				}
 				out.append(sym.name);
 				return;
@@ -43,8 +43,8 @@ public final class LispPrinter {
 			if (o instanceof Keyword) {
 				Keyword kw = (Keyword) o;
 				out.append(':');
-				if (kw.namespaceName != null) {
-					out.append(kw.namespaceName).append('/');
+				if (kw.nsName != null) {
+					out.append(kw.nsName).append('/');
 				}
 				out.append(kw.name);
 				return;
@@ -106,12 +106,19 @@ public final class LispPrinter {
 				return;
 			}
 			if (o instanceof Symbol) {
-				out.append(((Symbol) o).name);
-				return;
+				Symbol s = (Symbol) o;
+				if (s.nsName != null) {
+					out.append(s.nsName).append('/');
+				}
+				out.append(s.name);
 			}
 			if (o instanceof Keyword) {
+				Keyword k = (Keyword) o;
 				out.append(':');
-				out.append(((Keyword) o).name);
+				if (k.nsName != null) {
+					out.append(k.nsName).append('/');
+				}
+				out.append(k.name);
 				return;
 			}
 			if (o instanceof Var) {
