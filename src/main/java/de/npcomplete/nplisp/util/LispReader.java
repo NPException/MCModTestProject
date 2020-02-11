@@ -116,6 +116,10 @@ public final class LispReader {
 				Object[] quoted = {new Symbol("quote"), build(it, null)};
 				return new ListSequence(quoted);
 
+			case VAR:
+				Object[] varCall = {new Symbol("var"), build(it, null)};
+				return new ListSequence(varCall);
+
 			case TAG:
 				// NOT YET SUPPORTED
 		}

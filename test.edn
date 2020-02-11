@@ -130,5 +130,6 @@
 (name 'bruno)
 (name :what)
 
+'#'my-var
 (def my-var :value)
 (var my-var)
