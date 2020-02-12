@@ -111,6 +111,7 @@ public final class LispPrinter {
 					out.append(s.nsName).append('/');
 				}
 				out.append(s.name);
+				return;
 			}
 			if (o instanceof Keyword) {
 				Keyword k = (Keyword) o;
