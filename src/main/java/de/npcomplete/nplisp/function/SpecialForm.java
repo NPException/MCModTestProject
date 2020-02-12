@@ -1,18 +1,15 @@
 package de.npcomplete.nplisp.function;
 
-import static de.npcomplete.nplisp.Environment.SYM_CURRENT_NAMESPACE;
-
 import java.util.Iterator;
 import java.util.List;
 
 import de.npcomplete.nplisp.Environment;
 import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.LispException;
+import de.npcomplete.nplisp.Var;
 import de.npcomplete.nplisp.data.Cons;
-import de.npcomplete.nplisp.data.Namespace;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
-import de.npcomplete.nplisp.data.Var;
 import de.npcomplete.nplisp.function.MultiArityFunction.Builder;
 import de.npcomplete.nplisp.util.LispElf;
 import de.npcomplete.nplisp.util.LispPrinter;
@@ -24,40 +21,31 @@ public interface SpecialForm {
 	// BASE IMPLEMENTATIONS //
 
 	/**
-	 * Takes one or two arguments, a symbol and a form:
-	 * <code>(def SYMBOL ?FORM)</code><br>
-	 * The form is evaluated and the resulting value
-	 * bound to the var in the current namespace.
+	 * Takes one or two arguments, a symbol and an init form:
+	 * <code>(def SYMBOL ?INIT)</code><br>
+	 * The init form is evaluated and the resulting value
+	 * bound to the var in the environment's namespace.
 	 * Returns the var.
 	 */
 	static Var DEF(Sequence args, Environment env, boolean allowRecur) {
 		if (!LispElf.matchSize(args, 1, 2)) {
-			throw new LispException("'def' requires at least 1 argument: (def SYMBOL ?INIT)");
+			throw new LispException("'def' requires 1 or 2 arguments: (def SYMBOL ?INIT)");
 		}
 		Object o = args.first();
 		if (!(o instanceof Symbol)) {
 			String s = LispPrinter.prStr(o);
 			throw new LispException("'def' binding target is not a symbol: " + s);
 		}
-		Symbol sym = (Symbol) o;
-		if (sym.nsName != null) {
-			throw new LispException("Can't 'def' fully qualified symbols: " + sym);
-		}
-		Environment currentNsEnv = env.currentNamespaceEnv();
-		Namespace ns = (Namespace) currentNsEnv.lookup(SYM_CURRENT_NAMESPACE).deref();
-		Var v = ns.intern(sym.name);
-
-		// FIXME: There may be edge cases where this overrides a local binding. Need to check that.
-		currentNsEnv.bindVar(sym, v);
+		Var var = env.defineVar((Symbol) o);
 
 		Sequence nextArgs = args.next();
 		if (nextArgs != null) {
 			Object initForm = nextArgs.first();
 			Object value = Lisp.eval(initForm, env, false);
-			v.bindValue(value);
+			var.bind(value);
 		}
 
-		return v;
+		return var;
 	}
 
 	/**
@@ -172,12 +160,12 @@ public interface SpecialForm {
 	 * Takes a single symbol as an argument. Returns the var designated by that symbol,
 	 * not its value.
 	 */
-	static Object VAR(Sequence args, Environment env, boolean allowRecur) {
+	static Var VAR(Sequence args, Environment env, boolean allowRecur) {
 		Object o = args.first();
-		if (!(o instanceof  Symbol)) {
+		if (!(o instanceof Symbol)) {
 			throw new LispException("Argument to 'var' must be a symbol");
 		}
-		return env.lookup((Symbol) o);
+		return env.lookupVar((Symbol) o);
 	}
 
 	/**

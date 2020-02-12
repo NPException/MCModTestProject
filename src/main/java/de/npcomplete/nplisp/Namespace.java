@@ -2,21 +2,23 @@ package de.npcomplete.nplisp;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import de.npcomplete.nplisp.data.Symbol;
 
 /**
  * Namespace is more or less just a top level environment
  */
-public class Namespace extends Environment {
+public class Namespace {
 	private final Map<Symbol, Var> mappings = new HashMap<>();
 	private final Map<String, Namespace> aliases = new HashMap<>();
 
 	public final String name;
+	private final Function<Symbol,Var> internVar;
 
-	public Namespace(String name) {
-		super(null);
+	Namespace(String name, Function<Symbol,Var> internVar) {
 		this.name = name;
+		this.internVar = internVar;
 	}
 
 	@Override
@@ -35,6 +37,8 @@ public class Namespace extends Environment {
 	public int hashCode() {
 		return name.hashCode();
 	}
+
+	// TODO: toString
 
 	public void addAlias(String name, Namespace ns) {
 		Namespace existingAlias = aliases.get(name);
@@ -65,11 +69,13 @@ public class Namespace extends Environment {
 		return referAs(symbol, aliasedNamespace.lookupVar(new Symbol(symbol.name)));
 	}
 
-	public Var def(Symbol symbol) {
+	public Var defineVar(Symbol symbol) {
 		if (symbol.nsName != null) {
-			throw new LispException("Can't def fully qualified symbols!");
+			throw new LispException("Can't def fully qualified symbols");
 		}
-		// TODO: intern all Vars in Lisp class
-		return mappings.computeIfAbsent(symbol, sym -> new Var(name, sym.name));
+		// store mapping for fully qualified and simple symbol
+		Var var = mappings.computeIfAbsent(new Symbol(this.name, symbol.name), internVar);
+		mappings.put(symbol, var);
+		return var;
 	}
 }

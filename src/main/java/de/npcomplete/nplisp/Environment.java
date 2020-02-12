@@ -5,47 +5,46 @@ import java.util.Map;
 import java.util.Objects;
 
 import de.npcomplete.nplisp.data.Symbol;
-import de.npcomplete.nplisp.data.Var;
 
 public class Environment {
-	public static final Symbol SYM_CURRENT_NAMESPACE = new Symbol("*ns*");
+	private static final Object NULL_MARKER = new Object();
 
-	private final Map<Symbol, Var> map = new HashMap<>();
+	private final Map<String, Object> bindings = new HashMap<>();
 	private final Environment parent;
+	// the Environment was created in the context of this
+	private final Namespace namespace;
 
 	public Environment(Environment parent) {
+		this(parent.namespace, parent);
+	}
+
+	public Environment(Namespace namespace, Environment parent) {
+		this.namespace = Objects.requireNonNull(namespace);
 		this.parent = parent;
 	}
 
-	/**
-	 * Returns the Environment which holds the current namespace var.
-	 */
-	public Environment currentNamespaceEnv() {
-		// NOTE: at least the very top Environment must hold a current namespace.
-		return map.get(SYM_CURRENT_NAMESPACE) == null
-				? parent.currentNamespaceEnv()
-				: this;
+	public Object lookup(Symbol symbol) {
+		if (symbol.nsName == null) {
+			Object val = bindings.get(symbol.name);
+			if (val != null) {
+				return val == NULL_MARKER ? null : val;
+			}
+			if (parent != null) {
+				return parent.lookup(symbol);
+			}
+		}
+		return lookupVar(symbol).deref();
 	}
 
-	public Var lookup(Symbol symbol) {
-		Var v = map.get(symbol);
-		if (v != null) {
-			return v;
-		}
-		if (parent != null) {
-			return parent.lookup(symbol);
-		}
-		throw new LispException("Symbol '" + symbol + "' is unbound");
+	public Var lookupVar(Symbol symbol) {
+		return namespace.lookupVar(symbol);
 	}
 
-	// TODO: remove. Replace all uses by bindVar
-	@Deprecated
+	public Var defineVar(Symbol symbol) {
+		return namespace.defineVar(symbol);
+	}
+
 	public void bind(Symbol symbol, Object value) {
-		bindVar(symbol, new Var(null, symbol.name).bindValue(value));
-	}
-
-	public void bindVar(Symbol symbol, Var v) {
-		Objects.requireNonNull(v);
-		map.put(symbol, v);
+		bindings.put(symbol.name, value == null ? NULL_MARKER : value);
 	}
 }

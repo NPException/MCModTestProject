@@ -27,11 +27,13 @@ public final class Playground {
 
 	private static void start(InputStream in) {
 		Lisp lisp = new Lisp();
-		lisp.initStandardEnvironment();
+
+		Namespace ns = lisp.namespaces.getOrCreateNamespace("nplisp.core");
+		Environment env = new Environment(ns, null);
 
 		// add test helper functions
 
-		lisp.globalEnv.bind(new Symbol("exit"), new LispFunction() {
+		env.bind(new Symbol("exit"), new LispFunction() {
 			@Override
 			public Object apply() {
 				System.exit(0);
@@ -45,10 +47,10 @@ public final class Playground {
 			}
 		});
 
-		lisp.globalEnv.bind(new Symbol("reload!"), new LispFunction() {
+		env.bind(new Symbol("reload!"), new LispFunction() {
 			@Override
 			public Object apply() {
-				lisp.initStandardEnvironment();
+				lisp.reset();
 				return null;
 			}
 		});
@@ -56,19 +58,19 @@ public final class Playground {
 		try (Reader reader = new InputStreamReader(in)) {
 			Iterator<Object> it = LispReader.readMany(reader);
 			while (it.hasNext()) {
-				run(lisp, it.next());
+				run(env, it.next());
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private static void run(Lisp lisp, Object form) {
+	private static void run(Environment env, Object form) {
 		System.out.println();
 		System.out.print("~: ");
 		System.out.println(LispPrinter.prStr(form));
 		try {
-			Object result = lisp.eval(form);
+			Object result = Lisp.eval(form, env, false);
 			System.out.print("~>");
 			System.out.println(LispPrinter.prStr(result));
 		} catch (Exception e) {

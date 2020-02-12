@@ -11,7 +11,7 @@ import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.data.Keyword;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
-import de.npcomplete.nplisp.data.Var;
+import de.npcomplete.nplisp.Var;
 
 public final class LispPrinter {
 
@@ -125,10 +125,7 @@ public final class LispPrinter {
 			if (o instanceof Var) {
 				Var v = (Var) o;
 				out.append("#'");
-				if (v.ns != null) {
-					out.append(v.ns.name).append('/');
-				}
-				out.append(v.name);
+				print(v.symbol, out);
 				return;
 			}
 			if (o instanceof Sequence) {
