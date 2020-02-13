@@ -1,12 +1,6 @@
 package de.npcomplete.nplisp.function;
 
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.data.Sequence;
@@ -59,68 +53,5 @@ public interface LispFunction {
 		} while ((args = args.next()) != null);
 
 		return apply(par1, par2, par3, rest.toArray());
-	}
-
-	/**
-	 * Attempts to create an {@link LispFunction} from the given object.
-	 */
-	static LispFunction from(Object o) {
-		if (o instanceof LispFunction) {
-			return (LispFunction) o;
-		}
-		if (o instanceof Set) {
-			return new LispFunction() {
-				@Override
-				public Object apply(Object par) {
-					return ((Set) o).contains(par) ? par : null;
-				}
-			};
-		}
-		if (o instanceof Map) {
-			return new LispFunction() {
-				@Override
-				public Object apply(Object par) {
-					return ((Map) o).get(par);
-				}
-			};
-		}
-		if (o instanceof Function) {
-			return new LispFunction() {
-				@Override
-				public Object apply(Object par) {
-					return ((Function) o).apply(par);
-				}
-			};
-		}
-		if (o instanceof Supplier) {
-			return new LispFunction() {
-				@Override
-				public Object apply() {
-					return ((Supplier) o).get();
-				}
-			};
-		}
-		if (o instanceof Consumer) {
-			return new LispFunction() {
-				@Override
-				public Object apply(Object par) {
-					((Consumer) o).accept(par);
-					return null;
-				}
-			};
-		}
-		if (o instanceof Callable) {
-			return new LispFunction() {
-				@Override
-				public Object apply() {
-					try {
-						return ((Callable) o).call();
-					} catch (Exception e) {
-						throw new LispException("Failed to call Callable", e);
-					}
-				}
-			};
-		}
-		return null;
 	}
 }

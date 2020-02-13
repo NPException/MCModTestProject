@@ -12,7 +12,7 @@ public class Environment {
 	private final Map<String, Object> bindings = new HashMap<>();
 	private final Environment parent;
 	// the Environment was created in the context of this
-	private final Namespace namespace;
+	public final Namespace namespace;
 
 	public Environment(Environment parent) {
 		this(parent.namespace, parent);
@@ -33,15 +33,7 @@ public class Environment {
 				return parent.lookup(symbol);
 			}
 		}
-		return lookupVar(symbol).deref();
-	}
-
-	public Var lookupVar(Symbol symbol) {
-		return namespace.lookupVar(symbol);
-	}
-
-	public Var defineVar(Symbol symbol) {
-		return namespace.defineVar(symbol);
+		return namespace.lookupVar(symbol).deref();
 	}
 
 	public void bind(Symbol symbol, Object value) {

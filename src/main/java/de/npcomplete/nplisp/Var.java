@@ -4,6 +4,7 @@ import de.npcomplete.nplisp.data.Deref;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.LispFunction;
+import de.npcomplete.nplisp.function.LispFunctionFactory;
 import de.npcomplete.nplisp.util.LispPrinter;
 
 public class Var implements LispFunction, Deref {
@@ -54,7 +55,7 @@ public class Var implements LispFunction, Deref {
 	}
 
 	private LispFunction fn() {
-		LispFunction f = LispFunction.from(deref());
+		LispFunction f = LispFunctionFactory.from(deref());
 		if (f == null) {
 			throw new LispException("Can't create function from var " + this);
 		}

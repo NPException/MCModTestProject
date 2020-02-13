@@ -11,12 +11,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Function;
 
 import de.npcomplete.nplisp.data.CoreLibrary;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.LispFunction;
+import de.npcomplete.nplisp.function.LispFunctionFactory;
+import de.npcomplete.nplisp.function.LispFunctionFactory.Fn1;
 import de.npcomplete.nplisp.function.Macro;
 import de.npcomplete.nplisp.function.SpecialForm;
 import de.npcomplete.nplisp.util.LispPrinter;
@@ -38,8 +39,8 @@ Example:
 
  */
 
-// TODO: read namespaced symbols and keywords
-// TODO: finish namespaces: implement 'in-ns' and 'require'
+// TODO: read namespaced symbols and keywords !!!
+// TODO: finish namespaces: implement 'ns' and 'require'
 // TODO: javadoc in CoreLibrary
 // TODO: switch from using java.util.List to own Vector class
 // TODO: destructuring
@@ -49,24 +50,16 @@ Example:
 // TODO: doc-strings
 
 public class Lisp {
-	private static final Symbol SYM_CURRENT_NAMESPACE = new Symbol("*ns*");
-
+	public static final String CORE_NS_NAME = "nplisp.core";
 	public final NamespaceMap namespaces = new NamespaceMap();
 
 	public Lisp() {
-		reset();
-	}
-
-	public void reset() {
 		// INIT CORE LIBRARY //
 
 		System.out.println("Initializing core library");
 		long start = System.nanoTime();
 
-		Namespace coreNs = namespaces.getOrCreateNamespace("nplisp.core");
-
-		// NAMESPACE HANDLING
-		def(coreNs, SYM_CURRENT_NAMESPACE.name, coreNs); // *ns* determines the current namespace for calls to 'eval'
+		Namespace coreNs = namespaces.core;
 
 		// SPECIAL FORMS
 		def(coreNs, "def", (SpecialForm) SpecialForm::DEF);
@@ -82,10 +75,7 @@ public class Lisp {
 		def(coreNs, "recur", CoreLibrary.FN_RECUR);
 
 		// EVAL & APPLY
-		def(coreNs, "eval", LispFunction.from((Function<?, ?>) obj -> {
-			Namespace currentNs = (Namespace) coreNs.lookupVar(SYM_CURRENT_NAMESPACE).deref();
-			return eval(obj, new Environment(currentNs, null), false);
-		}));
+		def(coreNs, "eval", (Fn1) this::eval);
 		def(coreNs, "apply", CoreLibrary.FN_APPLY);
 
 		// DATA STRUCTURE CREATION
@@ -124,6 +114,16 @@ public class Lisp {
 		def(coreNs, "print-str", CoreLibrary.FN_PRINT_STR);
 		def(coreNs, "println-str", CoreLibrary.FN_PRINTLN_STR);
 
+		// NAMESPACE HANDLING
+		def(coreNs, "*ns*", coreNs); // *ns* holds the current namespace for calls to 'eval'
+		def(coreNs, "in-ns", (Fn1) par -> {
+			String name = (String) CoreLibrary.FN_NAME.apply(par);
+			Namespace ns = namespaces.getOrCreateNamespace(name);
+			currentNsVar().bind(ns);
+			return ns;
+		});
+		// TODO: implement 'ns' and 'require'
+
 		// TODO: COMPARISONS
 
 		// UTILITY
@@ -142,8 +142,21 @@ public class Lisp {
 			throw new RuntimeException("Failed to load core library", e);
 		}
 
+		// setup default 'user' namespace
+		Namespace ns = namespaces.getOrCreateNamespace("user");
+		currentNsVar().bind(ns);
+
 		long time = System.nanoTime() - start;
 		System.out.println("Done in " + time / 1_000_000.0 + " msecs");
+	}
+
+	private Var currentNsVar() {
+		return namespaces.core.lookupVar(new Symbol("*ns*"));
+	}
+
+	public Object eval(Object obj) {
+		Namespace currentNs = (Namespace) currentNsVar().deref();
+		return eval(obj, new Environment(currentNs, null), false);
 	}
 
 	public static Object eval(Object obj, Environment env, boolean allowRecur) throws LispException {
@@ -174,7 +187,7 @@ public class Lisp {
 			}
 
 			// call to function
-			LispFunction fn = LispFunction.from(callable);
+			LispFunction fn = LispFunctionFactory.from(callable);
 			if (fn != null) {
 				Sequence args = seq.more();
 				if (args.empty()) {
@@ -266,6 +279,11 @@ public class Lisp {
 	public static class NamespaceMap {
 		private final Map<String, Namespace> namespaces = new HashMap<>();
 		private final Map<String, Map<String, Var>> allVars = new HashMap<>();
+		final Namespace core = new Namespace(CORE_NS_NAME, null, this::internVar);
+
+		NamespaceMap() {
+			namespaces.put(CORE_NS_NAME, core);
+		}
 
 		private Var internVar(Symbol symbol) {
 			if (symbol.nsName == null) {
@@ -276,7 +294,7 @@ public class Lisp {
 		}
 
 		public Namespace getOrCreateNamespace(String name) {
-			return namespaces.computeIfAbsent(name, k -> new Namespace(k, this::internVar));
+			return namespaces.computeIfAbsent(name, k -> new Namespace(k, core, this::internVar));
 		}
 	}
 }

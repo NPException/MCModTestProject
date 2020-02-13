@@ -133,3 +133,5 @@
 '#'my-var
 (def my-var :value)
 (var my-var)
+
+(var defn)

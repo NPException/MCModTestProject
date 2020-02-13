@@ -1,4 +1,4 @@
-package de.npcomplete.nplisp;
+package playground;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -7,8 +7,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Iterator;
 
-import de.npcomplete.nplisp.data.Symbol;
-import de.npcomplete.nplisp.function.LispFunction;
+import de.npcomplete.nplisp.Lisp;
+import de.npcomplete.nplisp.Var;
+import de.npcomplete.nplisp.function.LispFunctionFactory.Fn0;
 import de.npcomplete.nplisp.util.LispPrinter;
 import de.npcomplete.nplisp.util.LispReader;
 
@@ -28,49 +29,37 @@ public final class Playground {
 	private static void start(InputStream in) {
 		Lisp lisp = new Lisp();
 
-		Namespace ns = lisp.namespaces.getOrCreateNamespace("nplisp.core");
-		Environment env = new Environment(ns, null);
-
 		// add test helper functions
 
-		env.bind(new Symbol("exit"), new LispFunction() {
-			@Override
-			public Object apply() {
-				System.exit(0);
-				return null;
-			}
+		evalStr(lisp, "(in-ns 'playground)");
 
-			@Override
-			public Object apply(Object par1) {
-				System.exit(((Number) par1).intValue());
-				return null;
-			}
-		});
-
-		env.bind(new Symbol("reload!"), new LispFunction() {
-			@Override
-			public Object apply() {
-				lisp.reset();
-				return null;
-			}
+		Var exitVar = evalStr(lisp, "(def exit)");
+		exitVar.bind((Fn0) () -> {
+			System.exit(0);
+			return null;
 		});
 
 		try (Reader reader = new InputStreamReader(in)) {
 			Iterator<Object> it = LispReader.readMany(reader);
 			while (it.hasNext()) {
-				run(env, it.next());
+				run(lisp, it.next());
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private static void run(Environment env, Object form) {
+	@SuppressWarnings("unchecked")
+	private static <T> T evalStr(Lisp lisp, String str) {
+		return (T) lisp.eval(LispReader.readStr(str));
+	}
+
+	private static void run(Lisp lisp, Object form) {
 		System.out.println();
 		System.out.print("~: ");
 		System.out.println(LispPrinter.prStr(form));
 		try {
-			Object result = Lisp.eval(form, env, false);
+			Object result = lisp.eval(form);
 			System.out.print("~>");
 			System.out.println(LispPrinter.prStr(result));
 		} catch (Exception e) {

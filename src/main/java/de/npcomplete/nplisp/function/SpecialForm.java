@@ -36,7 +36,7 @@ public interface SpecialForm {
 			String s = LispPrinter.prStr(o);
 			throw new LispException("'def' binding target is not a symbol: " + s);
 		}
-		Var var = env.defineVar((Symbol) o);
+		Var var = env.namespace.defineVar((Symbol) o);
 
 		Sequence nextArgs = args.next();
 		if (nextArgs != null) {
@@ -165,7 +165,7 @@ public interface SpecialForm {
 		if (!(o instanceof Symbol)) {
 			throw new LispException("Argument to 'var' must be a symbol");
 		}
-		return env.lookupVar((Symbol) o);
+		return env.namespace.lookupVar((Symbol) o);
 	}
 
 	/**

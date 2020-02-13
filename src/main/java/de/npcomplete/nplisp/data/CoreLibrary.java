@@ -16,8 +16,10 @@ import java.util.function.BiConsumer;
 import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.function.LispFunction;
-import de.npcomplete.nplisp.function.VarArgsFunction;
+import de.npcomplete.nplisp.function.LispFunctionFactory.Fn1;
+import de.npcomplete.nplisp.function.LispFunctionFactory.Fn2;
 import de.npcomplete.nplisp.function.SpecialForm;
+import de.npcomplete.nplisp.function.VarArgsFunction;
 import de.npcomplete.nplisp.util.LispPrinter;
 
 public final class CoreLibrary {
@@ -88,58 +90,39 @@ public final class CoreLibrary {
 	 * Maps, native Java arrays (of reference types) and any objects
 	 * that implement Iterable.
 	 */
-	public static final LispFunction FN_SEQ = new LispFunction() {
-		@Override
-		public Object apply(Object par1) {
-			return seq(par1);
-		}
-	};
+	public static final LispFunction FN_SEQ = (Fn1) CoreLibrary::seq;
 
 	/**
 	 * Returns the first item in the collection. Calls seq on its
 	 * argument. If coll is nil, returns nil.
 	 */
-	public static final LispFunction FN_FIRST = new LispFunction() {
-		@Override
-		public Object apply(Object par1) {
-			Sequence s = seq(par1);
-			return s != null ? s.first() : null;
-		}
+	public static final LispFunction FN_FIRST = (Fn1) par1 -> {
+		Sequence s = seq(par1);
+		return s != null ? s.first() : null;
 	};
 
 	/**
 	 * Returns a seq of the items after the first. Calls seq on its
 	 * argument. If there are no more items, returns nil.
 	 */
-	public static final LispFunction FN_NEXT = new LispFunction() {
-		@Override
-		public Object apply(Object par1) {
-			Sequence s = seq(par1);
-			return s != null ? s.next() : null;
-		}
+	public static final LispFunction FN_NEXT = (Fn1) par1 -> {
+		Sequence s = seq(par1);
+		return s != null ? s.next() : null;
 	};
 
 	/**
 	 * Returns a possibly empty seq of the items after the first. Calls seq on its
 	 * argument.
 	 */
-	public static final LispFunction FN_REST = new LispFunction() {
-		@Override
-		public Object apply(Object par1) {
-			Sequence s = seq(par1);
-			return s != null ? s.more() : Sequence.EMPTY_SEQUENCE;
-		}
+	public static final LispFunction FN_REST = (Fn1) par1 -> {
+		Sequence s = seq(par1);
+		return s != null ? s.more() : Sequence.EMPTY_SEQUENCE;
 	};
 
 	/**
 	 * Constructs a new sequence with the new element prepended to the given sequence
 	 */
-	public static final LispFunction FN_CONS = new LispFunction() {
-		@Override
-		public Object apply(Object par1, Object par2) {
-			return new Cons(par1, seq(par2));
-		}
-	};
+	public static final LispFunction FN_CONS = (Fn2) (par1, par2) -> new Cons(par1, seq(par2));
 
 	// TODO: replace with interop like clojure (https://github.com/clojure/clojure/blob/clojure-1.9.0/src/clj/clojure/core.clj#L652)
 	public static final LispFunction FN_APPLY = new LispFunction() {
@@ -286,54 +269,45 @@ public final class CoreLibrary {
 		return sb.toString();
 	};
 
-	public static final LispFunction FN_NAME = new LispFunction() {
-		@Override
-		public Object apply(Object arg) {
-			if (arg instanceof String) {
-				return arg;
-			}
-			if (arg instanceof Symbol) {
-				return ((Symbol) arg).name;
-			}
-			if (arg instanceof Keyword) {
-				return ((Keyword) arg).name;
-			}
-			throw new LispException("Doesn't support name: " + FN_STR.apply(arg));
+	public static final LispFunction FN_NAME = (Fn1) par1 -> {
+		if (par1 instanceof String) {
+			return par1;
 		}
+		if (par1 instanceof Symbol) {
+			return ((Symbol) par1).name;
+		}
+		if (par1 instanceof Keyword) {
+			return ((Keyword) par1).name;
+		}
+		throw new LispException("Doesn't support name: " + FN_STR.apply(par1));
 	};
 
-	public static final LispFunction FN_SYMBOL = new LispFunction() {
-		@Override
-		public Object apply(Object arg) {
-			if (arg instanceof Symbol) {
-				return arg;
-			}
-			if (arg instanceof Keyword) {
-				Keyword kw = (Keyword) arg;
-				return new Symbol(kw.nsName, kw.name);
-			}
-			if (arg instanceof String) {
-				return new Symbol((String) arg);
-			}
-			throw new LispException("Can't create symbol from: " + FN_STR.apply(arg));
+	public static final LispFunction FN_SYMBOL = (Fn1) par1 -> {
+		if (par1 instanceof Symbol) {
+			return par1;
 		}
+		if (par1 instanceof Keyword) {
+			Keyword kw = (Keyword) par1;
+			return new Symbol(kw.nsName, kw.name);
+		}
+		if (par1 instanceof String) {
+			return new Symbol((String) par1);
+		}
+		throw new LispException("Can't create symbol from: " + FN_STR.apply(par1));
 	};
 
-	public static final LispFunction FN_KEYWORD = new LispFunction() {
-		@Override
-		public Object apply(Object arg) {
-			if (arg instanceof Keyword) {
-				return arg;
-			}
-			if (arg instanceof Symbol) {
-				Symbol sym = (Symbol) arg;
-				return new Keyword(sym.nsName, sym.name);
-			}
-			if (arg instanceof String) {
-				return new Keyword((String) arg);
-			}
-			throw new LispException("Can't create keyword from: " + FN_STR.apply(arg));
+	public static final LispFunction FN_KEYWORD = (Fn1) par1 -> {
+		if (par1 instanceof Keyword) {
+			return par1;
 		}
+		if (par1 instanceof Symbol) {
+			Symbol sym = (Symbol) par1;
+			return new Keyword(sym.nsName, sym.name);
+		}
+		if (par1 instanceof String) {
+			return new Keyword((String) par1);
+		}
+		throw new LispException("Can't create keyword from: " + FN_STR.apply(par1));
 	};
 
 	private static void print(Object[] args, Appendable out, BiConsumer<Object, Appendable> printFunction) {

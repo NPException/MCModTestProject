@@ -11,14 +11,23 @@ import de.npcomplete.nplisp.data.Symbol;
  */
 public class Namespace {
 	private final Map<Symbol, Var> mappings = new HashMap<>();
+	private final Map<Symbol, Var> referred = new HashMap<>();
 	private final Map<String, Namespace> aliases = new HashMap<>();
 
-	public final String name;
-	private final Function<Symbol,Var> internVar;
+	private final Map<Symbol, Var> referredCore;
 
-	Namespace(String name, Function<Symbol,Var> internVar) {
+	public final String name;
+	private final Function<Symbol, Var> internVar;
+
+	Namespace(String name, Namespace core, Function<Symbol, Var> internVar) {
+		referredCore = core != null ? core.mappings : null;
 		this.name = name;
 		this.internVar = internVar;
+		// add alias to self to resolve fully qualified symbols
+		addAlias(name, this);
+		if (core != null) {
+			addAlias(core.name, core);
+		}
 	}
 
 	@Override
@@ -49,21 +58,34 @@ public class Namespace {
 	}
 
 	public Var referAs(Symbol sym, Var v) {
-		mappings.put(sym, v);
+		referred.put(sym, v);
 		return v;
 	}
 
 	public Var lookupVar(Symbol symbol) {
-		Var v = mappings.get(symbol);
-		if (v != null) {
-			return v;
+		Var var;
+		if (symbol.nsName == null) {
+			var = mappings.get(symbol);
+			if (var != null) {
+				return var;
+			}
+		}
+		var = referred.get(symbol);
+		if (var != null) {
+			return var;
+		}
+		if (referredCore != null) {
+			var = referredCore.get(symbol);
+			if (var != null) {
+				return var;
+			}
 		}
 		if (symbol.nsName == null) {
 			throw new LispException("Symbol '" + symbol.name + "' is unbound in namespace '" + name + "'");
 		}
 		Namespace aliasedNamespace = aliases.get(symbol.nsName);
 		if (aliasedNamespace == null) {
-			throw new LispException("Namespace '" + symbol.nsName + "' needs to be required before use");
+			throw new LispException("Unknown namespace or alias: '" + symbol.nsName + "' (Namespaces need to be required before use)");
 		}
 		// refer for quicker lookup next time
 		return referAs(symbol, aliasedNamespace.lookupVar(new Symbol(symbol.name)));
@@ -73,9 +95,6 @@ public class Namespace {
 		if (symbol.nsName != null) {
 			throw new LispException("Can't def fully qualified symbols");
 		}
-		// store mapping for fully qualified and simple symbol
-		Var var = mappings.computeIfAbsent(new Symbol(this.name, symbol.name), internVar);
-		mappings.put(symbol, var);
-		return var;
+		return mappings.computeIfAbsent(symbol, sym -> internVar.apply(new Symbol(name, sym.name)));
 	}
 }
