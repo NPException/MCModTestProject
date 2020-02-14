@@ -1,9 +1,8 @@
 ;; core library
 
 (defmacro defn [name & fn-declaration]
-  (cons 'def
-    (list name
-      (apply list 'fn name fn-declaration))))
+  (list 'def name
+    (apply list 'fn name fn-declaration)))
 
 
 ;; LOGIC FUNCTIONS AND MACROS
@@ -27,7 +26,7 @@
   ([x & next]
     (list 'if x
       x
-      (cons 'and next))))
+      (cons 'or next))))
 
 
 ;; CONDITIONALS
