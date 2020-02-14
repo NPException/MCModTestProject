@@ -40,13 +40,13 @@ Example:
  */
 
 // TODO: finish namespaces: implement 'ns' and 'require'
+// TODO: doc-strings
+// TODO: loop
 // TODO: javadoc in CoreLibrary
-// TODO: switch from using java.util.List to own Vector class
-// TODO: destructuring
 // TODO: proper macro expansion
 // TODO: syntax-quote / unquote
-// TODO: loop
-// TODO: doc-strings
+// TODO: destructuring
+// TODO: switch from using java.util.List to own Vector class
 
 public class Lisp {
 	public static final String CORE_NS_NAME = "nplisp.core";
