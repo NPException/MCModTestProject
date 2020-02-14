@@ -3,6 +3,7 @@ package de.npcomplete.nplisp.data;
 import java.util.Map;
 import java.util.Objects;
 
+import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.function.LispFunction;
 import de.npcomplete.nplisp.util.LispPrinter;
 
@@ -13,12 +14,19 @@ public final class Symbol implements LispFunction {
 	public final String name;
 
 	public Symbol(String name) {
-		this(null, name);
+		if (name.indexOf('/') == -1 || name.length() == 1) {
+			this.nsName = null;
+			this.name = name;
+			return;
+		}
+		String[] nsAndName = name.split("/", 2);
+		this.nsName = verifyNs(nsAndName[0]);
+		this.name = verifyName(nsAndName[1]);
 	}
 
 	public Symbol(String nsName, String name) {
-		this.nsName = nsName;
-		this.name = name;
+		this.nsName = verifyNs(nsName);
+		this.name = verifyName(name);
 	}
 
 	@Override
@@ -60,5 +68,22 @@ public final class Symbol implements LispFunction {
 	@Override
 	public String toString() {
 		return LispPrinter.prStr(this);
+	}
+
+
+	static String verifyNs(String nsName) {
+		if (nsName.length() == 0
+				|| nsName.indexOf('/') != -1) {
+			throw new LispException("Invalid namespace name: '" + nsName + "'");
+		}
+		return nsName;
+	}
+
+	static String verifyName(String name) {
+		if (name.length() == 0
+				|| name.indexOf('/') != -1 && name.length() != 1) {
+			throw new LispException("Invalid name: '" + name + "'");
+		}
+		return name;
 	}
 }

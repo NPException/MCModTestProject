@@ -39,7 +39,6 @@ Example:
 
  */
 
-// TODO: read namespaced symbols and keywords !!!
 // TODO: finish namespaces: implement 'ns' and 'require'
 // TODO: javadoc in CoreLibrary
 // TODO: switch from using java.util.List to own Vector class

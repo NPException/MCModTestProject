@@ -1,5 +1,8 @@
 package de.npcomplete.nplisp.data;
 
+import static de.npcomplete.nplisp.data.Symbol.verifyName;
+import static de.npcomplete.nplisp.data.Symbol.verifyNs;
+
 import java.util.Map;
 import java.util.Objects;
 
@@ -13,12 +16,19 @@ public final class Keyword implements LispFunction {
 	public final String name;
 
 	public Keyword(String name) {
-		this(null, name);
+		if (name.indexOf('/') == -1 || name.length() == 1) {
+			this.nsName = null;
+			this.name = name;
+			return;
+		}
+		String[] nsAndName = name.split("/", 2);
+		this.nsName = verifyNs(nsAndName[0]);
+		this.name = verifyName(nsAndName[1]);
 	}
 
 	public Keyword(String nsName, String name) {
-		this.nsName = nsName;
-		this.name = name;
+		this.nsName = verifyNs(nsName);
+		this.name = verifyName(name);
 	}
 
 	@Override
