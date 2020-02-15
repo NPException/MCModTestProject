@@ -60,7 +60,7 @@ public class Lisp {
 		Namespace coreNs = namespaces.core;
 
 		// EVAL & APPLY
-		def(coreNs, "eval", (Fn1) par1 -> eval(par1, new Environment(coreNs, null), false));
+		def(coreNs, "eval", (Fn1) par1 -> eval(par1, new Environment(coreNs), false));
 		def(coreNs, "apply", CoreLibrary.FN_APPLY);
 
 		// SPECIAL FORMS
@@ -133,7 +133,7 @@ public class Lisp {
 		// TODO: use load-ns function (to-be-implemented)
 		try (InputStream in = Lisp.class.getResourceAsStream("/nplisp/core.edn");
 			 Reader reader = new InputStreamReader(in)) {
-			Environment coreEnv = new Environment(coreNs, null);
+			Environment coreEnv = new Environment(coreNs);
 			Object coreNamespaceForm = LispReader.read(reader);
 			eval(coreNamespaceForm, coreEnv, false);
 		} catch (Exception e) {

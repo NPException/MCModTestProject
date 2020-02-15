@@ -402,7 +402,7 @@ public final class CoreLibrary {
 				throw new LispException("First argument to 'ns' must be a simple symbol");
 			}
 			Namespace ns = internNamespace.apply(((Symbol) o).name);
-			Environment nsEnv = new Environment(ns, null);
+			Environment nsEnv = new Environment(ns);
 
 			if (!ns.name.equals("nplisp.core")) {
 				// hack 'eval' to make it work with the namespace instead of nplisp.core

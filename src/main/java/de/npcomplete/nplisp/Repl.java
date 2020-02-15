@@ -31,7 +31,7 @@ public class Repl {
 	 * (note: generics are only used to safe the caller an explicit cast)
 	 */
 	public <T> T eval(Object form) {
-		Environment replEnv = new Environment(currentReplNs[0], null);
+		Environment replEnv = new Environment(currentReplNs[0]);
 		replEnv.bind(IN_NS_SYMBOL, in_ns_function);
 		return (T) Lisp.eval(form, replEnv, false);
 	}

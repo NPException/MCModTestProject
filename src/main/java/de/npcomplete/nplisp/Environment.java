@@ -15,12 +15,13 @@ public class Environment {
 	public final Namespace namespace;
 
 	public Environment(Environment parent) {
-		this(parent.namespace, parent);
+		this.namespace = parent.namespace;
+		this.parent = parent;
 	}
 
-	public Environment(Namespace namespace, Environment parent) {
+	public Environment(Namespace namespace) {
 		this.namespace = Objects.requireNonNull(namespace);
-		this.parent = parent;
+		this.parent = null;
 	}
 
 	public Object lookup(Symbol symbol) {
