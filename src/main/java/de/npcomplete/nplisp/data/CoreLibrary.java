@@ -12,9 +12,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
+import de.npcomplete.nplisp.Environment;
 import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.LispException;
+import de.npcomplete.nplisp.Namespace;
+import de.npcomplete.nplisp.Var;
 import de.npcomplete.nplisp.function.LispFunction;
 import de.npcomplete.nplisp.function.LispFunctionFactory.Fn1;
 import de.npcomplete.nplisp.function.LispFunctionFactory.Fn2;
@@ -320,7 +324,7 @@ public final class CoreLibrary {
 		}
 	}
 
-	public static final VarArgsFunction FN_PR = args -> {
+	public static final LispFunction FN_PR = (VarArgsFunction) args -> {
 		print(args, System.out, LispPrinter::pr);
 		return null;
 	};
@@ -331,7 +335,7 @@ public final class CoreLibrary {
 		return null;
 	};
 
-	public static final VarArgsFunction FN_PR_STR = args -> {
+	public static final LispFunction FN_PR_STR = (VarArgsFunction) args -> {
 		StringBuilder sb = new StringBuilder();
 		print(args, sb, LispPrinter::pr);
 		return sb.toString();
@@ -344,7 +348,7 @@ public final class CoreLibrary {
 		return sb.toString();
 	};
 
-	public static final VarArgsFunction FN_PRINT = args -> {
+	public static final LispFunction FN_PRINT = (VarArgsFunction) args -> {
 		print(args, System.out, LispPrinter::print);
 		return null;
 	};
@@ -355,7 +359,7 @@ public final class CoreLibrary {
 		return null;
 	};
 
-	public static final VarArgsFunction FN_PRINT_STR = args -> {
+	public static final LispFunction FN_PRINT_STR = (VarArgsFunction) args -> {
 		StringBuilder sb = new StringBuilder();
 		print(args, sb, LispPrinter::print);
 		return sb.toString();
@@ -378,4 +382,45 @@ public final class CoreLibrary {
 		FN_PRN.apply("Elapsed time: " + time / 1_000_000.0 + " msecs");
 		return val;
 	};
+
+	/**
+	 * Executes the body in the context of the given namespace.
+	 * Creates the namespace if it does not yet exist.
+	 * Returns the namespace.
+	 * Note: The 'ns' form does not capture any bindings from a surrounding environment.
+	 */
+	public static SpecialForm SF_NS(Function<String, Namespace> internNamespace) {
+		Symbol evalSym = new Symbol("eval");
+		Symbol evalSymQualified = new Symbol("nplisp.core/eval");
+
+		return (args, env, allowRecur) -> {
+			if (args.empty()) {
+				throw new LispException("'ns' requires at least one argument: (ns NAME *&BODY*)");
+			}
+			Object o = args.first();
+			if (!(o instanceof Symbol) || ((Symbol) o).nsName != null) {
+				throw new LispException("First argument to 'ns' must be a simple symbol");
+			}
+			Namespace ns = internNamespace.apply(((Symbol) o).name);
+			Environment nsEnv = new Environment(ns, null);
+
+			if (!ns.name.equals("nplisp.core")) {
+				// hack 'eval' to make it work with the namespace instead of nplisp.core
+				// TODO: find a better way
+				Symbol evalHackSym = new Symbol(ns.name, "~$eval-hack$~");
+				Var evalHack = new Var(evalHackSym).bind((Fn1) par -> Lisp.eval(par, nsEnv, false));
+
+				if (ns.lookupVar(evalSym).symbol.nsName.equals("nplisp.core")) {
+					ns.referAs(evalSym, evalHack);
+				}
+				if (ns.lookupVar(evalSymQualified).symbol.nsName.equals("nplisp.core")) {
+					ns.referAs(evalSymQualified, evalHack);
+				}
+			}
+
+			// evaluate body
+			SpecialForm.DO(args.next(), nsEnv, false);
+			return ns;
+		};
+	}
 }

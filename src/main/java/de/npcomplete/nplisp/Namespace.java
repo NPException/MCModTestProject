@@ -19,10 +19,10 @@ public class Namespace {
 	public final String name;
 	private final Function<Symbol, Var> internVar;
 
-	Namespace(String name, Namespace core, Function<Symbol, Var> internVar) {
+	Namespace(String name, Namespace core, Function<Symbol, Var> internQualifiedVar) {
 		referredCore = core != null ? core.mappings : null;
 		this.name = name;
-		this.internVar = internVar;
+		this.internVar = sym -> internQualifiedVar.apply(new Symbol(name, sym.name));
 		// add alias to self to resolve fully qualified symbols
 		addAlias(name, this);
 		if (core != null) {
@@ -91,10 +91,10 @@ public class Namespace {
 		return referAs(symbol, aliasedNamespace.lookupVar(new Symbol(symbol.name)));
 	}
 
-	public Var defineVar(Symbol symbol) {
+	public Var define(Symbol symbol) {
 		if (symbol.nsName != null) {
 			throw new LispException("Can't def fully qualified symbols");
 		}
-		return mappings.computeIfAbsent(symbol, sym -> internVar.apply(new Symbol(name, sym.name)));
+		return mappings.computeIfAbsent(symbol, internVar);
 	}
 }

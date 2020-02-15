@@ -8,6 +8,7 @@ import java.io.Reader;
 import java.util.Iterator;
 
 import de.npcomplete.nplisp.Lisp;
+import de.npcomplete.nplisp.Repl;
 import de.npcomplete.nplisp.Var;
 import de.npcomplete.nplisp.function.LispFunctionFactory.Fn0;
 import de.npcomplete.nplisp.util.LispPrinter;
@@ -27,13 +28,13 @@ public final class Playground {
 	}
 
 	private static void start(InputStream in) {
-		Lisp lisp = new Lisp();
-
+		Repl repl = new Repl(new Lisp());
 		// add test helper functions
 
-		evalStr(lisp, "(in-ns 'playground)");
+		repl.evalStr("(in-ns 'playground)");
 
-		Var exitVar = evalStr(lisp, "(def exit)");
+		// TODO: move into test.edn file once interop exists
+		Var exitVar = repl.evalStr("(def exit)");
 		exitVar.bind((Fn0) () -> {
 			System.exit(0);
 			return null;
@@ -42,24 +43,19 @@ public final class Playground {
 		try (Reader reader = new InputStreamReader(in)) {
 			Iterator<Object> it = LispReader.readMany(reader);
 			while (it.hasNext()) {
-				run(lisp, it.next());
+				run(repl, it.next());
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	private static <T> T evalStr(Lisp lisp, String str) {
-		return (T) lisp.eval(LispReader.readStr(str));
-	}
-
-	private static void run(Lisp lisp, Object form) {
+	private static void run(Repl repl, Object form) {
 		System.out.println();
 		System.out.print("~: ");
 		System.out.println(LispPrinter.prStr(form));
 		try {
-			Object result = lisp.eval(form);
+			Object result = repl.eval(form);
 			System.out.print("~>");
 			System.out.println(LispPrinter.prStr(result));
 		} catch (Exception e) {

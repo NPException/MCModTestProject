@@ -6,7 +6,6 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -39,17 +38,17 @@ Example:
 
  */
 
-// TODO: finish namespaces: implement 'ns' and 'require'
+// TODO: finish namespaces: implement 'require'
 // TODO: doc-strings
 // TODO: loop
 // TODO: javadoc in CoreLibrary
 // TODO: proper macro expansion
+// TODO: ensure all used symbols are already bound when invoking 'fn' or 'defmacro'
 // TODO: syntax-quote / unquote
 // TODO: destructuring
 // TODO: switch from using java.util.List to own Vector class
 
 public class Lisp {
-	public static final String CORE_NS_NAME = "nplisp.core";
 	public final NamespaceMap namespaces = new NamespaceMap();
 
 	public Lisp() {
@@ -59,6 +58,10 @@ public class Lisp {
 		long start = System.nanoTime();
 
 		Namespace coreNs = namespaces.core;
+
+		// EVAL & APPLY
+		def(coreNs, "eval", (Fn1) par1 -> eval(par1, new Environment(coreNs, null), false));
+		def(coreNs, "apply", CoreLibrary.FN_APPLY);
 
 		// SPECIAL FORMS
 		def(coreNs, "def", (SpecialForm) SpecialForm::DEF);
@@ -70,12 +73,8 @@ public class Lisp {
 		def(coreNs, "quote", (SpecialForm) SpecialForm::QUOTE);
 		def(coreNs, "defmacro", (SpecialForm) SpecialForm::DEFMACRO);
 
-		// LOOP (TODO)
+		// TODO: 'loop'
 		def(coreNs, "recur", CoreLibrary.FN_RECUR);
-
-		// EVAL & APPLY
-		def(coreNs, "eval", (Fn1) this::eval);
-		def(coreNs, "apply", CoreLibrary.FN_APPLY);
 
 		// DATA STRUCTURE CREATION
 		def(coreNs, "list", CoreLibrary.FN_LIST);
@@ -113,15 +112,16 @@ public class Lisp {
 		def(coreNs, "print-str", CoreLibrary.FN_PRINT_STR);
 		def(coreNs, "println-str", CoreLibrary.FN_PRINTLN_STR);
 
+		// READING
+
+		// TODO: read-file, read-str, read-resource
+		// (read the first form encountered in the source)
+
 		// NAMESPACE HANDLING
-		def(coreNs, "*ns*", coreNs); // *ns* holds the current namespace for calls to 'eval'
-		def(coreNs, "in-ns", (Fn1) par -> {
-			String name = (String) CoreLibrary.FN_NAME.apply(par);
-			Namespace ns = namespaces.getOrCreateNamespace(name);
-			currentNsVar().bind(ns);
-			return ns;
-		});
-		// TODO: implement 'ns' and 'require'
+
+		def(coreNs, "ns", CoreLibrary.SF_NS(namespaces::getOrCreateNamespace));
+		// TODO: implement 'load-ns' (read file or resource, eval if it is an 'ns' form)
+		// TODO: implement 'require' (if desired namespace is not yet aliased, initialize via 'load-ns' then alias. Else just alias.)
 
 		// TODO: COMPARISONS
 
@@ -130,32 +130,18 @@ public class Lisp {
 
 		// bootstrap rest of core library
 
-		try (InputStream in = Lisp.class.getResourceAsStream("core.edn");
+		// TODO: use load-ns function (to-be-implemented)
+		try (InputStream in = Lisp.class.getResourceAsStream("/nplisp/core.edn");
 			 Reader reader = new InputStreamReader(in)) {
 			Environment coreEnv = new Environment(coreNs, null);
-			Iterator<Object> it = LispReader.readMany(reader);
-			while (it.hasNext()) {
-				eval(it.next(), coreEnv, false);
-			}
+			Object coreNamespaceForm = LispReader.read(reader);
+			eval(coreNamespaceForm, coreEnv, false);
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to load core library", e);
 		}
 
-		// setup default 'user' namespace
-		Namespace ns = namespaces.getOrCreateNamespace("user");
-		currentNsVar().bind(ns);
-
 		long time = System.nanoTime() - start;
 		System.out.println("Done in " + time / 1_000_000.0 + " msecs");
-	}
-
-	private Var currentNsVar() {
-		return namespaces.core.lookupVar(new Symbol("*ns*"));
-	}
-
-	public Object eval(Object obj) {
-		Namespace currentNs = (Namespace) currentNsVar().deref();
-		return eval(obj, new Environment(currentNs, null), false);
 	}
 
 	public static Object eval(Object obj, Environment env, boolean allowRecur) throws LispException {
@@ -178,7 +164,6 @@ public class Lisp {
 			}
 
 			// TODO: proper macro expansion phase (try to expand macros after reading)
-			// TODO: alternatively replace current sequence in code after expansion
 			if (callable instanceof Macro) {
 				Sequence args = seq.more();
 				Object expansion = ((Macro) callable).expand(args);
@@ -272,16 +257,16 @@ public class Lisp {
 	}
 
 	private static void def(Namespace ns, String key, Object value) {
-		ns.defineVar(new Symbol(key)).bind(value);
+		ns.define(new Symbol(key)).bind(value);
 	}
 
 	public static class NamespaceMap {
 		private final Map<String, Namespace> namespaces = new HashMap<>();
 		private final Map<String, Map<String, Var>> allVars = new HashMap<>();
-		final Namespace core = new Namespace(CORE_NS_NAME, null, this::internVar);
+		final Namespace core = new Namespace("nplisp.core", null, this::internVar);
 
 		NamespaceMap() {
-			namespaces.put(CORE_NS_NAME, core);
+			namespaces.put(core.name, core);
 		}
 
 		private Var internVar(Symbol symbol) {
