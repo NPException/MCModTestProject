@@ -40,6 +40,9 @@ Example:
 
 // TODO: finish namespaces: implement 'require'
 // TODO: doc-strings
+// TODO: interop - (. $target-class $receiver-instance ($method-name $arg*))
+//                 (.set $target-class $receiver-instance $field-name)
+//                 (.get $target-class $receiver-instance $field-name)
 // TODO: loop
 // TODO: javadoc in CoreLibrary
 // TODO: proper macro expansion
