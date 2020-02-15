@@ -34,7 +34,7 @@ public class Environment {
 				return parent.lookup(symbol);
 			}
 		}
-		return namespace.lookupVar(symbol).deref();
+		return namespace.lookupVar(symbol);
 	}
 
 	public void bind(Symbol symbol, Object value) {

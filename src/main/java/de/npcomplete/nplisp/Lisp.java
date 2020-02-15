@@ -144,9 +144,21 @@ public class Lisp {
 		System.out.println("Done in " + time / 1_000_000.0 + " msecs");
 	}
 
+	private static Object lookup(Environment env, Symbol sym, boolean allowMacro) {
+		Object val = env.lookup(sym);
+		if (!(val instanceof Var)) {
+			return val;
+		}
+		Var var = (Var) val;
+		if (!allowMacro && var.isMacro()) {
+			throw new LispException("Can't take value of a macro: " + var);
+		}
+		return var.deref();
+	}
+
 	public static Object eval(Object obj, Environment env, boolean allowRecur) throws LispException {
 		if (obj instanceof Symbol) {
-			return env.lookup((Symbol) obj);
+			return lookup(env, (Symbol) obj, false);
 		}
 
 		if (obj instanceof Sequence) {
@@ -154,8 +166,11 @@ public class Lisp {
 			if (seq.empty()) {
 				throw new LispException("Can't evaluate empty list");
 			}
-			// evaluate first element
-			Object callable = eval(seq.first(), env, false);
+			// evaluate first element with special handling for symbols to allow macros
+			Object firstElement = seq.first();
+			Object callable = firstElement instanceof Symbol
+					? lookup(env, (Symbol) firstElement, true)
+					: eval(seq.first(), env, false);
 
 			// call to special form
 			if (callable instanceof SpecialForm) {

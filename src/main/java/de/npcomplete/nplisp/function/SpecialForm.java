@@ -43,6 +43,7 @@ public interface SpecialForm {
 			Object initForm = nextArgs.first();
 			Object value = Lisp.eval(initForm, env, false);
 			var.bind(value);
+			var.macro(false);
 		}
 
 		return var;
@@ -198,6 +199,7 @@ public interface SpecialForm {
 		LispFunction macroFunction = FN(args, env, false /*not used in FN*/);
 		Macro macro = macroFunction::applyTo;
 
-		return DEF(new Cons(sym, new Cons(macro, null)), env, allowRecur);
+		return DEF(new Cons(sym, new Cons(macro, null)), env, allowRecur)
+				.macro(true);
 	}
 }

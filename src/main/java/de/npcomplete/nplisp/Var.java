@@ -12,12 +12,22 @@ public class Var implements LispFunction, Deref {
 
 	public final Symbol symbol;
 	private Object value = UNBOUND;
+	private boolean isMacro;
 
 	public Var(Symbol symbol) {
 		if (symbol.nsName == null) {
 			throw new LispException("Can't create var without fully qualified symbol");
 		}
 		this.symbol = symbol;
+	}
+
+	public boolean isMacro() {
+		return isMacro;
+	}
+
+	public Var macro(boolean isMacro) {
+		this.isMacro = isMacro;
+		return this;
 	}
 
 	@Override
