@@ -5,10 +5,16 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -323,30 +329,123 @@ public final class CoreLibrary {
 		throw new LispException("Can't create keyword from: " + FN_STR.apply(par1));
 	};
 
+	// BASIC I/O
+
+	// taken from clojure.java.io/escaped-utf8-urlstring->str
+	private static String escaped_utf8_urlstring_to_string(String s) {
+		try {
+			String encodedPlus = URLEncoder.encode("+", "UTF-8");
+			String prepared = s.replace("+", encodedPlus);
+			return URLDecoder.decode(prepared, "UTF-8");
+		} catch (UnsupportedEncodingException ignore) {
+			throw new Error("No UTF-8 available? WTF?! Impossible!");
+		}
+	}
+
 	/**
 	 * Coerces its argument to a {@link File}
 	 */
-	public static final LispFunction FN_FILE = (Fn1) par -> {
-		if (par instanceof File) {
-			return par;
+	public static final LispFunction FN_AS_FILE = (Fn1) CoreLibrary::asFile;
+
+	private static File asFile(Object par) {
+		if (par == null) {
+			return null;
 		}
 		if (par instanceof String) {
 			return new File((String) par);
 		}
+		if (par instanceof File) {
+			return (File) par;
+		}
 		if (par instanceof Path) {
 			return ((Path) par).toFile();
 		}
+		if (par instanceof URL) {
+			URL url = (URL) par;
+			if ("file".equals(url.getProtocol())) {
+				String path = url.getFile().replace('/', File.separatorChar);
+				return new File(escaped_utf8_urlstring_to_string(path));
+			} else {
+				throw new LispException("Can't create File. URL is not a file: " + url);
+			}
+		}
 		if (par instanceof URI) {
-			return new File((URI) par);
+			return asFile(asUrl(par));
+		}
+		throw new LispException("Don't know how to create file from: " + par);
+	}
+
+	/**
+	 * Coerces its argument to a {@link URL}
+	 */
+	public static final LispFunction FN_AS_URL = (Fn1) CoreLibrary::asUrl;
+
+	private static URL asUrl(Object par) {
+		if (par == null) {
+			return null;
+		}
+		if (par instanceof String) {
+			try {
+				return new URL((String) par);
+			} catch (MalformedURLException e) {
+				throw new LispException("Can't create URL from String: " + par, e);
+			}
+		}
+		if (par instanceof File) {
+			try {
+				return ((File) par).toURI().toURL();
+			} catch (MalformedURLException e) {
+				throw new LispException("Can't create URL from File: " + par, e);
+			}
+		}
+		if (par instanceof Path) {
+			try {
+				return ((Path) par).toUri().toURL();
+			} catch (MalformedURLException e) {
+				throw new LispException("Can't create URL from Path: " + par, e);
+			}
 		}
 		if (par instanceof URL) {
+			return (URL) par;
+		}
+		if (par instanceof URI) {
 			try {
-				return new File(((URL) par).toURI());
-			} catch (URISyntaxException e) {
-				throw new LispException("Can't create file from URL: " + par, e);
+				return ((URI) par).toURL();
+			} catch (MalformedURLException e) {
+				throw new LispException("Can't create URL from URI: " + par, e);
 			}
 		}
 		throw new LispException("Don't know how to create file from: " + par);
+	}
+
+	public static final LispFunction FN_RESOURCE_URL = new LispFunction() {
+		@Override
+		public Object apply(Object name) {
+			return apply(Lisp.class, name);
+		}
+
+		@Override
+		public Object apply(Object clazz, Object name) {
+			return ((Class<?>) clazz).getResource((String) name);
+		}
+	};
+
+	/**
+	 * Coerces its argument to a {@link Reader}.
+	 * If the argument i
+	 */
+	public static final LispFunction FN_READER = (Fn1) par -> {
+		Object source;
+		try {
+			source = asUrl(par);
+		} catch (Exception e) {
+			source = asFile(par);
+		}
+		try {
+			return new InputStreamReader(asUrl(source).openStream());
+		} catch (IOException e) {
+			throw new LispException("Can't create reader from URL: " + par, e);
+		}
 	};
 
 	// PRINTING //
@@ -412,17 +511,11 @@ public final class CoreLibrary {
 	// READING //
 	public static final LispFunction FN_READ_STRING = (Fn1) par -> LispReader.readStr((String) par);
 
-	public static final LispFunction FN_READ = (Fn1) par -> {
-		try (Reader reader = (Reader) par) {
-			return LispReader.read(reader);
-		} catch (Exception e) {
-			throw new LispException("Can't read from: " + par, e);
-		}
-	};
+	public static final LispFunction FN_READ = (Fn1) par -> LispReader.read((Reader) par);
 
 	//
 
-	public static final SpecialForm MACRO_TIME = (args, env, allowRecur) -> {
+	public static final SpecialForm SF_TIME = (args, env, allowRecur) -> {
 		if (args.empty() || args.next() != null) {
 			throw new LispException("'time' requires exactly one argument");
 		}
@@ -473,4 +566,14 @@ public final class CoreLibrary {
 			return ns;
 		};
 	}
+
+	public static final Delay CORE_NS_FORM = new Delay(() -> {
+		// TODO: use load-ns function (to-be-implemented)
+		try (InputStream in = Lisp.class.getResourceAsStream("/nplisp/core.edn");
+			 Reader reader = new InputStreamReader(in)) {
+			return LispReader.read(reader);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to load core library", e);
+		}
+	});
 }

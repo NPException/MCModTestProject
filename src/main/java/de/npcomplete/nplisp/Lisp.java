@@ -1,8 +1,5 @@
 package de.npcomplete.nplisp;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,7 +17,6 @@ import de.npcomplete.nplisp.function.LispFunctionFactory.Fn1;
 import de.npcomplete.nplisp.function.Macro;
 import de.npcomplete.nplisp.function.SpecialForm;
 import de.npcomplete.nplisp.util.LispPrinter;
-import de.npcomplete.nplisp.util.LispReader;
 
 /*
 
@@ -44,6 +40,9 @@ Example:
 //                 (.set $target-class $receiver-instance $field-name)
 //                 (.get $target-class $receiver-instance $field-name)
 // TODO: loop
+// TODO: 'delay' (and 'deref')
+// TODO: 'try/catch' form
+// TODO: 'with-open' form
 // TODO: javadoc in CoreLibrary
 // TODO: proper macro expansion
 // TODO: ensure all used symbols are already bound when invoking 'fn' or 'defmacro'
@@ -56,8 +55,8 @@ public class Lisp {
 
 	public Lisp() {
 		// INIT CORE LIBRARY //
+		// TODO: move initialization to CoreLibrary class
 
-		System.out.println("Initializing core library");
 		long start = System.nanoTime();
 
 		Namespace coreNs = namespaces.core;
@@ -105,7 +104,10 @@ public class Lisp {
 		def(coreNs, "keyword", CoreLibrary.FN_KEYWORD);
 
 		// I/O
-		def(coreNs, "file", CoreLibrary.FN_FILE);
+		def(coreNs, "as-file", CoreLibrary.FN_AS_FILE);
+		def(coreNs, "as-url", CoreLibrary.FN_AS_URL);
+		def(coreNs, "resource-url", CoreLibrary.FN_RESOURCE_URL);
+		def(coreNs, "reader", CoreLibrary.FN_READER);
 
 		// PRINTING
 		def(coreNs, "pr", CoreLibrary.FN_PR);
@@ -132,22 +134,17 @@ public class Lisp {
 		// TODO: COMPARISONS
 
 		// UTILITY
-		def(coreNs, "time", CoreLibrary.MACRO_TIME);
+		def(coreNs, "time", CoreLibrary.SF_TIME);
 
 		// bootstrap rest of core library
+		Environment coreEnv = new Environment(coreNs);
+		eval(CoreLibrary.CORE_NS_FORM.deref(), coreEnv, false);
 
-		// TODO: use load-ns function (to-be-implemented)
-		try (InputStream in = Lisp.class.getResourceAsStream("/nplisp/core.edn");
-			 Reader reader = new InputStreamReader(in)) {
-			Environment coreEnv = new Environment(coreNs);
-			Object coreNamespaceForm = LispReader.read(reader);
-			eval(coreNamespaceForm, coreEnv, false);
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to load core library", e);
-		}
-
+		// Note: Initialization is quite slow when all the lambdas are first bootstrapped and
+		//       and the core namespace is read from disk once. (~30 ms)
+		//       After that it's okay. (~0.5 ms)
 		long time = System.nanoTime() - start;
-		System.out.println("Done in " + time / 1_000_000.0 + " msecs");
+		System.out.println("Core library initialized in " + time / 1_000_000.0 + " msecs");
 	}
 
 	private static Object lookup(Environment env, Symbol sym, boolean allowMacro) {
