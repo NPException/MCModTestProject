@@ -104,6 +104,9 @@ public class Lisp {
 		def(coreNs, "symbol", CoreLibrary.FN_SYMBOL);
 		def(coreNs, "keyword", CoreLibrary.FN_KEYWORD);
 
+		// I/O
+		def(coreNs, "file", CoreLibrary.FN_FILE);
+
 		// PRINTING
 		def(coreNs, "pr", CoreLibrary.FN_PR);
 		def(coreNs, "prn", CoreLibrary.FN_PRN);
@@ -117,8 +120,8 @@ public class Lisp {
 
 		// READING
 
-		// TODO: read-file, read-str, read-resource
-		// (read the first form encountered in the source)
+		def(coreNs, "read", CoreLibrary.FN_READ);
+		def(coreNs, "read-string", CoreLibrary.FN_READ_STRING);
 
 		// NAMESPACE HANDLING
 

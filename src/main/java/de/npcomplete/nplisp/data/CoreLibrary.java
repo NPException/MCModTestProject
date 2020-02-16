@@ -4,6 +4,12 @@ import static de.npcomplete.nplisp.util.LispElf.mapIterator;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 
+import java.io.File;
+import java.io.Reader;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,6 +31,9 @@ import de.npcomplete.nplisp.function.LispFunctionFactory.Fn2;
 import de.npcomplete.nplisp.function.SpecialForm;
 import de.npcomplete.nplisp.function.VarArgsFunction;
 import de.npcomplete.nplisp.util.LispPrinter;
+import de.npcomplete.nplisp.util.LispReader;
+
+// TODO: move all things that aren't trivial method references to separate classes in a "corelibrary" package
 
 public final class CoreLibrary {
 	private CoreLibrary() {
@@ -314,6 +323,34 @@ public final class CoreLibrary {
 		throw new LispException("Can't create keyword from: " + FN_STR.apply(par1));
 	};
 
+	/**
+	 * Coerces its argument to a {@link File}
+	 */
+	public static final LispFunction FN_FILE = (Fn1) par -> {
+		if (par instanceof File) {
+			return par;
+		}
+		if (par instanceof String) {
+			return new File((String) par);
+		}
+		if (par instanceof Path) {
+			return ((Path) par).toFile();
+		}
+		if (par instanceof URI) {
+			return new File((URI) par);
+		}
+		if (par instanceof URL) {
+			try {
+				return new File(((URL) par).toURI());
+			} catch (URISyntaxException e) {
+				throw new LispException("Can't create file from URL: " + par, e);
+			}
+		}
+		throw new LispException("Don't know how to create file from: " + par);
+	};
+
+	// PRINTING //
+
 	private static void print(Object[] args, Appendable out, BiConsumer<Object, Appendable> printFunction) {
 		if (args.length > 0) {
 			printFunction.accept(args[0], out);
@@ -371,6 +408,19 @@ public final class CoreLibrary {
 		sb.append('\n');
 		return sb.toString();
 	};
+
+	// READING //
+	public static final LispFunction FN_READ_STRING = (Fn1) par -> LispReader.readStr((String) par);
+
+	public static final LispFunction FN_READ = (Fn1) par -> {
+		try (Reader reader = (Reader) par) {
+			return LispReader.read(reader);
+		} catch (Exception e) {
+			throw new LispException("Can't read from: " + par, e);
+		}
+	};
+
+	//
 
 	public static final SpecialForm MACRO_TIME = (args, env, allowRecur) -> {
 		if (args.empty() || args.next() != null) {
