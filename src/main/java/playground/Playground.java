@@ -25,7 +25,7 @@ public final class Playground {
 	private static final Object inNsPlaygroundForm = repl.evalStr("'(in-ns 'playground)");
 	private static final Object defExitForm = repl.evalStr("'(def exit)");
 
-	private static void evalForms(Iterator<Object> forms) {// add test helper functions
+	private static void evalForms(Iterator<Object> forms, boolean isAuto) {// add test helper functions
 		repl.eval(inNsPlaygroundForm);
 		// TODO: move into test.edn file once interop exists
 		Var exitVar = repl.eval(defExitForm);
@@ -34,21 +34,37 @@ public final class Playground {
 			return null;
 		});
 
+		if (!isAuto) {
+			System.out.print(repl.currentNs().name + "=> ");
+			System.out.flush();
+		}
+
 		while (forms.hasNext()) {
-			run(forms.next());
+			try {
+				Object form = forms.next();
+				if (isAuto) {
+					System.out.println();
+					System.out.print(repl.currentNs().name + "=> " + form);
+					System.out.println();
+				}
+				Object result = repl.eval(form);
+				System.out.println(LispPrinter.prStr(result));
+			} catch (Exception e) {
+				System.out.println("Failed - " + e.getClass().getName() + ": " + e.getMessage());
+			}
+			if (!isAuto) {
+				System.out.println();
+				System.out.print(repl.currentNs().name + "=> ");
+				System.out.flush();
+			}
 		}
 	}
 
-	private static void run(Object form) {
-		System.out.println();
-		System.out.print("~: ");
-		System.out.println(LispPrinter.prStr(form));
-		try {
-			Object result = repl.eval(form);
-			System.out.print("~>");
-			System.out.println(LispPrinter.prStr(result));
-		} catch (Exception e) {
-			System.out.println("Failed - " + e.getClass().getName() + ": " + e.getMessage());
+	public static void main(String[] args) {
+		try (Reader reader = new InputStreamReader(System.in)) {
+			evalForms(LispReader.readMany(reader), false);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -56,7 +72,7 @@ public final class Playground {
 		public static void main(String[] arguments) throws Exception {
 			long start = System.nanoTime();
 			try {
-				evalForms(LispReader.readMany(new FileReader("test.edn")));
+				evalForms(LispReader.readMany(new FileReader("test.edn")), true);
 			} finally {
 				long time = System.nanoTime() - start;
 				System.out.println("Runtime: " + time / 1_000_000.0 + " ms");
@@ -89,7 +105,7 @@ public final class Playground {
 			// run a few times
 			for (int i = 0; i < count; i++) {
 				long start = System.nanoTime();
-				evalForms(forms.iterator());
+				evalForms(forms.iterator(), true);
 				times[i] = (System.nanoTime() - start) / 1_000_000.0;
 			}
 
@@ -109,16 +125,6 @@ public final class Playground {
 
 			System.setOut(sysout);
 			Thread.sleep(100);
-		}
-	}
-
-	public static final class REPL {
-		public static void main(String[] args) {
-			try (Reader reader = new InputStreamReader(System.in)) {
-				evalForms(LispReader.readMany(reader));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		}
 	}
 }
