@@ -47,6 +47,11 @@ public class Namespace {
 		return name.hashCode();
 	}
 
+	@Override
+	public String toString() {
+		return name;
+	}
+
 	// TODO: toString
 
 	public void addAlias(String name, Namespace ns) {

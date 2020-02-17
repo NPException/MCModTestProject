@@ -82,7 +82,7 @@ public final class LispPrinter {
 				out.append('}');
 				return;
 			}
-			out.append(String.valueOf(o));
+			printObject(o, out);
 		} catch (IOException e) {
 			throw new LispException("IO Exception when trying to print", e);
 		}
@@ -161,10 +161,20 @@ public final class LispPrinter {
 				out.append('}');
 				return;
 			}
-			out.append(String.valueOf(o));
+			printObject(o, out);
 		} catch (IOException e) {
 			throw new LispException("IO Exception when trying to print", e);
 		}
+	}
+
+	private static void printObject(Object o, Appendable out) throws IOException {
+		out.append("#object[");
+		out.append(o.getClass().getName());
+		out.append(' ');
+		out.append(String.format("0x%x", System.identityHashCode(o)));
+		out.append(' ');
+		out.append(o.toString());
+		out.append(']');
 	}
 
 	private static <T> void printIterable(Appendable out, Iterable<T> iterable,
