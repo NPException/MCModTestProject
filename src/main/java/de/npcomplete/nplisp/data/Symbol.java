@@ -72,8 +72,8 @@ public final class Symbol implements LispFunction {
 
 
 	static String verifyNs(String nsName) {
-		if (nsName.length() == 0
-				|| nsName.indexOf('/') != -1) {
+		if (nsName != null
+				&& (nsName.length() == 0 || nsName.indexOf('/') != -1)) {
 			throw new LispException("Invalid namespace name: '" + nsName + "'");
 		}
 		return nsName;
