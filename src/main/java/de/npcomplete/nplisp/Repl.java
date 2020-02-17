@@ -8,7 +8,9 @@ import de.npcomplete.nplisp.util.LispReader;
 
 @SuppressWarnings("unchecked")
 public class Repl {
-	private static final Symbol IN_NS_SYMBOL = new Symbol("in-ns");
+	public static final Symbol IN_NS_SYMBOL = new Symbol("in-ns");
+	public static final Symbol CURRENT_NS_SYMBOL = new Symbol("*ns*");
+
 	private final Namespace[] currentReplNs = new Namespace[1];
 	private final LispFunction in_ns_function;
 
@@ -26,13 +28,19 @@ public class Repl {
 		};
 	}
 
+	public Namespace currentNs() {
+		return currentReplNs[0];
+	}
+
 	/**
 	 * Evaluates the given form in the current namespace.
 	 * (note: generics are only used to safe the caller an explicit cast)
 	 */
 	public <T> T eval(Object form) {
-		Environment replEnv = new Environment(currentReplNs[0]);
+		Namespace ns = currentNs();
+		Environment replEnv = new Environment(ns);
 		replEnv.bind(IN_NS_SYMBOL, in_ns_function);
+		replEnv.bind(CURRENT_NS_SYMBOL, ns);
 		return (T) Lisp.eval(form, replEnv, false);
 	}
 
