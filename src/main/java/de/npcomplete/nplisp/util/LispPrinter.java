@@ -49,6 +49,12 @@ public final class LispPrinter {
 				out.append(kw.name);
 				return;
 			}
+			if (o instanceof Var) {
+				Var v = (Var) o;
+				out.append("#'");
+				print(v.symbol, out);
+				return;
+			}
 			if (o instanceof Sequence) {
 				out.append('(');
 				Iterable<?> i = (Iterable) o;
@@ -106,20 +112,20 @@ public final class LispPrinter {
 				return;
 			}
 			if (o instanceof Symbol) {
-				Symbol s = (Symbol) o;
-				if (s.nsName != null) {
-					out.append(s.nsName).append('/');
+				Symbol sym = (Symbol) o;
+				if (sym.nsName != null) {
+					out.append(sym.nsName).append('/');
 				}
-				out.append(s.name);
+				out.append(sym.name);
 				return;
 			}
 			if (o instanceof Keyword) {
-				Keyword k = (Keyword) o;
+				Keyword kw = (Keyword) o;
 				out.append(':');
-				if (k.nsName != null) {
-					out.append(k.nsName).append('/');
+				if (kw.nsName != null) {
+					out.append(kw.nsName).append('/');
 				}
-				out.append(k.name);
+				out.append(kw.name);
 				return;
 			}
 			if (o instanceof Var) {

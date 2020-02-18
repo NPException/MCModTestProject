@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import de.npcomplete.nplisp.data.CoreLibrary;
@@ -75,7 +76,7 @@ public class Lisp {
 		def(coreNs, "quote", (SpecialForm) SpecialForm::QUOTE);
 		def(coreNs, "defmacro", (SpecialForm) SpecialForm::DEFMACRO);
 
-		// TODO: 'loop'
+		def(coreNs, "loop", (SpecialForm) SpecialForm::LOOP);
 		def(coreNs, "recur", CoreLibrary.FN_RECUR);
 
 		// DATA STRUCTURE CREATION
@@ -132,6 +133,7 @@ public class Lisp {
 		// TODO: implement 'require' (if desired namespace is not yet aliased, initialize via 'load-ns' then alias. Else just alias.)
 
 		// TODO: COMPARISONS
+		def(coreNs, "equals", (Fn2) Objects::equals); // TODO: replace with interop when available
 
 		// UTILITY
 		def(coreNs, "time", CoreLibrary.SF_TIME);

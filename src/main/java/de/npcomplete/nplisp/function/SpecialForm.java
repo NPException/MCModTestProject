@@ -158,6 +158,45 @@ public interface SpecialForm {
 	}
 
 	/**
+	 * Just like 'let', but calls to 'recur' repeat the body with the values passed to recur
+	 * bound to the symbols.
+	 */
+	static Object LOOP(Sequence args, Environment env, boolean allowRecur) {
+		if (args.empty()) {
+			throw new LispException("'loop' requires at least one argument: (let BINDINGS *&FORMS*)");
+		}
+		Object arg1 = args.first();
+		if (!(arg1 instanceof List)) {
+			throw new LispException("'loop' first argument is not a List");
+		}
+		List<?> bindings = (List<?>) arg1;
+		if (bindings.size() % 2 != 0) {
+			throw new LispException("'loop' bindings List doesn't have an even number of elements");
+		}
+
+		Environment localEnv = new Environment(env);
+		Symbol[] paramSymbols = new Symbol[bindings.size() / 2];
+
+		// process bindings
+		for (int i = 0, size = paramSymbols.length; i < size; i++) {
+			int symIndex = i * 2;
+			int valIndex = i * 2 + 1;
+			Object o = bindings.get(symIndex);
+			if (!(o instanceof Symbol)) {
+				String s = LispPrinter.prStr(o);
+				throw new LispException("'let' binding target is not a symbol: " + s);
+			}
+			Symbol sym = (Symbol) o;
+			paramSymbols[i] = sym;
+			Object value = Lisp.eval(bindings.get(valIndex), localEnv, false);
+			localEnv.bind(sym, value);
+		}
+
+		// evaluate body
+		return SingleArityFunction.call(args.next(), paramSymbols, localEnv);
+	}
+
+	/**
 	 * Takes a single symbol as an argument. Returns the var designated by that symbol,
 	 * not its value.
 	 */

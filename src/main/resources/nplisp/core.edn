@@ -40,6 +40,19 @@
        (cons 'or next))))
 
 
+  ;; COMPARISONS
+
+  (defn =
+    ([x] true)
+    ([x y] (equals x y))
+    ([x y & more]
+     (if (equals x y)
+       (if (next more)
+         (recur y (first more) (next more))
+         (equals y (first more)))
+       false)))
+
+
   ;; CONDITIONALS
 
   (defmacro if-not
