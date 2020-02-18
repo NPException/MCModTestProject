@@ -28,8 +28,13 @@ public final class LispPrinter {
 				out.append("nil");
 				return;
 			}
-			if (o instanceof String) {
-				out.append('"').append(escapeString((String) o)).append('"');
+			if (o instanceof CharSequence) {
+				out.append('"').append(escapeString(o.toString())).append('"');
+				return;
+			}
+			if (o instanceof Number
+					|| o instanceof Boolean) {
+				out.append(String.valueOf(o));
 				return;
 			}
 			if (o instanceof Symbol) {
@@ -167,7 +172,7 @@ public final class LispPrinter {
 				out.append('}');
 				return;
 			}
-			printObject(o, out);
+			out.append(String.valueOf(o));
 		} catch (IOException e) {
 			throw new LispException("IO Exception when trying to print", e);
 		}

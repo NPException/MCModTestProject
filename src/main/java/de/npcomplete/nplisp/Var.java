@@ -61,7 +61,7 @@ public class Var implements LispFunction, Deref {
 
 	@Override
 	public String toString() {
-		return LispPrinter.printStr(this);
+		return LispPrinter.prStr(this);
 	}
 
 	private LispFunction fn() {
