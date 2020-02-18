@@ -32,6 +32,7 @@ import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.Namespace;
 import de.npcomplete.nplisp.Var;
 import de.npcomplete.nplisp.function.LispFunction;
+import de.npcomplete.nplisp.function.LispFunctionFactory.Fn0;
 import de.npcomplete.nplisp.function.LispFunctionFactory.Fn1;
 import de.npcomplete.nplisp.function.LispFunctionFactory.Fn2;
 import de.npcomplete.nplisp.function.SpecialForm;
@@ -509,9 +510,20 @@ public final class CoreLibrary {
 	};
 
 	// READING //
+
 	public static final LispFunction FN_READ_STRING = (Fn1) par -> LispReader.readStr((String) par);
 
 	public static final LispFunction FN_READ = (Fn1) par -> LispReader.read((Reader) par);
+
+	//
+
+	public static final SpecialForm SF_DELAY = (body, env, allowRecur) -> {
+		Sequence fn_definition = new Cons(Collections.EMPTY_LIST, body);
+		LispFunction f = SpecialForm.FN(fn_definition, env, false);
+		return new Delay(f);
+	};
+
+	public static final LispFunction FN_DEREF = (Fn1) par -> ((Deref) par).deref();
 
 	//
 
@@ -567,7 +579,7 @@ public final class CoreLibrary {
 		};
 	}
 
-	public static final Delay CORE_NS_FORM = new Delay(() -> {
+	public static final Delay CORE_NS_FORM = new Delay((Fn0) () -> {
 		// TODO: use load-ns function (to-be-implemented)
 		try (InputStream in = Lisp.class.getResourceAsStream("/nplisp/core.edn");
 			 Reader reader = new InputStreamReader(in)) {

@@ -1,14 +1,14 @@
 package de.npcomplete.nplisp.data;
 
-import de.npcomplete.nplisp.function.LispFunctionFactory.Fn0;
+import de.npcomplete.nplisp.function.LispFunction;
 import de.npcomplete.nplisp.util.Util;
 
-public class Delay {
+public class Delay implements Deref {
 	private Object val;
 	private Throwable exception;
-	private Fn0 fn;
+	private LispFunction fn;
 
-	public Delay(Fn0 fn) {
+	public Delay(LispFunction fn) {
 		this.fn = fn;
 		this.val = null;
 		this.exception = null;
@@ -27,5 +27,11 @@ public class Delay {
 			throw Util.sneakyThrow(exception);
 		}
 		return val;
+	}
+
+	public static Object force(Object x) {
+		return x instanceof Delay
+				? ((Delay) x).deref()
+				: x;
 	}
 }

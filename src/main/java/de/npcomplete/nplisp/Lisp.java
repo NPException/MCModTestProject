@@ -10,11 +10,13 @@ import java.util.Objects;
 import java.util.Set;
 
 import de.npcomplete.nplisp.data.CoreLibrary;
+import de.npcomplete.nplisp.data.Delay;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.LispFunction;
 import de.npcomplete.nplisp.function.LispFunctionFactory;
 import de.npcomplete.nplisp.function.LispFunctionFactory.Fn1;
+import de.npcomplete.nplisp.function.LispFunctionFactory.Fn2;
 import de.npcomplete.nplisp.function.Macro;
 import de.npcomplete.nplisp.function.SpecialForm;
 import de.npcomplete.nplisp.util.LispPrinter;
@@ -40,8 +42,6 @@ Example:
 // TODO: interop - (. $target-class $receiver-instance ($method-name $arg*))
 //                 (.set $target-class $receiver-instance $field-name)
 //                 (.get $target-class $receiver-instance $field-name)
-// TODO: loop
-// TODO: 'delay' (and 'deref')
 // TODO: 'try/catch' form
 // TODO: 'with-open' form
 // TODO: javadoc in CoreLibrary
@@ -78,6 +78,10 @@ public class Lisp {
 
 		def(coreNs, "loop", (SpecialForm) SpecialForm::LOOP);
 		def(coreNs, "recur", CoreLibrary.FN_RECUR);
+
+		def(coreNs, "delay", CoreLibrary.SF_DELAY);
+		def(coreNs, "deref", CoreLibrary.FN_DEREF);
+		def(coreNs, "force", (Fn1) Delay::force);
 
 		// DATA STRUCTURE CREATION
 		def(coreNs, "list", CoreLibrary.FN_LIST);
