@@ -12,6 +12,7 @@ import de.npcomplete.nplisp.data.Symbol;
 public class Namespace {
 	private final Map<Symbol, Var> mappings = new HashMap<>();
 	private final Map<Symbol, Var> referred = new HashMap<>();
+	private final Map<Symbol, Var> imports = new HashMap<>();
 	private final Map<String, Namespace> aliases = new HashMap<>();
 
 	private final Map<Symbol, Var> referredCore;
@@ -67,9 +68,15 @@ public class Namespace {
 		return v;
 	}
 
+	public Var importAs(Symbol sym, Class<?> c) {
+		return imports.computeIfAbsent(sym, internVar).bind(c);
+	}
+
 	public Var lookupVar(Symbol symbol) {
 		Var var;
-		if (symbol.nsName == null) {
+		String symName = symbol.name;
+		String symNs = symbol.nsName;
+		if (symNs == null) {
 			var = mappings.get(symbol);
 			if (var != null) {
 				return var;
@@ -85,15 +92,23 @@ public class Namespace {
 				return var;
 			}
 		}
-		if (symbol.nsName == null) {
-			throw new LispException("Symbol '" + symbol.name + "' is unbound in namespace '" + name + "'");
+		if (symNs == null) {
+			if (symName.startsWith("^")) {
+				String classname = symName.substring(1);
+				try {
+					return importAs(symbol, Class.forName(classname));
+				} catch (ClassNotFoundException e) {
+					throw new LispException("Can't find class with name: " + classname, e);
+				}
+			}
+			throw new LispException("Symbol '" + symName + "' is unbound in namespace '" + this.name + "'");
 		}
-		Namespace aliasedNamespace = aliases.get(symbol.nsName);
+		Namespace aliasedNamespace = aliases.get(symNs);
 		if (aliasedNamespace == null) {
-			throw new LispException("Unknown namespace or alias: '" + symbol.nsName + "' (Namespaces need to be required before use)");
+			throw new LispException("Unknown namespace or alias: '" + symNs + "' (Namespaces need to be required before use)");
 		}
 		// refer for quicker lookup next time
-		return referAs(symbol, aliasedNamespace.lookupVar(new Symbol(symbol.name)));
+		return referAs(symbol, aliasedNamespace.lookupVar(new Symbol(symName)));
 	}
 
 	public Var define(Symbol symbol) {
