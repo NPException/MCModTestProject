@@ -1,5 +1,6 @@
 package de.npcomplete.nplisp;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,10 +39,11 @@ Example:
  */
 
 // TODO: finish namespaces: implement 'require'
+// TODO: import classes: bind alias symbol to class
 // TODO: doc-strings
 // TODO: interop - (. $target-class $receiver-instance ($method-name $arg*))
-//                 (.set $target-class $receiver-instance $field-name)
-//                 (.get $target-class $receiver-instance $field-name)
+//                 (. $target-class $receiver-instance $field-name) // get
+//                 (. $target-class $receiver-instance $field-name $value) // set
 // TODO: 'try/catch' form
 // TODO: 'with-open' form
 // TODO: javadoc in CoreLibrary
@@ -54,7 +56,7 @@ Example:
 public class Lisp {
 	public final NamespaceMap namespaces = new NamespaceMap();
 
-	public Lisp() {
+	public Lisp(File libFolder) {
 		// INIT CORE LIBRARY //
 		// TODO: move initialization to CoreLibrary class
 
@@ -133,11 +135,17 @@ public class Lisp {
 		// NAMESPACE HANDLING
 
 		def(coreNs, "ns", CoreLibrary.SF_NS(namespaces::getOrCreateNamespace));
-		// TODO: implement 'load-ns' (read file or resource, eval if it is an 'ns' form)
+		def(coreNs, "load-ns", CoreLibrary.SF_LOAD_NS(libFolder));
 		// TODO: implement 'require' (if desired namespace is not yet aliased, initialize via 'load-ns' then alias. Else just alias.)
 
 		// TODO: COMPARISONS
 		def(coreNs, "equals", (Fn2) Objects::equals); // TODO: replace with interop when available
+
+		// TODO: INTEROP
+		def(coreNs, ".", (SpecialForm) (args, env, allowRecur) -> {
+			throw new LispException("Interop not yet implemented.");
+		});
+		def(coreNs, "instance?", (Fn2) (c, x) -> ((Class<?>) c).isInstance(x));
 
 		// UTILITY
 		def(coreNs, "time", CoreLibrary.SF_TIME);

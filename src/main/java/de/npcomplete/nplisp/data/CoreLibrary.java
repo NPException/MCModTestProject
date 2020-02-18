@@ -579,6 +579,55 @@ public final class CoreLibrary {
 		};
 	}
 
+	private static Object findNamespaceSource(File libFolder, String nsName) {
+		String path = '/'
+				+ nsName.replace('.', '/').replace('-', '_')
+				+ ".edn";
+		File nsFile = new File(libFolder, path);
+		if (libFolder != null && nsFile.isFile()) {
+			return nsFile;
+		}
+		return FN_RESOURCE_URL.apply(path);
+	}
+
+	/**
+	 * Loads the namespace specified by the given parameter. If the parameter is a URL or File,
+	 * tries to read a form from it. If the parameter is a Symbol, first attempts to resolve
+	 * its name as a file in libFolder, otherwise a resource in the current classpath.
+	 */
+	public static SpecialForm SF_LOAD_NS(File libFolder) {
+		Symbol nsSym = new Symbol("ns");
+		return (args, env, allowRecur) -> {
+			Object par = Lisp.eval(args.first(), env, false);
+			Object source;
+			if (par instanceof URL || par instanceof File) {
+				source = par;
+			} else if (par instanceof Symbol) {
+				if (((Symbol) par).nsName != null) {
+					throw new LispException("Can't use qualified symbol as namespace name");
+				}
+				source = findNamespaceSource(libFolder, ((Symbol) par).name);
+				if (source == null) {
+					throw new LispException("Can't find source for namespace: " + par);
+				}
+			} else {
+				throw new LispException("Parameter to 'load-ns' must be a String, URL, or File, but was "
+						+ (par == null ? null : par.getClass().getName()));
+			}
+			Object form = LispReader.read((Reader) FN_READER.apply(source));
+			if (!(form instanceof Sequence && nsSym.equals(((Sequence) form).first()))) {
+				throw new LispException("Form read from " + par + " is not an 'ns' form");
+			}
+			if (par instanceof Symbol) {
+				Object nsNameSym = ((Sequence) form).more().first();
+				if (!(nsNameSym instanceof Symbol) || !nsNameSym.equals(par)) {
+					throw new LispException("Namespace in file ('" + nsNameSym + "') does not match the desired namespace.");
+				}
+			}
+			return Lisp.eval(form, env, false);
+		};
+	}
+
 	public static final Delay CORE_NS_FORM = new Delay((Fn0) () -> {
 		// TODO: use load-ns function (to-be-implemented)
 		try (InputStream in = Lisp.class.getResourceAsStream("/nplisp/core.edn");

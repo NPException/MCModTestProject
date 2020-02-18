@@ -1,0 +1,6 @@
+(ns nplisp.string
+
+  (defn upper-case [s]
+    (. ^java.lang.String s (toUpperCase)))
+
+  )

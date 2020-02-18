@@ -1,5 +1,6 @@
 package playground;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -20,7 +21,7 @@ import de.npcomplete.nplisp.util.LispPrinter;
 import de.npcomplete.nplisp.util.LispReader;
 
 public final class Playground {
-	private static final Repl repl = new Repl(new Lisp());
+	private static final Repl repl = new Repl(new Lisp(new File("./lib")));
 
 	private static final Object inNsPlaygroundForm = repl.evalStr("'(in-ns 'playground)");
 	private static final Object defExitForm = repl.evalStr("'(def exit)");
