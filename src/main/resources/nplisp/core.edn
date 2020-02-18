@@ -10,12 +10,6 @@
       (apply list 'fn name fn-declaration)))
 
 
-  (defn eval
-    [form]
-    (let [ns (current-ns)]
-      (eval-in-ns ns form)))
-
-
   ;; LOGIC FUNCTIONS AND MACROS
 
   (defn not [x]
