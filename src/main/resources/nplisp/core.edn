@@ -1,5 +1,8 @@
 (ns nplisp.core
 
+  ;; implemented as a special case in de.npcomplete.nplisp.Lisp#lookup
+  (def eval)
+
   (defmacro declare
     [name]
     (list 'def name))

@@ -30,7 +30,6 @@ import de.npcomplete.nplisp.Environment;
 import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.Namespace;
-import de.npcomplete.nplisp.Var;
 import de.npcomplete.nplisp.function.LispFunction;
 import de.npcomplete.nplisp.function.LispFunctionFactory.Fn0;
 import de.npcomplete.nplisp.function.LispFunctionFactory.Fn1;
@@ -545,9 +544,6 @@ public final class CoreLibrary {
 	 * Note: The 'ns' form does not capture any bindings from a surrounding environment.
 	 */
 	public static SpecialForm SF_NS(Function<String, Namespace> internNamespace) {
-		Symbol evalSym = new Symbol("eval");
-		Symbol evalSymQualified = new Symbol("nplisp.core/eval");
-
 		return (args, env, allowRecur) -> {
 			if (args.empty()) {
 				throw new LispException("'ns' requires at least one argument: (ns NAME *&BODY*)");
@@ -557,24 +553,9 @@ public final class CoreLibrary {
 				throw new LispException("First argument to 'ns' must be a simple symbol");
 			}
 			Namespace ns = internNamespace.apply(((Symbol) o).name);
-			Environment nsEnv = new Environment(ns);
-
-			if (!ns.name.equals("nplisp.core")) {
-				// hack 'eval' to make it work with the namespace instead of nplisp.core
-				// TODO: find a better way
-				Symbol evalHackSym = new Symbol(ns.name, "~$eval-hack$~");
-				Var evalHack = new Var(evalHackSym).bind((Fn1) par -> Lisp.eval(par, nsEnv, false));
-
-				if (ns.lookupVar(evalSym).symbol.nsName.equals("nplisp.core")) {
-					ns.referAs(evalSym, evalHack);
-				}
-				if (ns.lookupVar(evalSymQualified).symbol.nsName.equals("nplisp.core")) {
-					ns.referAs(evalSymQualified, evalHack);
-				}
-			}
 
 			// evaluate body
-			SpecialForm.DO(args.next(), nsEnv, false);
+			SpecialForm.DO(args.next(), new Environment(ns), false);
 			return ns;
 		};
 	}

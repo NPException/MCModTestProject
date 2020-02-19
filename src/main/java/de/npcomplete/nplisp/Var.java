@@ -101,4 +101,25 @@ public class Var implements LispFunction, Deref {
 	public Object applyTo(Sequence args) {
 		return fn().applyTo(args);
 	}
+
+
+	public static final class MarkerVar extends Var {
+		public MarkerVar(Symbol symbol) {
+			super(symbol);
+		}
+
+		private LispException forbiddenModification() {
+			return new LispException("Var must not be modified: " + this);
+		}
+
+		@Override
+		public Var bind(Object value) {
+			throw forbiddenModification();
+		}
+
+		@Override
+		public Var macro(boolean isMacro) {
+			throw forbiddenModification();
+		}
+	}
 }

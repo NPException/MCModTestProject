@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
+import de.npcomplete.nplisp.Var.MarkerVar;
 import de.npcomplete.nplisp.data.CoreLibrary;
 import de.npcomplete.nplisp.data.Delay;
 import de.npcomplete.nplisp.data.Sequence;
@@ -44,7 +45,7 @@ Example:
 // TODO: interop - (. $target-class $receiver-instance ($method-name $arg*))
 //                 (. $target-class $receiver-instance $field-name) // get
 //                 (. $target-class $receiver-instance $field-name $value) // set
-// TODO: 'try/catch' form
+// TODO: 'try/catch/finally' form
 // TODO: 'with-open' form
 // TODO: javadoc in CoreLibrary
 // TODO: proper macro expansion
@@ -54,6 +55,8 @@ Example:
 // TODO: switch from using java.util.List to own Vector class
 
 public class Lisp {
+	static final Var CORE_EVAL_VAR = new MarkerVar(new Symbol("nplisp.core/eval"));
+
 	public final NamespaceMap namespaces = new NamespaceMap();
 
 	public Lisp(File libFolder) {
@@ -64,8 +67,6 @@ public class Lisp {
 
 		Namespace coreNs = namespaces.core;
 
-		// EVAL & APPLY
-		def(coreNs, "eval", (Fn1) par1 -> eval(par1, new Environment(coreNs), false));
 		def(coreNs, "apply", CoreLibrary.FN_APPLY);
 
 		// SPECIAL FORMS
@@ -137,6 +138,7 @@ public class Lisp {
 		def(coreNs, "ns", CoreLibrary.SF_NS(namespaces::getOrCreateNamespace));
 		def(coreNs, "load-ns", CoreLibrary.SF_LOAD_NS(libFolder));
 		// TODO: implement 'require' (if desired namespace is not yet aliased, initialize via 'load-ns' then alias. Else just alias.)
+		// TODO: implement 'import'
 
 		// TODO: COMPARISONS
 		def(coreNs, "equals", (Fn2) Objects::equals); // TODO: replace with interop when available
@@ -169,6 +171,11 @@ public class Lisp {
 		Var var = (Var) val;
 		if (!allowMacro && var.isMacro()) {
 			throw new LispException("Can't take value of a macro: " + var);
+		}
+		// generate 'eval' function which uses the current namespace for evaluation
+		if (var == CORE_EVAL_VAR) {
+			Namespace ns = env.namespace;
+			return (Fn1) par -> eval(par, new Environment(ns), false);
 		}
 		return var.deref();
 	}
@@ -299,6 +306,10 @@ public class Lisp {
 
 		NamespaceMap() {
 			namespaces.put(core.name, core);
+			// prepare special 'eval' var, so it get's returned when internVar is called for it.
+			HashMap<String, Var> coreVars = new HashMap<>();
+			coreVars.put("eval", CORE_EVAL_VAR);
+			allVars.put(core.name, coreVars);
 		}
 
 		private Var internVar(Symbol symbol) {
