@@ -2,7 +2,7 @@
 
   (defmacro declare
     [name]
-    (def name))
+    (list 'def name))
 
   (defmacro defn
     [name & fn-declaration]
