@@ -57,7 +57,7 @@ public final class CoreLibrary {
 
 	public static final LispFunction FN_RECUR = (VarArgsFunction) TailCall::new;
 
-	public static final LispFunction FN_LIST = (VarArgsFunction) ListSequence::new;
+	public static final LispFunction FN_LIST = (VarArgsFunction) ArraySequence::new;
 
 	public static final LispFunction FN_VECTOR =
 			(VarArgsFunction) args -> unmodifiableList(asList(args));
@@ -99,7 +99,7 @@ public final class CoreLibrary {
 		}
 		if (o instanceof Object[]) {
 			Object[] array = (Object[]) o;
-			return array.length > 0 ? new ListSequence(array) : null;
+			return array.length > 0 ? new ArraySequence(array) : null;
 		}
 		throw new LispException("Don't know how to create sequence from" + o.getClass());
 	}

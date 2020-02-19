@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
 
 import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.data.Keyword;
-import de.npcomplete.nplisp.data.ListSequence;
+import de.npcomplete.nplisp.data.ArraySequence;
 import de.npcomplete.nplisp.data.Symbol;
 
 public final class LispReader {
@@ -84,7 +84,7 @@ public final class LispReader {
 			case LIST_START:
 				ArrayList<Object> seqContent = new ArrayList<>();
 				buildCollection(seqContent, Token.LIST_END, it);
-				return new ListSequence(seqContent.toArray());
+				return new ArraySequence(seqContent.toArray());
 
 			case VECTOR_START:
 				ArrayList<Object> list = new ArrayList<>();
@@ -114,11 +114,11 @@ public final class LispReader {
 
 			case QUOTE:
 				Object[] quoted = {new Symbol("quote"), build(it, null)};
-				return new ListSequence(quoted);
+				return new ArraySequence(quoted);
 
 			case VAR:
 				Object[] varCall = {new Symbol("var"), build(it, null)};
-				return new ListSequence(varCall);
+				return new ArraySequence(varCall);
 
 			case TAG:
 				// NOT YET SUPPORTED

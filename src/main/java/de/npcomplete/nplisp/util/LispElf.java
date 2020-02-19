@@ -8,7 +8,7 @@ import java.util.function.Function;
 
 import de.npcomplete.nplisp.Environment;
 import de.npcomplete.nplisp.LispException;
-import de.npcomplete.nplisp.data.ListSequence;
+import de.npcomplete.nplisp.data.ArraySequence;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 
@@ -105,7 +105,7 @@ public final class LispElf {
 			localEnv.bind(paramSymbols[i], args[i]);
 		}
 		Sequence varArgs = args.length > lastParamIndex
-				? new ListSequence(lastParamIndex == 0 ? args : Arrays.copyOfRange(args, lastParamIndex, argsCount))
+				? new ArraySequence(lastParamIndex == 0 ? args : Arrays.copyOfRange(args, lastParamIndex, argsCount))
 				: null;
 		localEnv.bind(paramSymbols[lastParamIndex], varArgs);
 	}
