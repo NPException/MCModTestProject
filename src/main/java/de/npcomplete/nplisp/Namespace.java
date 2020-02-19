@@ -53,7 +53,12 @@ public class Namespace {
 		return name;
 	}
 
-	// TODO: toString
+	public Var define(Symbol symbol) {
+		if (symbol.nsName != null) {
+			throw new LispException("Can't def fully qualified symbols");
+		}
+		return mappings.computeIfAbsent(symbol, internVar);
+	}
 
 	public void addAlias(String name, Namespace ns) {
 		Namespace existingAlias = aliases.get(name);
@@ -101,7 +106,7 @@ public class Namespace {
 					throw new LispException("Can't find class with name: " + classname, e);
 				}
 			}
-			throw new LispException("Symbol '" + symName + "' is unbound in namespace '" + this.name + "'");
+			throw new LispException("Unable to resolve var '" + symName + "' in namespace '" + this.name + "'");
 		}
 		Namespace aliasedNamespace = aliases.get(symNs);
 		if (aliasedNamespace == null) {
@@ -109,12 +114,5 @@ public class Namespace {
 		}
 		// refer for quicker lookup next time
 		return referAs(symbol, aliasedNamespace.lookupVar(new Symbol(symName)));
-	}
-
-	public Var define(Symbol symbol) {
-		if (symbol.nsName != null) {
-			throw new LispException("Can't def fully qualified symbols");
-		}
-		return mappings.computeIfAbsent(symbol, internVar);
 	}
 }
