@@ -1,12 +1,17 @@
 package de.npcomplete.nplisp.function;
 
 import java.util.ArrayList;
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.data.Sequence;
 
-@SuppressWarnings("unchecked")
-public interface LispFunction {
+@SuppressWarnings("rawtypes")
+public interface LispFunction extends Runnable, Callable, Supplier, Consumer, Predicate, Function {
 	default Object apply() {
 		throw new LispException("Wrong arity: 0");
 	}
@@ -53,5 +58,35 @@ public interface LispFunction {
 		} while ((args = args.next()) != null);
 
 		return apply(par1, par2, par3, rest.toArray());
+	}
+
+	// Runnable
+	@Override
+	default void run() {
+		apply();
+	}
+
+	// Callable
+	@Override
+	default Object call() {
+		return apply();
+	}
+
+	// Supplier
+	@Override
+	default Object get() {
+		return apply();
+	}
+
+	// Consumer
+	@Override
+	default void accept(Object o) {
+		apply(o);
+	}
+
+	// Predicate
+	@Override
+	default boolean test(Object o) {
+		return (Boolean) apply(o);
 	}
 }
