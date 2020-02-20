@@ -9,7 +9,6 @@ import de.npcomplete.nplisp.util.LispReader;
 @SuppressWarnings("unchecked")
 public class Repl {
 	public static final Symbol IN_NS_SYMBOL = new Symbol("in-ns");
-	public static final Symbol CURRENT_NS_SYMBOL = new Symbol("*ns*");
 
 	private final Namespace[] currentReplNs = new Namespace[1];
 	private final LispFunction in_ns_function;
@@ -40,7 +39,6 @@ public class Repl {
 		Namespace ns = currentNs();
 		Environment replEnv = new Environment(ns);
 		replEnv.bind(IN_NS_SYMBOL, in_ns_function);
-		replEnv.bind(CURRENT_NS_SYMBOL, ns);
 		return (T) Lisp.eval(form, replEnv, false);
 	}
 

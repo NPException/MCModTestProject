@@ -48,6 +48,7 @@ Example:
 // TODO: 'try/catch/finally' form
 // TODO: 'with-open' form
 // TODO: javadoc in CoreLibrary
+// TODO: private Vars (for 'def-' & 'defn-')
 // TODO: proper macro expansion
 // TODO: ensure all used symbols are already bound when invoking 'fn' or 'defmacro'
 // TODO: syntax-quote / unquote
@@ -56,6 +57,7 @@ Example:
 
 public class Lisp {
 	static final Var CORE_EVAL_VAR = new MarkerVar(new Symbol("nplisp.core/eval"));
+	static final Var CORE_CURRENT_NS_VAR = new MarkerVar(new Symbol("nplisp.core/*ns*"));
 
 	public final NamespaceMap namespaces = new NamespaceMap();
 
@@ -176,6 +178,9 @@ public class Lisp {
 		if (var == CORE_EVAL_VAR) {
 			Namespace ns = env.namespace;
 			return (Fn1) par -> eval(par, new Environment(ns), false);
+		}
+		if (var == CORE_CURRENT_NS_VAR) {
+			return env.namespace;
 		}
 		return var.deref();
 	}
@@ -306,9 +311,11 @@ public class Lisp {
 
 		NamespaceMap() {
 			namespaces.put(core.name, core);
-			// prepare special 'eval' var, so it get's returned when internVar is called for it.
+			// prepare special vars, so they get can be loaded into the core namespace
+			// when 'def' is called for them
 			HashMap<String, Var> coreVars = new HashMap<>();
 			coreVars.put("eval", CORE_EVAL_VAR);
+			coreVars.put("*ns*", CORE_CURRENT_NS_VAR);
 			allVars.put(core.name, coreVars);
 		}
 
