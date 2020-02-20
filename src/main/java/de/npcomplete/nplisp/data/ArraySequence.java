@@ -11,26 +11,25 @@ public final class ArraySequence implements Sequence {
 	private final int index;
 	private final boolean empty;
 
-	private Sequence rest;
+	private Sequence next;
 
 	/**
 	 * Creates a new sequence from a given array, starting at the
 	 * given index. In an ideal world, the array should be immutable.
 	 */
 	private ArraySequence(Object[] array, int index) {
-		if (array == null) {
-			throw new IllegalArgumentException("array must not be null");
-		}
-		if (index < 0) {
-			throw new IllegalArgumentException("index must be >= 0");
-		}
 		this.array = array;
 		this.index = index;
 		empty = index >= array.length;
 	}
 
 	public ArraySequence(Object ... elements) {
-		this(elements, 0);
+		if (elements == null) {
+			throw new IllegalArgumentException("elements array must not be null");
+		}
+		this.array = elements;
+		this.index = 0;
+		empty = array.length == 0;
 	}
 
 	@Override
@@ -40,12 +39,12 @@ public final class ArraySequence implements Sequence {
 
 	@Override
 	public Sequence next() {
-		if (rest == null) {
-			rest = index < array.length - 1
+		if (next == null) {
+			next = index < array.length - 1
 					? new ArraySequence(array, index + 1)
-					: null;
+					: Sequence.EMPTY_SEQUENCE;
 		}
-		return rest;
+		return next != Sequence.EMPTY_SEQUENCE ? next : null;
 	}
 
 	@Override
@@ -73,8 +72,8 @@ public final class ArraySequence implements Sequence {
 		if (empty() && other.empty()) {
 			return true;
 		}
-		Iterator a = iterator();
-		Iterator b = other.iterator();
+		Iterator<?> a = iterator();
+		Iterator<?> b = other.iterator();
 		while (a.hasNext() && b.hasNext()) {
 			if (!Objects.equals(a.next(), b.next())) {
 				return false;
