@@ -1,12 +1,12 @@
 package de.npcomplete.nplisp.data;
 
 import static de.npcomplete.nplisp.util.LispElf.mapIterator;
+import static de.npcomplete.nplisp.util.LispElf.truthy;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
@@ -41,6 +41,7 @@ import de.npcomplete.nplisp.util.LispReader;
 
 // TODO: move all things that aren't trivial method references to separate classes in a "corelibrary" package
 
+@SuppressWarnings("rawtypes")
 public final class CoreLibrary {
 	private static final Symbol NS_SYM = new Symbol("ns");
 
@@ -578,42 +579,86 @@ public final class CoreLibrary {
 	 * tries to read a form from it. If the parameter is a Symbol, first attempts to resolve
 	 * its name as a file in libFolder, otherwise a resource in the current classpath.
 	 */
-	private static Object loadNsForm(Object par, File libFolder) {
+	private static Object loadNsForm(Symbol desiredNsSym, File libFolder, boolean errorOnMissingSource) {
 		Object source;
-		if (par instanceof URL || par instanceof File) {
-			source = par;
-		} else if (par instanceof Symbol) {
-			if (((Symbol) par).nsName != null) {
-				throw new LispException("Can't use qualified symbol as namespace name");
+		if (desiredNsSym.nsName != null) {
+			throw new LispException("Can't use qualified symbol as namespace name");
+		}
+		source = findNamespaceSource(libFolder, desiredNsSym.name);
+		if (source == null) {
+			if (errorOnMissingSource) {
+				throw new LispException("Can't find source for namespace: " + desiredNsSym);
 			}
-			source = findNamespaceSource(libFolder, ((Symbol) par).name);
-			if (source == null) {
-				throw new LispException("Can't find source for namespace: " + par);
-			}
-		} else {
-			throw new LispException("Parameter to 'load-ns' must be a Symbol, URL, or File, but was "
-					+ (par == null ? null : par.getClass().getName()));
+			return null;
 		}
 		Object form = LispReader.read((Reader) FN_READER.apply(source));
 		if (!(form instanceof Sequence && NS_SYM.equals(((Sequence) form).first()))) {
-			throw new LispException("Form read from " + par + " is not an 'ns' form");
+			throw new LispException("Form read from " + source + " is not an 'ns' form");
 		}
-		if (par instanceof Symbol) {
-			Object nsNameSym = ((Sequence) form).more().first();
-			if (!(nsNameSym instanceof Symbol) || !nsNameSym.equals(par)) {
-				throw new LispException("Namespace in file ('" + nsNameSym + "') does not match the desired namespace.");
-			}
+		Object nsNameSym = ((Sequence) form).more().first();
+		if (!(nsNameSym instanceof Symbol) || !nsNameSym.equals(desiredNsSym)) {
+			throw new LispException(
+					"Namespace " + nsNameSym + " in file (" + source + ")" +
+							" does not match the desired namespace " + desiredNsSym);
 		}
 		return form;
 	}
 
-	public static SpecialForm SF_LOAD_NS(File libFolder) {
+	// TODO implement via interop using '*ns*' once possible
+	public static SpecialForm SF_REQUIRE(File libFolder, Function<String, Namespace> getExistingNs) {
+		Keyword kw_as = new Keyword("as");
+		Keyword kw_refer = new Keyword("refer");
+		Keyword kw_refer_all = new Keyword("refer-all");
+		Keyword kw_reload = new Keyword("reload");
+		Keyword kw_reload_all = new Keyword("reload-all");
+
 		return (args, env, allowRecur) -> {
-			Object form = loadNsForm(Lisp.eval(args.first(), env, false), libFolder);
-			return Lisp.eval(form, env, false);
+			Namespace currentNs = env.namespace;
+
+			// TODO: add current namespace to a ThreadLocal "require chain" to avoid infinite require loops
+			//       (these should not happen and are technically fine, unless :reload or :reload-all is involved)
+
+			boolean tl_reloadAll = false; // TODO: get from a ThreadLocal
+
+			args.forEach(arg -> {
+				// Since 'require' is supposed to be a regular function later on, I evaluate ever
+				// argument as long as this is a SpecialForm.
+				// Means the vectors passed to 'require' already need to be quoted.
+				arg = Lisp.eval(arg, env, false);
+
+				Sequence spec = seq(arg);
+				Object sym = spec.first();
+				if (!(sym instanceof Symbol) || ((Symbol) sym).nsName != null) {
+					throw new LispException("First element of a require spec must be a simple symbol. Was: " + sym);
+				}
+				Symbol nsSym = (Symbol) sym;
+
+				// TODO: generate options map from spec.next()  (:refer, :as, :reload, :reload-all)
+				Map<?, ?> options = new HashMap<>();
+
+				boolean reload = truthy(options.get(kw_reload));
+				boolean reloadAll = tl_reloadAll || truthy(options.get(kw_reload_all));
+
+				Namespace ns = getExistingNs.apply(nsSym.name);
+
+				if (ns == null || reload || reloadAll) {
+					// TODO: set reloadAll ThreadLocal if not yet set
+					Object form = loadNsForm(nsSym, libFolder, ns == null);
+					if (form != null) {
+						ns = (Namespace) Lisp.eval(form, new Environment(currentNs), false);
+					}
+					// TODO: un-set reloadAll ThreadLocal if we set it before
+				}
+
+				currentNs.addAlias(ns.name, ns);
+
+				// TODO: alias and refer stuff
+			});
+
+			return null;
 		};
 	}
 
 	public static final Delay CORE_NS_FORM =
-			new Delay((Fn0) () -> loadNsForm(new Symbol("nplisp.core"), null));
+			new Delay((Fn0) () -> loadNsForm(new Symbol("nplisp.core"), null, true));
 }

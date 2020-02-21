@@ -138,8 +138,8 @@ public class Lisp {
 		// NAMESPACE HANDLING
 
 		def(coreNs, "ns", CoreLibrary.SF_NS(namespaces::getOrCreateNamespace));
-		def(coreNs, "load-ns", CoreLibrary.SF_LOAD_NS(libFolder));
-		// TODO: implement 'require' (if desired namespace is not yet aliased, initialize via 'load-ns' then alias. Else just alias.)
+		def(coreNs, "require", CoreLibrary.SF_REQUIRE(libFolder, namespaces::getNamespace));
+		// TODO: finish 'require'
 		// TODO: implement 'import'
 
 		// TODO: COMPARISONS
@@ -325,6 +325,10 @@ public class Lisp {
 			}
 			Map<String, Var> nsVars = allVars.computeIfAbsent(symbol.nsName, k -> new HashMap<>());
 			return nsVars.computeIfAbsent(symbol.name, k -> new Var(symbol));
+		}
+
+		public Namespace getNamespace(String name) {
+			return namespaces.get(name);
 		}
 
 		public Namespace getOrCreateNamespace(String name) {

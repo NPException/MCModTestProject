@@ -23,11 +23,9 @@ import de.npcomplete.nplisp.util.LispReader;
 public final class Playground {
 	private static final Repl repl = new Repl(new Lisp(new File("./lib")));
 
-	private static final Object inNsPlaygroundForm = repl.evalStr("'(in-ns 'playground)");
 	private static final Object defExitForm = repl.evalStr("'(def exit)");
 
 	private static void evalForms(Iterator<Object> forms, boolean isAuto) {// add test helper functions
-		repl.eval(inNsPlaygroundForm);
 		// TODO: move into test.edn file once interop exists
 		Var exitVar = repl.eval(defExitForm);
 		exitVar.bind((Fn0) () -> {

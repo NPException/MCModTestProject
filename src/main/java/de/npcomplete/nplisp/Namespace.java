@@ -62,7 +62,7 @@ public class Namespace {
 
 	public void addAlias(String name, Namespace ns) {
 		Namespace existingAlias = aliases.get(name);
-		if (existingAlias != null && existingAlias.equals(ns)) {
+		if (existingAlias != null && !existingAlias.equals(ns)) {
 			throw new LispException("Can't put a different Namespace for an existing alias");
 		}
 		aliases.put(name, ns);
