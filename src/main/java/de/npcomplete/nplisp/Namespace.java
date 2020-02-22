@@ -79,7 +79,6 @@ public class Namespace {
 
 	public Var lookupVar(Symbol symbol) {
 		Var var;
-		String symName = symbol.name;
 		String symNs = symbol.nsName;
 		if (symNs == null) {
 			var = mappings.get(symbol);
@@ -97,6 +96,7 @@ public class Namespace {
 				return var;
 			}
 		}
+		String symName = symbol.name;
 		if (symNs == null) {
 			if (symName.startsWith("^")) {
 				String classname = symName.substring(1);

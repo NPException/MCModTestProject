@@ -153,4 +153,11 @@ public final class LispElf {
 
 		return symbols;
 	}
+
+	/**
+	 * Returns true iff arg is an instance of {@link Symbol} and does not have a namespace.
+	 */
+	public static boolean isSimpleSymbol(Object arg) {
+		return arg instanceof Symbol && ((Symbol) arg).nsName == null;
+	}
 }

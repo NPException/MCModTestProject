@@ -1,5 +1,6 @@
 package de.npcomplete.nplisp.data;
 
+import static de.npcomplete.nplisp.util.LispElf.isSimpleSymbol;
 import static de.npcomplete.nplisp.util.LispElf.mapIterator;
 import static de.npcomplete.nplisp.util.LispElf.truthy;
 import static java.util.Arrays.asList;
@@ -553,7 +554,7 @@ public final class CoreLibrary {
 				throw new LispException("'ns' requires at least one argument: (ns NAME *&BODY*)");
 			}
 			Object o = args.first();
-			if (!(o instanceof Symbol) || ((Symbol) o).nsName != null) {
+			if (!isSimpleSymbol(o)) {
 				throw new LispException("First argument to 'ns' must be a simple symbol");
 			}
 			Namespace ns = internNamespace.apply(((Symbol) o).name);
@@ -607,7 +608,7 @@ public final class CoreLibrary {
 
 	private static final Keyword KW_AS = new Keyword("as");
 	private static final Keyword KW_REFER = new Keyword("refer");
-	private static final Keyword KW_REFER_ALL = new Keyword("refer-all");
+	private static final Keyword KW_ALL = new Keyword("all");
 	private static final Keyword KW_RELOAD = new Keyword("reload");
 	private static final Keyword KW_RELOAD_ALL = new Keyword("reload-all");
 
@@ -631,7 +632,7 @@ public final class CoreLibrary {
 
 				Sequence spec = seq(arg);
 				Object sym = spec.first();
-				if (!(sym instanceof Symbol) || ((Symbol) sym).nsName != null) {
+				if (!isSimpleSymbol(sym)) {
 					throw new LispException("First element of a require spec must be a simple symbol. Was: " + sym);
 				}
 				Symbol nsSym = (Symbol) sym;
@@ -653,10 +654,16 @@ public final class CoreLibrary {
 						reloadAllFlag.unsetIf(startReloadAll);
 					}
 				}
+				assert ns != null;
 
+				Object alias = options.get(KW_AS);
+				if (alias != null) {
+					if (!isSimpleSymbol(alias)) {
+						throw new LispException("Alias for namespace must be a simple symbol. Was: " + alias);
+					}
+					currentNs.addAlias(((Symbol) alias).name, ns);
+				}
 				currentNs.addAlias(ns.name, ns);
-
-				// TODO: alias and refer stuff
 			}
 
 			return null;
