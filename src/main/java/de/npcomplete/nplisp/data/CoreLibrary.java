@@ -38,6 +38,7 @@ import de.npcomplete.nplisp.function.SpecialForm;
 import de.npcomplete.nplisp.function.VarArgsFunction;
 import de.npcomplete.nplisp.util.LispPrinter;
 import de.npcomplete.nplisp.util.LispReader;
+import de.npcomplete.nplisp.util.ThreadLocalFlag;
 
 // TODO: move all things that aren't trivial method references to separate classes in a "corelibrary" package
 
@@ -604,13 +605,15 @@ public final class CoreLibrary {
 		return form;
 	}
 
+	private static final Keyword KW_AS = new Keyword("as");
+	private static final Keyword KW_REFER = new Keyword("refer");
+	private static final Keyword KW_REFER_ALL = new Keyword("refer-all");
+	private static final Keyword KW_RELOAD = new Keyword("reload");
+	private static final Keyword KW_RELOAD_ALL = new Keyword("reload-all");
+
 	// TODO implement via interop using '*ns*' once possible
 	public static SpecialForm SF_REQUIRE(File libFolder, Function<String, Namespace> getExistingNs) {
-		Keyword kw_as = new Keyword("as");
-		Keyword kw_refer = new Keyword("refer");
-		Keyword kw_refer_all = new Keyword("refer-all");
-		Keyword kw_reload = new Keyword("reload");
-		Keyword kw_reload_all = new Keyword("reload-all");
+		ThreadLocalFlag reloadAllFlag = new ThreadLocalFlag();
 
 		return (args, env, allowRecur) -> {
 			Namespace currentNs = env.namespace;
@@ -618,9 +621,9 @@ public final class CoreLibrary {
 			// TODO: add current namespace to a ThreadLocal "require chain" to avoid infinite require loops
 			//       (these should not happen and are technically fine, unless :reload or :reload-all is involved)
 
-			boolean tl_reloadAll = false; // TODO: get from a ThreadLocal
+			boolean outerReloadAll = reloadAllFlag.isSet();
 
-			args.forEach(arg -> {
+			for (Object arg : args) {
 				// Since 'require' is supposed to be a regular function later on, I evaluate ever
 				// argument as long as this is a SpecialForm.
 				// Means the vectors passed to 'require' already need to be quoted.
@@ -633,27 +636,28 @@ public final class CoreLibrary {
 				}
 				Symbol nsSym = (Symbol) sym;
 
-				// TODO: generate options map from spec.next()  (:refer, :as, :reload, :reload-all)
-				Map<?, ?> options = new HashMap<>();
+				// load options map (:refer, :as, :reload, :reload-all)
+				Map<?, ?> options = (Map<?, ?>) FN_HASH_MAP.applyTo(spec.next());
 
-				boolean reload = truthy(options.get(kw_reload));
-				boolean reloadAll = tl_reloadAll || truthy(options.get(kw_reload_all));
+				boolean reload = truthy(options.get(KW_RELOAD));
+				boolean reloadAll = truthy(options.get(KW_RELOAD_ALL));
 
 				Namespace ns = getExistingNs.apply(nsSym.name);
 
-				if (ns == null || reload || reloadAll) {
-					// TODO: set reloadAll ThreadLocal if not yet set
+				if (ns == null || reload || reloadAll || outerReloadAll) {
 					Object form = loadNsForm(nsSym, libFolder, ns == null);
 					if (form != null) {
+						boolean startReloadAll = reloadAll && !outerReloadAll;
+						reloadAllFlag.setIf(startReloadAll);
 						ns = (Namespace) Lisp.eval(form, new Environment(currentNs), false);
+						reloadAllFlag.unsetIf(startReloadAll);
 					}
-					// TODO: un-set reloadAll ThreadLocal if we set it before
 				}
 
 				currentNs.addAlias(ns.name, ns);
 
 				// TODO: alias and refer stuff
-			});
+			}
 
 			return null;
 		};
