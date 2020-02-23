@@ -106,7 +106,7 @@ public class Namespace {
 		return imports.computeIfAbsent(sym, internVar).bind(c);
 	}
 
-	public Var lookupVar(Symbol symbol) {
+	public Var lookupVar(Symbol symbol, boolean allowPrivate) {
 		Var var;
 		String symNs = symbol.nsName;
 		if (symNs == null) {
@@ -141,7 +141,9 @@ public class Namespace {
 		if (aliasedNamespace == null) {
 			throw new LispException("Unknown namespace or alias: '" + symNs + "' (Namespaces need to be required before use)");
 		}
-		// refer qualified symbol for quicker lookup next time (also checks if var is private)
-		return referAs(symbol, aliasedNamespace.lookupVar(new Symbol(symName)));
+		var = aliasedNamespace.lookupVar(new Symbol(symName), false);
+		return allowPrivate
+				? var
+				: referAs(symbol, var);
 	}
 }

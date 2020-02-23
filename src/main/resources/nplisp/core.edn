@@ -4,15 +4,47 @@
   (def eval)
   (def *ns*)
 
+
+  (def decode-defn-args
+    (fn [args]
+      (let [arg-1 (first args)
+            flags (if (some? arg-1)
+                    (if (seqable? arg-1)
+                      arg-1))
+            name (if flags
+                   (first (next args))
+                   arg-1)
+            specs (if flags
+                    (next (next args))
+                    (next args))]
+        {:flags flags
+         :name name
+         :specs specs})))
+
+
+  (def [:macro] defn
+    (fn [& args]
+      (let [fn-map (decode-defn-args args)
+            flags (:flags fn-map)
+            name (:name fn-map)
+            specs (:specs fn-map)]
+        (list 'nplisp.core/def flags name
+          (apply list 'nplisp.core/fn name specs)))))
+
+
+  (defn [:macro] defmacro
+    ;; identical to defn, but sets the :macro flag on the defined var
+    [& args]
+    (let [fn-map (decode-defn-args args)
+          flags (apply vector :macro (:flags fn-map))
+          name (:name fn-map)
+          specs (:specs fn-map)]
+      (apply list 'nplisp.core/defn flags name specs)))
+
+
   (defmacro declare
     [name]
-    (list 'def name))
-
-  (defmacro defn
-    [name & fn-declaration]
-    (list 'def name
-      (apply list 'fn name fn-declaration)))
-
+    (list 'nplisp.core/def name))
 
   ;; LOGIC FUNCTIONS AND MACROS
 

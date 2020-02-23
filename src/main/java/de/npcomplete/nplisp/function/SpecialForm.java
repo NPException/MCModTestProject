@@ -1,5 +1,8 @@
 package de.npcomplete.nplisp.function;
 
+import static de.npcomplete.nplisp.data.CoreLibrary.KW_MACRO;
+import static de.npcomplete.nplisp.data.CoreLibrary.KW_PRIVATE;
+
 import java.util.Iterator;
 import java.util.List;
 
@@ -7,7 +10,8 @@ import de.npcomplete.nplisp.Environment;
 import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.Var;
-import de.npcomplete.nplisp.data.Cons;
+import de.npcomplete.nplisp.Var.MarkerVar;
+import de.npcomplete.nplisp.data.CoreLibrary;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.MultiArityFunction.Builder;
@@ -28,22 +32,53 @@ public interface SpecialForm {
 	 * Returns the var.
 	 */
 	static Var DEF(Sequence args, Environment env, boolean allowRecur) {
-		if (!LispElf.matchSize(args, 1, 2)) {
-			throw new LispException("'def' requires 1 or 2 arguments: (def SYMBOL ?INIT)");
+		if (!LispElf.matchSize(args, 1, 3)) {
+			throw new LispException("'def' can take some optional flags and requires at lest 1 argument:" +
+					" (def ?FLAGS SYMBOL ?INIT)");
 		}
+
+		boolean isMacro = false;
+		boolean isPrivate = false;
+
 		Object o = args.first();
+
+		// process flags
+		if (!(o instanceof Symbol)) {
+			o = Lisp.eval(o, env, false);
+			Sequence flags = (Sequence) CoreLibrary.FN_SEQ.apply(o);
+			if (flags != null) {
+				for (Object flag : flags) {
+					if (KW_PRIVATE.equals(flag)) {
+						isPrivate = true;
+					} else if (KW_MACRO.equals(flag)) {
+						isMacro = true;
+					}
+				}
+			}
+			args = args.more();
+			o = args.first();
+		}
+
+		if (!LispElf.matchSize(args, 1, 2)) {
+			throw new LispException("'def' can take some optional flags and requires at lest 1 argument:" +
+					" (def ?FLAGS SYMBOL ?INIT)");
+		}
+
 		if (!(o instanceof Symbol)) {
 			String s = LispPrinter.prStr(o);
 			throw new LispException("'def' binding target is not a symbol: " + s);
 		}
 		Var var = env.namespace.define((Symbol) o);
+		if (!(var instanceof MarkerVar)) {
+			var.setPrivate(isPrivate);
+			var.macro(isMacro);
+		}
 
 		Sequence nextArgs = args.next();
 		if (nextArgs != null) {
 			Object initForm = nextArgs.first();
 			Object value = Lisp.eval(initForm, env, false);
 			var.bind(value);
-			var.macro(false);
 		}
 
 		return var;
@@ -205,7 +240,7 @@ public interface SpecialForm {
 		if (!(o instanceof Symbol)) {
 			throw new LispException("Argument to 'var' must be a symbol");
 		}
-		return env.namespace.lookupVar((Symbol) o);
+		return env.namespace.lookupVar((Symbol) o, true);
 	}
 
 	/**
@@ -216,29 +251,5 @@ public interface SpecialForm {
 			throw new LispException("'quote' requires exactly 1 argument: (quote FORM)");
 		}
 		return args.first();
-	}
-
-	/**
-	 * Takes at least 2 arguments (a symbol and an argument vector),
-	 * and and ideally one or more body forms.<br>
-	 * <code>(defmacro name [params*] body*)</code><br>
-	 * <code>(defmacro name ([params*] body*) +)</code><br>
-	 * Creates a macro which will transform the provided arguments
-	 * as specified by the body. The macro is bound to the symbol and then returned.
-	 */
-	static Var DEFMACRO(Sequence args, Environment env, boolean allowRecur) {
-		if (!LispElf.minSize(args, 2)) {
-			throw new LispException("'defmacro' requires at least 2 arguments: (defmacro name [params*] body*)");
-		}
-		Object sym = args.first();
-		if (!(sym instanceof Symbol)) {
-			String s = LispPrinter.prStr(sym);
-			throw new LispException("'defmacro' binding target is not a symbol: " + s);
-		}
-		LispFunction macroFunction = FN(args, env, false /*not used in FN*/);
-		Macro macro = macroFunction::applyTo;
-
-		return DEF(new Cons(sym, new Cons(macro, null)), env, allowRecur)
-				.macro(true);
 	}
 }

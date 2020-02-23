@@ -62,7 +62,6 @@ public class Lisp {
 		def(coreNs, "let", (SpecialForm) SpecialForm::LET);
 		def(coreNs, "var", (SpecialForm) SpecialForm::VAR);
 		def(coreNs, "quote", (SpecialForm) SpecialForm::QUOTE);
-		def(coreNs, "defmacro", (SpecialForm) SpecialForm::DEFMACRO);
 
 		def(coreNs, "loop", (SpecialForm) SpecialForm::LOOP);
 		def(coreNs, "recur", CoreLibrary.FN_RECUR);
@@ -124,6 +123,15 @@ public class Lisp {
 		def(coreNs, "require", CoreLibrary.SF_REQUIRE(libFolder, namespaces::getNamespace));
 		// TODO: implement 'import'
 
+		// BASIC PREDICATES
+		def(coreNs, "nil?", (Fn1) Objects::isNull);
+		def(coreNs, "some?", (Fn1) Objects::nonNull);
+		def(coreNs, "seqable?", CoreLibrary.FN_SEQABLE_QMARK);
+		def(coreNs, "seq?", (Fn1) arg -> arg instanceof Sequence);
+		def(coreNs, "vector?", (Fn1) arg -> arg instanceof List);
+		def(coreNs, "set?", (Fn1) arg -> arg instanceof Set);
+		def(coreNs, "map?", (Fn1) arg -> arg instanceof Map);
+
 		// TODO: COMPARISONS
 		def(coreNs, "equals", (Fn2) Objects::equals); // TODO: replace with interop when available
 
@@ -153,8 +161,12 @@ public class Lisp {
 			return val;
 		}
 		Var var = (Var) val;
-		if (!allowMacro && var.isMacro()) {
-			throw new LispException("Can't take value of a macro: " + var);
+		if (var.isMacro()) {
+			if (!allowMacro) {
+				throw new LispException("Can't take value of a macro: " + var);
+			}
+			LispFunction macroFunction = LispFunctionFactory.from(var.deref());
+			return (Macro) macroFunction::applyTo;
 		}
 		// generate 'eval' function which uses the current namespace for evaluation
 		if (var == CORE_EVAL_VAR) {

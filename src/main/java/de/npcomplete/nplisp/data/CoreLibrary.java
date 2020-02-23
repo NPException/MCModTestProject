@@ -46,7 +46,16 @@ import de.npcomplete.nplisp.util.ThreadLocalFlag;
 
 @SuppressWarnings("rawtypes")
 public final class CoreLibrary {
-	private static final Symbol NS_SYM = new Symbol("ns");
+	private static final Symbol SYM_NS = new Symbol("ns");
+
+	private static final Keyword KW_AS = new Keyword("as");
+	private static final Keyword KW_REFER = new Keyword("refer");
+	private static final Keyword KW_ALL = new Keyword("all");
+	private static final Keyword KW_RELOAD = new Keyword("reload");
+	private static final Keyword KW_RELOAD_ALL = new Keyword("reload-all");
+
+	public static final Keyword KW_PRIVATE = new Keyword("private");
+	public static final Keyword KW_MACRO = new Keyword("macro");
 
 	private CoreLibrary() {
 		throw new IllegalStateException("No instance allowed.");
@@ -116,6 +125,12 @@ public final class CoreLibrary {
 	 * that implement Iterable.
 	 */
 	public static final LispFunction FN_SEQ = (Fn1) CoreLibrary::seq;
+
+	public static final LispFunction FN_SEQABLE_QMARK =
+			(Fn1) arg -> arg == null
+					|| arg instanceof Map
+					|| arg instanceof Iterable
+					|| arg instanceof Object[];
 
 	/**
 	 * Returns the first item in the collection. Calls seq on its
@@ -595,7 +610,7 @@ public final class CoreLibrary {
 			return null;
 		}
 		Object form = LispReader.read((Reader) FN_READER.apply(source));
-		if (!(form instanceof Sequence && NS_SYM.equals(((Sequence) form).first()))) {
+		if (!(form instanceof Sequence && SYM_NS.equals(((Sequence) form).first()))) {
 			throw new LispException("Form read from " + source + " is not an 'ns' form");
 		}
 		Object nsNameSym = ((Sequence) form).more().first();
@@ -606,12 +621,6 @@ public final class CoreLibrary {
 		}
 		return form;
 	}
-
-	private static final Keyword KW_AS = new Keyword("as");
-	private static final Keyword KW_REFER = new Keyword("refer");
-	private static final Keyword KW_ALL = new Keyword("all");
-	private static final Keyword KW_RELOAD = new Keyword("reload");
-	private static final Keyword KW_RELOAD_ALL = new Keyword("reload-all");
 
 	// TODO implement via interop using '*ns*' once possible
 	public static SpecialForm SF_REQUIRE(File libFolder, Function<String, Namespace> getExistingNs) {
@@ -671,7 +680,7 @@ public final class CoreLibrary {
 					if (refer.equals(KW_ALL)) {
 						currentNs.referFrom(ns, null);
 					} else {
-						Sequence refSymbols  = seq(refer);
+						Sequence refSymbols = seq(refer);
 						currentNs.referFrom(ns, refSymbols != null ? refSymbols : EMPTY_SEQUENCE);
 					}
 				}
