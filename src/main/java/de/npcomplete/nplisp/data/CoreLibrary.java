@@ -1,5 +1,6 @@
 package de.npcomplete.nplisp.data;
 
+import static de.npcomplete.nplisp.data.Sequence.EMPTY_SEQUENCE;
 import static de.npcomplete.nplisp.util.LispElf.isSimpleSymbol;
 import static de.npcomplete.nplisp.util.LispElf.mapIterator;
 import static de.npcomplete.nplisp.util.LispElf.truthy;
@@ -140,7 +141,7 @@ public final class CoreLibrary {
 	 */
 	public static final LispFunction FN_REST = (Fn1) par1 -> {
 		Sequence s = seq(par1);
-		return s != null ? s.more() : Sequence.EMPTY_SEQUENCE;
+		return s != null ? s.more() : EMPTY_SEQUENCE;
 	};
 
 	/**
@@ -664,6 +665,16 @@ public final class CoreLibrary {
 					currentNs.addAlias(((Symbol) alias).name, ns);
 				}
 				currentNs.addAlias(ns.name, ns);
+
+				Object refer = options.get(KW_REFER);
+				if (refer != null) {
+					if (refer.equals(KW_ALL)) {
+						currentNs.referFrom(ns, null);
+					} else {
+						Sequence refSymbols  = seq(refer);
+						currentNs.referFrom(ns, refSymbols != null ? refSymbols : EMPTY_SEQUENCE);
+					}
+				}
 			}
 
 			return null;

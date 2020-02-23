@@ -13,12 +13,22 @@ public class Var implements LispFunction, Deref {
 	public final Symbol symbol;
 	private Object value = UNBOUND;
 	private boolean isMacro;
+	private boolean isPrivate;
 
 	public Var(Symbol symbol) {
 		if (symbol.nsName == null) {
 			throw new LispException("Can't create var without fully qualified symbol");
 		}
 		this.symbol = symbol;
+	}
+
+	public boolean isPrivate() {
+		return isPrivate;
+	}
+
+	public Var setPrivate(boolean isPrivate) {
+		this.isPrivate = isPrivate;
+		return this;
 	}
 
 	public boolean isMacro() {

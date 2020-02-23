@@ -23,23 +23,6 @@ import de.npcomplete.nplisp.function.Macro;
 import de.npcomplete.nplisp.function.SpecialForm;
 import de.npcomplete.nplisp.util.LispPrinter;
 
-/*
-
-Require entire namespace to be within a 'ns' form. That will give a cleaner option for
-multiple namespaces in the same file.
-Example:
-
-(ns my-project.core
-  (require '[vector.math :as vm])
-
-  ...
-  regular code here
-  ...
-  )
-
- */
-
-// TODO: finish namespaces: implement 'require'
 // TODO: import classes: bind alias symbol to class
 // TODO: doc-strings
 // TODO: interop - (. $target-class $receiver-instance ($method-name $arg*))
@@ -48,7 +31,7 @@ Example:
 // TODO: 'try/catch/finally' form
 // TODO: 'with-open' form
 // TODO: javadoc in CoreLibrary
-// TODO: private Vars (for 'def-' & 'defn-')
+// TODO: private Vars (add 'def-' & 'defn-' which set the var to private)
 // TODO: proper macro expansion
 // TODO: ensure all used symbols are already bound when invoking 'fn' or 'defmacro'
 // TODO: syntax-quote / unquote
@@ -139,7 +122,6 @@ public class Lisp {
 
 		def(coreNs, "ns", CoreLibrary.SF_NS(namespaces::getOrCreateNamespace));
 		def(coreNs, "require", CoreLibrary.SF_REQUIRE(libFolder, namespaces::getNamespace));
-		// TODO: finish 'require'
 		// TODO: implement 'import'
 
 		// TODO: COMPARISONS

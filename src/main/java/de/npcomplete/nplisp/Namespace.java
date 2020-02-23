@@ -1,9 +1,12 @@
 package de.npcomplete.nplisp;
 
+import static de.npcomplete.nplisp.util.LispElf.isSimpleSymbol;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 
 /**
@@ -68,7 +71,33 @@ public class Namespace {
 		aliases.put(name, ns);
 	}
 
-	public Var referAs(Symbol sym, Var v) {
+	public void referFrom(Namespace other, Sequence symbols) {
+		if (symbols == null) {
+			// referring all public vars
+			other.mappings.forEach((sym, var) -> {
+				if (!var.isPrivate()) {
+					referAs(sym, var);
+				}
+			});
+			return;
+		}
+		for (Object o : symbols) {
+			if (!isSimpleSymbol(o)) {
+				throw new LispException("Can only refer from simple symbols: " + o);
+			}
+			Symbol sym = (Symbol) o;
+			Var var = other.mappings.get(sym);
+			if (var == null) {
+				throw new LispException("Can't refer var. Does not exist: " + new Var(new Symbol(other.name, sym.name)));
+			}
+			referAs(sym, var);
+		}
+	}
+
+	private Var referAs(Symbol sym, Var v) {
+		if (v.isPrivate()) {
+			throw new LispException("Can't refer to private var: " + v);
+		}
 		referred.put(sym, v);
 		return v;
 	}
@@ -92,7 +121,7 @@ public class Namespace {
 		}
 		if (referredCore != null) {
 			var = referredCore.get(symbol);
-			if (var != null) {
+			if (var != null && !var.isPrivate()) {
 				return var;
 			}
 		}
@@ -112,7 +141,7 @@ public class Namespace {
 		if (aliasedNamespace == null) {
 			throw new LispException("Unknown namespace or alias: '" + symNs + "' (Namespaces need to be required before use)");
 		}
-		// refer for quicker lookup next time
+		// refer qualified symbol for quicker lookup next time (also checks if var is private)
 		return referAs(symbol, aliasedNamespace.lookupVar(new Symbol(symName)));
 	}
 }
