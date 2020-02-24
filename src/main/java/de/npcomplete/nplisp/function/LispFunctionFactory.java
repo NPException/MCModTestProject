@@ -1,13 +1,13 @@
 package de.npcomplete.nplisp.function;
 
+import static de.npcomplete.nplisp.util.Util.sneakyThrow;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
-import de.npcomplete.nplisp.LispException;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public final class LispFunctionFactory {
@@ -59,7 +59,7 @@ public final class LispFunctionFactory {
 				try {
 					return ((Callable) o).call();
 				} catch (Exception e) {
-					throw new LispException("Failed to call Callable", e);
+					throw sneakyThrow(e);
 				}
 			};
 		}

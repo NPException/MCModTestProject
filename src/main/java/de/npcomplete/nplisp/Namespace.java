@@ -1,6 +1,7 @@
 package de.npcomplete.nplisp;
 
 import static de.npcomplete.nplisp.util.LispElf.isSimpleSymbol;
+import static de.npcomplete.nplisp.util.Util.sneakyThrow;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +16,6 @@ import de.npcomplete.nplisp.data.Symbol;
 public class Namespace {
 	private final Map<Symbol, Var> mappings = new HashMap<>();
 	private final Map<Symbol, Var> referred = new HashMap<>();
-	private final Map<Symbol, Var> imports = new HashMap<>();
 	private final Map<String, Namespace> aliases = new HashMap<>();
 
 	private final Map<Symbol, Var> referredCore;
@@ -103,7 +103,7 @@ public class Namespace {
 	}
 
 	public Var importAs(Symbol sym, Class<?> c) {
-		return imports.computeIfAbsent(sym, internVar).bind(c);
+		return referred.computeIfAbsent(sym, internVar).bind(c);
 	}
 
 	public Var lookupVar(Symbol symbol, boolean allowPrivate) {
@@ -132,7 +132,7 @@ public class Namespace {
 				try {
 					return importAs(symbol, Class.forName(classname));
 				} catch (ClassNotFoundException e) {
-					throw new LispException("Can't find class with name: " + classname, e);
+					throw sneakyThrow(e);
 				}
 			}
 			throw new LispException("Unable to resolve var '" + symName + "' in namespace '" + this.name + "'");

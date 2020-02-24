@@ -1,5 +1,7 @@
 package de.npcomplete.nplisp.util;
 
+import static de.npcomplete.nplisp.util.Util.sneakyThrow;
+
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
@@ -8,11 +10,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.npcomplete.nplisp.LispException;
+import de.npcomplete.nplisp.Var;
 import de.npcomplete.nplisp.data.Keyword;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
-import de.npcomplete.nplisp.Var;
 
+@SuppressWarnings("rawtypes")
 public final class LispPrinter {
 
 	public static String prStr(Object o) throws LispException {
@@ -95,7 +98,7 @@ public final class LispPrinter {
 			}
 			printObject(o, out);
 		} catch (IOException e) {
-			throw new LispException("IO Exception when trying to print", e);
+			throw sneakyThrow(e);
 		}
 	}
 
@@ -174,7 +177,7 @@ public final class LispPrinter {
 			}
 			out.append(String.valueOf(o));
 		} catch (IOException e) {
-			throw new LispException("IO Exception when trying to print", e);
+			throw sneakyThrow(e);
 		}
 	}
 

@@ -1,7 +1,8 @@
 package de.npcomplete.nplisp.data;
 
+import static de.npcomplete.nplisp.util.Util.sneakyThrow;
+
 import de.npcomplete.nplisp.function.LispFunction;
-import de.npcomplete.nplisp.util.Util;
 
 public class Delay implements Deref {
 	private Object val;
@@ -24,7 +25,7 @@ public class Delay implements Deref {
 			fn = null;
 		}
 		if (exception != null) {
-			throw Util.sneakyThrow(exception);
+			throw sneakyThrow(exception);
 		}
 		return val;
 	}

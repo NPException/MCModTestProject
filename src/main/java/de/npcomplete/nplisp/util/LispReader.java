@@ -1,5 +1,7 @@
 package de.npcomplete.nplisp.util;
 
+import static de.npcomplete.nplisp.util.Util.sneakyThrow;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
@@ -13,8 +15,8 @@ import java.util.Set;
 import java.util.stream.IntStream;
 
 import de.npcomplete.nplisp.LispException;
-import de.npcomplete.nplisp.data.Keyword;
 import de.npcomplete.nplisp.data.ArraySequence;
+import de.npcomplete.nplisp.data.Keyword;
 import de.npcomplete.nplisp.data.Symbol;
 
 public final class LispReader {
@@ -60,7 +62,7 @@ public final class LispReader {
 			try {
 				return reader.read();
 			} catch (IOException e) {
-				throw new LispException("Failed to read from reader", e);
+				throw sneakyThrow(e);
 			}
 		});
 	}

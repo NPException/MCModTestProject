@@ -6,7 +6,7 @@ import java.util.Objects;
 
 import de.npcomplete.nplisp.util.LispPrinter;
 
-public final class ArraySequence implements Sequence {
+public final class ArraySequence implements Sequence, Countable {
 	private final Object[] array;
 	private final int index;
 	private final boolean empty;
@@ -23,7 +23,7 @@ public final class ArraySequence implements Sequence {
 		empty = index >= array.length;
 	}
 
-	public ArraySequence(Object ... elements) {
+	public ArraySequence(Object... elements) {
 		if (elements == null) {
 			throw new IllegalArgumentException("elements array must not be null");
 		}
@@ -55,6 +55,11 @@ public final class ArraySequence implements Sequence {
 	@Override
 	public Iterator<Object> iterator() {
 		return new ArrayIterator(index, array);
+	}
+
+	@Override
+	public long count() {
+		return empty ? 0 : array.length - index;
 	}
 
 	@Override

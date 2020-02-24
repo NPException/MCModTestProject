@@ -4,6 +4,7 @@ import static de.npcomplete.nplisp.data.Sequence.EMPTY_SEQUENCE;
 import static de.npcomplete.nplisp.util.LispElf.isSimpleSymbol;
 import static de.npcomplete.nplisp.util.LispElf.mapIterator;
 import static de.npcomplete.nplisp.util.LispElf.truthy;
+import static de.npcomplete.nplisp.util.Util.sneakyThrow;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 
@@ -18,6 +19,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -158,6 +160,39 @@ public final class CoreLibrary {
 		Sequence s = seq(par1);
 		return s != null ? s.more() : EMPTY_SEQUENCE;
 	};
+
+	private static long count(Object par1) {
+		if (par1 == null) {
+			return 0;
+		}
+		if (par1 instanceof Countable) {
+			return ((Countable) par1).count();
+		}
+		if (par1 instanceof Collection) {
+			return ((Collection) par1).size();
+		}
+		if (par1 instanceof Map) {
+			return ((Map) par1).size();
+		}
+		if (par1 instanceof String) {
+			return ((String) par1).length();
+		}
+		if (par1 instanceof Sequence) {
+			Sequence s = seq(par1);
+			long n = 0;
+			while (s != null) {
+				n++;
+				s = s.next();
+			}
+			return n;
+		}
+		throw new LispException("Can't get count of: " + par1);
+	}
+
+	/**
+	 * Returns the number of items contained in col.
+	 */
+	public static final LispFunction FN_COUNT = (Fn1) CoreLibrary::count;
 
 	/**
 	 * Constructs a new sequence with the new element prepended to the given sequence
@@ -635,7 +670,7 @@ public final class CoreLibrary {
 			boolean outerReloadAll = reloadAllFlag.isSet();
 
 			for (Object arg : args) {
-				// Since 'require' is supposed to be a regular function later on, I evaluate ever
+				// Since 'require' is supposed to be a regular function later on, I evaluate every
 				// argument as long as this is a SpecialForm.
 				// Means the vectors passed to 'require' already need to be quoted.
 				arg = Lisp.eval(arg, env, false);

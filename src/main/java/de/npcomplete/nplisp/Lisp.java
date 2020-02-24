@@ -81,6 +81,7 @@ public class Lisp {
 		def(coreNs, "first", CoreLibrary.FN_FIRST);
 		def(coreNs, "next", CoreLibrary.FN_NEXT);
 		def(coreNs, "rest", CoreLibrary.FN_REST);
+		def(coreNs, "count", CoreLibrary.FN_COUNT);
 		def(coreNs, "cons", CoreLibrary.FN_CONS);
 
 		// MATHS
