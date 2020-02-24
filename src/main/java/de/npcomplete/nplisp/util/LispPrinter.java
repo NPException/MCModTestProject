@@ -96,6 +96,11 @@ public final class LispPrinter {
 				out.append('}');
 				return;
 			}
+			if (o instanceof Class) {
+				out.append('^');
+				out.append(((Class) o).getName());
+				return;
+			}
 			printObject(o, out);
 		} catch (IOException e) {
 			throw sneakyThrow(e);
