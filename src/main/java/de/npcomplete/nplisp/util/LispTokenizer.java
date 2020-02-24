@@ -109,6 +109,9 @@ class LispTokenizer implements Iterator<Token> {
 			if (chr == '{') {
 				return Token.SET_START;
 			}
+			if (chr == '\'') {
+				return Token.VAR;
+			}
 			return new Token(Type.TAG, finishToken(chr));
 		}
 

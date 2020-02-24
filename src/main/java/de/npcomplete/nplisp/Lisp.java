@@ -1,126 +1,187 @@
 package de.npcomplete.nplisp;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 
+import de.npcomplete.nplisp.Var.MarkerVar;
 import de.npcomplete.nplisp.data.CoreLibrary;
+import de.npcomplete.nplisp.data.Delay;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.LispFunction;
+import de.npcomplete.nplisp.function.LispFunctionFactory;
+import de.npcomplete.nplisp.function.LispFunctionFactory.Fn1;
+import de.npcomplete.nplisp.function.LispFunctionFactory.Fn2;
 import de.npcomplete.nplisp.function.Macro;
 import de.npcomplete.nplisp.function.SpecialForm;
 import de.npcomplete.nplisp.util.LispPrinter;
-import de.npcomplete.nplisp.util.LispReader;
 
-// TODO: javadoc in CoreLibrary
-// TODO: switch from using java.util.List to own Vector class
-// TODO: destructuring
-// TODO: proper macro expansion
-// TODO: syntax-quote / unquote
-// TODO: loop
 // TODO: doc-strings
+// TODO: interop - (. $target-class $receiver-instance ($method-name $arg*))
+//                 (. $target-class $receiver-instance $field-name) // get
+//                 (. $target-class $receiver-instance $field-name $value) // set
+// TODO: 'try/catch/finally' form
+// TODO: 'with-open' form
+// TODO: javadoc in CoreLibrary
+// TODO: private Vars (add 'def-' & 'defn-' which set the var to private)
+// TODO: proper macro expansion
+// TODO: ensure all used symbols are already bound when invoking 'fn' or 'defmacro'
+// TODO: syntax-quote / unquote
+// TODO: destructuring
+// TODO: switch from using java.util.List to own Vector class
 
 public class Lisp {
-	public final Environment globalEnv;
+	static final Var CORE_EVAL_VAR = new MarkerVar(new Symbol("nplisp.core/eval"));
+	static final Var CORE_CURRENT_NS_VAR = new MarkerVar(new Symbol("nplisp.core/*ns*"));
 
-	public Lisp() {
-		globalEnv = new Environment(null);
-	}
+	public final NamespaceMap namespaces = new NamespaceMap();
 
-	public void initStandardEnvironment() {
-		System.out.println("Initializing core library");
+	public Lisp(File libFolder) {
+		// INIT CORE LIBRARY //
+		// TODO: move initialization to CoreLibrary class
+
 		long start = System.nanoTime();
 
+		Namespace coreNs = namespaces.core;
+
+		def(coreNs, "apply", CoreLibrary.FN_APPLY);
+
 		// SPECIAL FORMS
-		globalEnv.bind(new Symbol("def"), (SpecialForm) SpecialForm::DEF);
-		globalEnv.bind(new Symbol("do"), (SpecialForm) SpecialForm::DO);
-		globalEnv.bind(new Symbol("fn"), (SpecialForm) SpecialForm::FN);
-		globalEnv.bind(new Symbol("if"), (SpecialForm) SpecialForm::IF);
-		globalEnv.bind(new Symbol("let"), (SpecialForm) SpecialForm::LET);
-		globalEnv.bind(new Symbol("quote"), (SpecialForm) SpecialForm::QUOTE);
-		globalEnv.bind(new Symbol("defmacro"), (SpecialForm) SpecialForm::DEFMACRO);
+		def(coreNs, "def", (SpecialForm) SpecialForm::DEF);
+		def(coreNs, "do", (SpecialForm) SpecialForm::DO);
+		def(coreNs, "fn", (SpecialForm) SpecialForm::FN);
+		def(coreNs, "if", (SpecialForm) SpecialForm::IF);
+		def(coreNs, "let", (SpecialForm) SpecialForm::LET);
+		def(coreNs, "var", (SpecialForm) SpecialForm::VAR);
+		def(coreNs, "quote", (SpecialForm) SpecialForm::QUOTE);
 
-		// LOOP (TODO)
-		globalEnv.bind(new Symbol("recur"), CoreLibrary.FN_RECUR);
+		def(coreNs, "loop", (SpecialForm) SpecialForm::LOOP);
+		def(coreNs, "recur", CoreLibrary.FN_RECUR);
 
-		// EVAL & APPLY
-		globalEnv.bind(new Symbol("eval"), LispFunction.from((Function<?,?>) this::eval));
-		globalEnv.bind(new Symbol("apply"), CoreLibrary.FN_APPLY);
+		def(coreNs, "delay", CoreLibrary.SF_DELAY);
+		def(coreNs, "deref", CoreLibrary.FN_DEREF);
+		def(coreNs, "force", (Fn1) Delay::force);
 
 		// DATA STRUCTURE CREATION
-		globalEnv.bind(new Symbol("list"), CoreLibrary.FN_LIST);
-		globalEnv.bind(new Symbol("vector"), CoreLibrary.FN_VECTOR);
-		globalEnv.bind(new Symbol("hash-set"), CoreLibrary.FN_HASH_SET);
-		globalEnv.bind(new Symbol("hash-map"), CoreLibrary.FN_HASH_MAP);
+		def(coreNs, "list", CoreLibrary.FN_LIST);
+		def(coreNs, "vector", CoreLibrary.FN_VECTOR);
+		def(coreNs, "hash-set", CoreLibrary.FN_HASH_SET);
+		def(coreNs, "hash-map", CoreLibrary.FN_HASH_MAP);
 
 		// SEQUENCE INTERACTION
-		globalEnv.bind(new Symbol("seq"), CoreLibrary.FN_SEQ);
-		globalEnv.bind(new Symbol("first"), CoreLibrary.FN_FIRST);
-		globalEnv.bind(new Symbol("next"), CoreLibrary.FN_NEXT);
-		globalEnv.bind(new Symbol("rest"), CoreLibrary.FN_REST);
-		globalEnv.bind(new Symbol("cons"), CoreLibrary.FN_CONS);
+		def(coreNs, "seq", CoreLibrary.FN_SEQ);
+		def(coreNs, "first", CoreLibrary.FN_FIRST);
+		def(coreNs, "next", CoreLibrary.FN_NEXT);
+		def(coreNs, "rest", CoreLibrary.FN_REST);
+		def(coreNs, "count", CoreLibrary.FN_COUNT);
+		def(coreNs, "cons", CoreLibrary.FN_CONS);
 
 		// MATHS
-		globalEnv.bind(new Symbol("+"), CoreLibrary.FN_ADD);
-		globalEnv.bind(new Symbol("-"), CoreLibrary.FN_SUBTRACT);
-		globalEnv.bind(new Symbol("*"), CoreLibrary.FN_MULTIPLY);
-		globalEnv.bind(new Symbol("/"), CoreLibrary.FN_DIVIDE);
+		def(coreNs, "+", CoreLibrary.FN_ADD);
+		def(coreNs, "-", CoreLibrary.FN_SUBTRACT);
+		def(coreNs, "*", CoreLibrary.FN_MULTIPLY);
+		def(coreNs, "/", CoreLibrary.FN_DIVIDE);
 
 		// STRING, SYMBOL, AND KEYWORD INTERACTION
-		globalEnv.bind(new Symbol("str"), CoreLibrary.FN_STR);
-		globalEnv.bind(new Symbol("name"), CoreLibrary.FN_NAME);
-		globalEnv.bind(new Symbol("symbol"), CoreLibrary.FN_SYMBOL);
-		globalEnv.bind(new Symbol("keyword"), CoreLibrary.FN_KEYWORD);
+		def(coreNs, "str", CoreLibrary.FN_STR);
+		def(coreNs, "name", CoreLibrary.FN_NAME);
+		def(coreNs, "symbol", CoreLibrary.FN_SYMBOL);
+		def(coreNs, "keyword", CoreLibrary.FN_KEYWORD);
+
+		// I/O
+		def(coreNs, "as-file", CoreLibrary.FN_AS_FILE);
+		def(coreNs, "as-url", CoreLibrary.FN_AS_URL);
+		def(coreNs, "resource-url", CoreLibrary.FN_RESOURCE_URL);
+		def(coreNs, "reader", CoreLibrary.FN_READER);
 
 		// PRINTING
-		globalEnv.bind(new Symbol("pr"), CoreLibrary.FN_PR);
-		globalEnv.bind(new Symbol("prn"), CoreLibrary.FN_PRN);
-		globalEnv.bind(new Symbol("pr-str"), CoreLibrary.FN_PR_STR);
-		globalEnv.bind(new Symbol("prn-str"), CoreLibrary.FN_PRN_STR);
+		def(coreNs, "pr", CoreLibrary.FN_PR);
+		def(coreNs, "prn", CoreLibrary.FN_PRN);
+		def(coreNs, "pr-str", CoreLibrary.FN_PR_STR);
+		def(coreNs, "prn-str", CoreLibrary.FN_PRN_STR);
 
-		globalEnv.bind(new Symbol("print"), CoreLibrary.FN_PRINT);
-		globalEnv.bind(new Symbol("println"), CoreLibrary.FN_PRINTLN);
-		globalEnv.bind(new Symbol("print-str"), CoreLibrary.FN_PRINT_STR);
-		globalEnv.bind(new Symbol("println-str"), CoreLibrary.FN_PRINTLN_STR);
+		def(coreNs, "print", CoreLibrary.FN_PRINT);
+		def(coreNs, "println", CoreLibrary.FN_PRINTLN);
+		def(coreNs, "print-str", CoreLibrary.FN_PRINT_STR);
+		def(coreNs, "println-str", CoreLibrary.FN_PRINTLN_STR);
+
+		// READING
+
+		def(coreNs, "read", CoreLibrary.FN_READ);
+		def(coreNs, "read-string", CoreLibrary.FN_READ_STRING);
+
+		// NAMESPACE HANDLING
+
+		def(coreNs, "ns", CoreLibrary.SF_NS(namespaces::getOrCreateNamespace));
+		def(coreNs, "require", CoreLibrary.SF_REQUIRE(libFolder, namespaces::getNamespace));
+		def(coreNs, "import", CoreLibrary.SF_IMPORT);
+
+		// BASIC PREDICATES
+		def(coreNs, "nil?", (Fn1) Objects::isNull);
+		def(coreNs, "some?", (Fn1) Objects::nonNull);
+		def(coreNs, "seqable?", CoreLibrary.FN_SEQABLE_QMARK);
+		def(coreNs, "seq?", (Fn1) arg -> arg instanceof Sequence);
+		def(coreNs, "vector?", (Fn1) arg -> arg instanceof List);
+		def(coreNs, "set?", (Fn1) arg -> arg instanceof Set);
+		def(coreNs, "map?", (Fn1) arg -> arg instanceof Map);
 
 		// TODO: COMPARISONS
+		def(coreNs, "equals", (Fn2) Objects::equals); // TODO: replace with interop when available
+
+		// TODO: INTEROP
+		def(coreNs, ".", (SpecialForm) (args, env, allowRecur) -> {
+			throw new LispException("Interop not yet implemented.");
+		});
+		def(coreNs, "instance?", (Fn2) (c, x) -> ((Class<?>) c).isInstance(x));
 
 		// UTILITY
-		globalEnv.bind(new Symbol("time"), CoreLibrary.MACRO_TIME);
+		def(coreNs, "time", CoreLibrary.SF_TIME);
 
 		// bootstrap rest of core library
+		Environment coreEnv = new Environment(coreNs);
+		eval(CoreLibrary.CORE_NS_FORM.deref(), coreEnv, false);
 
-		try (InputStream in = Lisp.class.getResourceAsStream("core.edn");
-				Reader reader = new InputStreamReader(in)) {
-			Iterator<Object> it = LispReader.readMany(reader);
-			while (it.hasNext()) {
-				eval(it.next());
-			}
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to load core library", e);
-		}
-
+		// Note: Initialization is quite slow when all the lambdas are first bootstrapped and
+		//       and the core namespace is read from disk once. (~30 ms)
+		//       After that it's okay. (~0.5 ms)
 		long time = System.nanoTime() - start;
-		System.out.println("Done in " + time / 1_000_000.0 + " msecs");
+		System.out.println("Core library initialized in " + time / 1_000_000.0 + " msecs");
 	}
 
-	public Object eval(Object obj) throws LispException {
-		return eval(obj, globalEnv, false);
+	private static Object lookup(Environment env, Symbol sym, boolean allowMacro) {
+		Object val = env.lookup(sym);
+		if (!(val instanceof Var)) {
+			return val;
+		}
+		Var var = (Var) val;
+		if (var.isMacro()) {
+			if (!allowMacro) {
+				throw new LispException("Can't take value of a macro: " + var);
+			}
+			LispFunction macroFunction = LispFunctionFactory.from(var.deref());
+			return (Macro) macroFunction::applyTo;
+		}
+		// generate 'eval' function which uses the current namespace for evaluation
+		if (var == CORE_EVAL_VAR) {
+			Namespace ns = env.namespace;
+			return (Fn1) par -> eval(par, new Environment(ns), false);
+		}
+		if (var == CORE_CURRENT_NS_VAR) {
+			return env.namespace;
+		}
+		return var.deref();
 	}
 
 	public static Object eval(Object obj, Environment env, boolean allowRecur) throws LispException {
 		if (obj instanceof Symbol) {
-			return env.lookup((Symbol) obj);
+			return lookup(env, (Symbol) obj, false);
 		}
 
 		if (obj instanceof Sequence) {
@@ -128,8 +189,11 @@ public class Lisp {
 			if (seq.empty()) {
 				throw new LispException("Can't evaluate empty list");
 			}
-			// evaluate first element
-			Object callable = eval(seq.first(), env, false);
+			// evaluate first element with special handling for symbols to allow macros
+			Object firstElement = seq.first();
+			Object callable = firstElement instanceof Symbol
+					? lookup(env, (Symbol) firstElement, true)
+					: eval(seq.first(), env, false);
 
 			// call to special form
 			if (callable instanceof SpecialForm) {
@@ -137,7 +201,7 @@ public class Lisp {
 				return check(allowRecur, ((SpecialForm) callable).apply(args, env, allowRecur));
 			}
 
-			// TODO: proper macro expansion phase
+			// TODO: proper macro expansion phase (try to expand macros after reading)
 			if (callable instanceof Macro) {
 				Sequence args = seq.more();
 				Object expansion = ((Macro) callable).expand(args);
@@ -145,7 +209,7 @@ public class Lisp {
 			}
 
 			// call to function
-			LispFunction fn = LispFunction.from(callable);
+			LispFunction fn = LispFunctionFactory.from(callable);
 			if (fn != null) {
 				Sequence args = seq.more();
 				if (args.empty()) {
@@ -210,7 +274,7 @@ public class Lisp {
 		if (obj instanceof Map) {
 			Map<?, ?> map = (Map<?, ?>) obj;
 			Map<Object, Object> result = new HashMap<>(map.size() * 2);
-			for (Entry<?,?> e : map.entrySet()) {
+			for (Entry<?, ?> e : map.entrySet()) {
 				Object key = eval(e.getKey(), env, false);
 				if (result.containsKey(key)) {
 					throw new LispException("Map creation with duplicate key: " + key);
@@ -224,9 +288,45 @@ public class Lisp {
 	}
 
 	private static Object check(boolean allowRecur, Object val) {
-		if (allowRecur || !(val instanceof CoreLibrary.TailCall)) {
-			return val;
+		if (!allowRecur && val instanceof CoreLibrary.TailCall) {
+			throw new LispException("Illegal call to 'recur'. Can only be used in function tail position.");
 		}
-		throw new LispException("Illegal call to 'recur'. Can only be used in function tail position.");
+		return val;
+	}
+
+	private static void def(Namespace ns, String key, Object value) {
+		ns.define(new Symbol(key)).bind(value);
+	}
+
+	public static class NamespaceMap {
+		private final Map<String, Namespace> namespaces = new HashMap<>();
+		private final Map<String, Map<String, Var>> allVars = new HashMap<>();
+		final Namespace core = new Namespace("nplisp.core", null, this::internVar);
+
+		NamespaceMap() {
+			namespaces.put(core.name, core);
+			// prepare special vars, so they get can be loaded into the core namespace
+			// when 'def' is called for them
+			HashMap<String, Var> coreVars = new HashMap<>();
+			coreVars.put("eval", CORE_EVAL_VAR);
+			coreVars.put("*ns*", CORE_CURRENT_NS_VAR);
+			allVars.put(core.name, coreVars);
+		}
+
+		private Var internVar(Symbol symbol) {
+			if (symbol.nsName == null) {
+				throw new LispException("Can't intern a Var for a symbol without a namespace");
+			}
+			Map<String, Var> nsVars = allVars.computeIfAbsent(symbol.nsName, k -> new HashMap<>());
+			return nsVars.computeIfAbsent(symbol.name, k -> new Var(symbol));
+		}
+
+		public Namespace getNamespace(String name) {
+			return namespaces.get(name);
+		}
+
+		public Namespace getOrCreateNamespace(String name) {
+			return namespaces.computeIfAbsent(name, k -> new Namespace(k, core, this::internVar));
+		}
 	}
 }

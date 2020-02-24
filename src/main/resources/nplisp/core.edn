@@ -1,0 +1,122 @@
+(ns nplisp.core
+
+  ;; implemented as a special cases in de.npcomplete.nplisp.Lisp#lookup
+  (def eval)
+  (def *ns*)
+
+
+  (def decode-defn-args
+    (fn [args]
+      (let [arg-1 (first args)
+            flags (if (some? arg-1)
+                    (if (seqable? arg-1)
+                      arg-1))
+            name (if flags
+                   (first (next args))
+                   arg-1)
+            specs (if flags
+                    (next (next args))
+                    (next args))]
+        {:flags flags
+         :name name
+         :specs specs})))
+
+
+  (def [:macro] defn
+    (fn [& args]
+      (let [fn-map (decode-defn-args args)
+            flags (:flags fn-map)
+            name (:name fn-map)
+            specs (:specs fn-map)]
+        (list 'nplisp.core/def flags name
+          (apply list 'nplisp.core/fn name specs)))))
+
+
+  (defn [:macro] defmacro
+    ;; identical to defn, but sets the :macro flag on the defined var
+    [& args]
+    (let [fn-map (decode-defn-args args)
+          flags (apply vector :macro (:flags fn-map))
+          name (:name fn-map)
+          specs (:specs fn-map)]
+      (apply list 'nplisp.core/defn flags name specs)))
+
+
+  (defmacro declare
+    [name]
+    (list 'nplisp.core/def name))
+
+  ;; LOGIC FUNCTIONS AND MACROS
+
+  (defn not [x]
+    (if x false true))
+
+
+  (defmacro and
+    ([] true)
+    ([x] x)
+    ([x & next]
+     (list 'nplisp.core/if x
+       (cons 'nplisp.core/and next)
+       x)))
+
+
+  (defmacro or
+    ([] nil)
+    ([x] x)
+    ([x & next]
+     (list 'nplisp.core/if x
+       x
+       (cons 'nplisp.core/or next))))
+
+
+  ;; COMPARISONS
+
+  (defn =
+    ([x] true)
+    ([x y] (equals x y))
+    ([x y & more]
+     (if (equals x y)
+       (if (next more)
+         (recur y (first more) (next more))
+         (equals y (first more)))
+       false)))
+
+
+  ;; CONDITIONALS
+
+  (defmacro if-not
+    ([test then]
+     (list 'nplisp.core/if test nil then))
+    ([test then else]
+     (list 'nplisp.core/if test else then)))
+
+
+  (defmacro when
+    [test & body]
+    (list 'nplisp.core/if test (cons 'nplisp.core/do body)))
+
+
+  (defmacro when-not
+    [test & body]
+    (list 'nplisp.core/if test nil (cons 'nplisp.core/do body)))
+
+
+  (defmacro cond
+    [& clauses]
+    (if clauses
+      (list 'nplisp.core/if (first clauses)
+        (first (next clauses))
+        (cons 'nplisp.core/cond (next (next clauses))))))
+
+
+  ;; DATA STRUCTURE MANIPULATION
+
+  (defn concat
+    ([] '())
+    ([x] x)
+    ([x y]
+     (let [s (seq x)]
+       (if s
+         (cons (first s) (concat (rest s) y))
+         (seq y))))))

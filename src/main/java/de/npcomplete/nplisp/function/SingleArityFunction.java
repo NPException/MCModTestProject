@@ -136,7 +136,7 @@ public final class SingleArityFunction implements LispFunction {
 
 	private void assertArity(int arity) {
 		if (paramSymbols.length != arity) {
-			throw new LispException("Wrong arity: " + arity + ". Expected: =" + paramSymbols.length);
+			throw new LispException("Wrong arity: " + arity + ". Expected: " + paramSymbols.length);
 		}
 	}
 }

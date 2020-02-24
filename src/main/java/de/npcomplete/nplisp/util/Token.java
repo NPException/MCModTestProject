@@ -16,6 +16,8 @@ class Token {
 
 	static final Token QUOTE = new Token(Type.QUOTE, "'");
 
+	static final Token VAR = new Token(Type.VAR, "#'");
+
 	enum Type {
 		LIST_START,
 		LIST_END,
@@ -31,6 +33,7 @@ class Token {
 		SYMBOL,
 		KEYWORD,
 		QUOTE,
+		VAR,
 		TAG
 	}
 

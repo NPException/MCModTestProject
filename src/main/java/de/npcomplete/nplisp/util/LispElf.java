@@ -8,7 +8,7 @@ import java.util.function.Function;
 
 import de.npcomplete.nplisp.Environment;
 import de.npcomplete.nplisp.LispException;
-import de.npcomplete.nplisp.data.ListSequence;
+import de.npcomplete.nplisp.data.ArraySequence;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 
@@ -105,7 +105,7 @@ public final class LispElf {
 			localEnv.bind(paramSymbols[i], args[i]);
 		}
 		Sequence varArgs = args.length > lastParamIndex
-				? new ListSequence(lastParamIndex == 0 ? args : Arrays.copyOfRange(args, lastParamIndex, argsCount))
+				? new ArraySequence(lastParamIndex == 0 ? args : Arrays.copyOfRange(args, lastParamIndex, argsCount))
 				: null;
 		localEnv.bind(paramSymbols[lastParamIndex], varArgs);
 	}
@@ -152,5 +152,12 @@ public final class LispElf {
 		}
 
 		return symbols;
+	}
+
+	/**
+	 * Returns true iff arg is an instance of {@link Symbol} and does not have a namespace.
+	 */
+	public static boolean isSimpleSymbol(Object arg) {
+		return arg instanceof Symbol && ((Symbol) arg).nsName == null;
 	}
 }

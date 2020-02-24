@@ -1,11 +1,17 @@
 package de.npcomplete.nplisp.function;
 
+import static de.npcomplete.nplisp.data.CoreLibrary.KW_MACRO;
+import static de.npcomplete.nplisp.data.CoreLibrary.KW_PRIVATE;
+
 import java.util.Iterator;
 import java.util.List;
 
 import de.npcomplete.nplisp.Environment;
 import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.LispException;
+import de.npcomplete.nplisp.Var;
+import de.npcomplete.nplisp.Var.MarkerVar;
+import de.npcomplete.nplisp.data.CoreLibrary;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.MultiArityFunction.Builder;
@@ -19,25 +25,63 @@ public interface SpecialForm {
 	// BASE IMPLEMENTATIONS //
 
 	/**
-	 * Takes two arguments, a symbol and a form:
-	 * <code>(def SYMBOL FORM)</code><br>
-	 * The form is evaluated and the resulting value
-	 * bound to the symbol in the global environment
-	 * and then returned.
+	 * Takes one or two arguments, a symbol and an init form:
+	 * <code>(def SYMBOL ?INIT)</code><br>
+	 * The init form is evaluated and the resulting value
+	 * bound to the var in the environment's namespace.
+	 * Returns the var.
 	 */
-	static Object DEF(Sequence args, Environment env, boolean allowRecur) {
-		if (!LispElf.matchSize(args, 2, 2)) {
-			throw new LispException("'def' requires 2 arguments: (def SYMBOL FORM)");
+	static Var DEF(Sequence args, Environment env, boolean allowRecur) {
+		if (!LispElf.matchSize(args, 1, 3)) {
+			throw new LispException("'def' can take some optional flags and requires at lest 1 argument:" +
+					" (def ?FLAGS SYMBOL ?INIT)");
 		}
-		Object sym = args.first();
-		if (!(sym instanceof Symbol)) {
-			String s = LispPrinter.prStr(sym);
+
+		boolean isMacro = false;
+		boolean isPrivate = false;
+
+		Object o = args.first();
+
+		// process flags
+		if (!(o instanceof Symbol)) {
+			o = Lisp.eval(o, env, false);
+			Sequence flags = (Sequence) CoreLibrary.FN_SEQ.apply(o);
+			if (flags != null) {
+				for (Object flag : flags) {
+					if (KW_PRIVATE.equals(flag)) {
+						isPrivate = true;
+					} else if (KW_MACRO.equals(flag)) {
+						isMacro = true;
+					}
+				}
+			}
+			args = args.more();
+			o = args.first();
+		}
+
+		if (!LispElf.matchSize(args, 1, 2)) {
+			throw new LispException("'def' can take some optional flags and requires at lest 1 argument:" +
+					" (def ?FLAGS SYMBOL ?INIT)");
+		}
+
+		if (!(o instanceof Symbol)) {
+			String s = LispPrinter.prStr(o);
 			throw new LispException("'def' binding target is not a symbol: " + s);
 		}
-		Object form = args.next().first();
-		Object value = Lisp.eval(form, env, false);
-		env.top().bind((Symbol) sym, value);
-		return value;
+		Var var = env.namespace.define((Symbol) o);
+		if (!(var instanceof MarkerVar)) {
+			var.setPrivate(isPrivate);
+			var.macro(isMacro);
+		}
+
+		Sequence nextArgs = args.next();
+		if (nextArgs != null) {
+			Object initForm = nextArgs.first();
+			Object value = Lisp.eval(initForm, env, false);
+			var.bind(value);
+		}
+
+		return var;
 	}
 
 	/**
@@ -149,6 +193,57 @@ public interface SpecialForm {
 	}
 
 	/**
+	 * Just like 'let', but calls to 'recur' repeat the body with the values passed to recur
+	 * bound to the symbols.
+	 */
+	static Object LOOP(Sequence args, Environment env, boolean allowRecur) {
+		if (args.empty()) {
+			throw new LispException("'loop' requires at least one argument: (let BINDINGS *&FORMS*)");
+		}
+		Object arg1 = args.first();
+		if (!(arg1 instanceof List)) {
+			throw new LispException("'loop' first argument is not a List");
+		}
+		List<?> bindings = (List<?>) arg1;
+		if (bindings.size() % 2 != 0) {
+			throw new LispException("'loop' bindings List doesn't have an even number of elements");
+		}
+
+		Environment localEnv = new Environment(env);
+		Symbol[] paramSymbols = new Symbol[bindings.size() / 2];
+
+		// process bindings
+		for (int i = 0, size = paramSymbols.length; i < size; i++) {
+			int symIndex = i * 2;
+			int valIndex = i * 2 + 1;
+			Object o = bindings.get(symIndex);
+			if (!(o instanceof Symbol)) {
+				String s = LispPrinter.prStr(o);
+				throw new LispException("'let' binding target is not a symbol: " + s);
+			}
+			Symbol sym = (Symbol) o;
+			paramSymbols[i] = sym;
+			Object value = Lisp.eval(bindings.get(valIndex), localEnv, false);
+			localEnv.bind(sym, value);
+		}
+
+		// evaluate body
+		return SingleArityFunction.call(args.next(), paramSymbols, localEnv);
+	}
+
+	/**
+	 * Takes a single symbol as an argument. Returns the var designated by that symbol,
+	 * not its value.
+	 */
+	static Var VAR(Sequence args, Environment env, boolean allowRecur) {
+		Object o = args.first();
+		if (!(o instanceof Symbol)) {
+			throw new LispException("Argument to 'var' must be a symbol");
+		}
+		return env.namespace.lookupVar((Symbol) o, true);
+	}
+
+	/**
 	 * Takes a single form as an argument. Returns that argument unevaluated.
 	 */
 	static Object QUOTE(Sequence args, Environment env, boolean allowRecur) {
@@ -156,28 +251,5 @@ public interface SpecialForm {
 			throw new LispException("'quote' requires exactly 1 argument: (quote FORM)");
 		}
 		return args.first();
-	}
-
-	/**
-	 * Takes at least 2 arguments (a symbol and an argument vector),
-	 * and and ideally one or more body forms.<br>
-	 * <code>(defmacro name [params*] body*)</code><br>
-	 * <code>(defmacro name ([params*] body*) +)</code><br>
-	 * Creates a macro which will transform the provided arguments
-	 * as specified by the body. The macro is bound to the symbol and then returned.
-	 */
-	static Macro DEFMACRO(Sequence args, Environment env, boolean allowRecur) {
-		if (!LispElf.minSize(args, 2)) {
-			throw new LispException("'defmacro' requires at least 2 arguments: (defmacro name [params*] body*)");
-		}
-		Object sym = args.first();
-		if (!(sym instanceof Symbol)) {
-			String s = LispPrinter.prStr(sym);
-			throw new LispException("'defmacro' binding target is not a symbol: " + s);
-		}
-		LispFunction macroFunction = FN(args, env, false /*not used in FN*/);
-		Macro macro = macroFunction::applyTo;
-		env.top().bind((Symbol) sym, macro);
-		return macro;
 	}
 }

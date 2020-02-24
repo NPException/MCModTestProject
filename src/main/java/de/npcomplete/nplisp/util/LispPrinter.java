@@ -1,5 +1,7 @@
 package de.npcomplete.nplisp.util;
 
+import static de.npcomplete.nplisp.util.Util.sneakyThrow;
+
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
@@ -8,10 +10,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.npcomplete.nplisp.LispException;
+import de.npcomplete.nplisp.Var;
 import de.npcomplete.nplisp.data.Keyword;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 
+@SuppressWarnings("rawtypes")
 public final class LispPrinter {
 
 	public static String prStr(Object o) throws LispException {
@@ -27,17 +31,36 @@ public final class LispPrinter {
 				out.append("nil");
 				return;
 			}
-			if (o instanceof String) {
-				out.append('"').append(escapeString((String) o)).append('"');
+			if (o instanceof CharSequence) {
+				out.append('"').append(escapeString(o.toString())).append('"');
+				return;
+			}
+			if (o instanceof Number
+					|| o instanceof Boolean) {
+				out.append(String.valueOf(o));
 				return;
 			}
 			if (o instanceof Symbol) {
-				out.append(((Symbol) o).name);
+				Symbol sym = (Symbol) o;
+				if (sym.nsName != null) {
+					out.append(sym.nsName).append('/');
+				}
+				out.append(sym.name);
 				return;
 			}
 			if (o instanceof Keyword) {
+				Keyword kw = (Keyword) o;
 				out.append(':');
-				out.append(((Keyword) o).name);
+				if (kw.nsName != null) {
+					out.append(kw.nsName).append('/');
+				}
+				out.append(kw.name);
+				return;
+			}
+			if (o instanceof Var) {
+				Var v = (Var) o;
+				out.append("#'");
+				print(v.symbol, out);
 				return;
 			}
 			if (o instanceof Sequence) {
@@ -73,9 +96,14 @@ public final class LispPrinter {
 				out.append('}');
 				return;
 			}
-			out.append(String.valueOf(o));
+			if (o instanceof Class) {
+				out.append('^');
+				out.append(((Class) o).getName());
+				return;
+			}
+			printObject(o, out);
 		} catch (IOException e) {
-			throw new LispException("IO Exception when trying to print", e);
+			throw sneakyThrow(e);
 		}
 	}
 
@@ -97,12 +125,26 @@ public final class LispPrinter {
 				return;
 			}
 			if (o instanceof Symbol) {
-				out.append(((Symbol) o).name);
+				Symbol sym = (Symbol) o;
+				if (sym.nsName != null) {
+					out.append(sym.nsName).append('/');
+				}
+				out.append(sym.name);
 				return;
 			}
 			if (o instanceof Keyword) {
+				Keyword kw = (Keyword) o;
 				out.append(':');
-				out.append(((Keyword) o).name);
+				if (kw.nsName != null) {
+					out.append(kw.nsName).append('/');
+				}
+				out.append(kw.name);
+				return;
+			}
+			if (o instanceof Var) {
+				Var v = (Var) o;
+				out.append("#'");
+				print(v.symbol, out);
 				return;
 			}
 			if (o instanceof Sequence) {
@@ -140,8 +182,18 @@ public final class LispPrinter {
 			}
 			out.append(String.valueOf(o));
 		} catch (IOException e) {
-			throw new LispException("IO Exception when trying to print", e);
+			throw sneakyThrow(e);
 		}
+	}
+
+	private static void printObject(Object o, Appendable out) throws IOException {
+		out.append("#object[");
+		out.append(o.getClass().getName());
+		out.append(' ');
+		out.append(String.format("0x%x", System.identityHashCode(o)));
+		out.append(' ');
+		out.append(o.toString());
+		out.append(']');
 	}
 
 	private static <T> void printIterable(Appendable out, Iterable<T> iterable,

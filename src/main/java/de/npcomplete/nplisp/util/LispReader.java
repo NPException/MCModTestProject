@@ -1,5 +1,7 @@
 package de.npcomplete.nplisp.util;
 
+import static de.npcomplete.nplisp.util.Util.sneakyThrow;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
@@ -13,8 +15,8 @@ import java.util.Set;
 import java.util.stream.IntStream;
 
 import de.npcomplete.nplisp.LispException;
+import de.npcomplete.nplisp.data.ArraySequence;
 import de.npcomplete.nplisp.data.Keyword;
-import de.npcomplete.nplisp.data.ListSequence;
 import de.npcomplete.nplisp.data.Symbol;
 
 public final class LispReader {
@@ -23,31 +25,21 @@ public final class LispReader {
 		return read(s.chars());
 	}
 
+	public static Iterator<Object> readStrMany(String s) {
+		return readMany(s.chars());
+	}
+
 	public static Object read(Reader reader) throws LispException {
-		return read(IntStream.generate(() -> {
-			try {
-				return reader.read();
-			} catch (IOException e) {
-				throw new LispException("Failed to read from reader", e);
-			}
-		}));
+		return read(streamCharacters(reader));
 	}
 
 	public static Iterator<Object> readMany(Reader reader) {
-		return readMany(IntStream.generate(() -> {
-			try {
-				return reader.read();
-			} catch (IOException e) {
-				throw new LispException("Failed to read from reader", e);
-			}
-		}));
+		return readMany(streamCharacters(reader));
 	}
 
 	public static Object read(IntStream chars) throws LispException {
 		LispTokenizer tokenizer = new LispTokenizer(chars.iterator());
-		return tokenizer.hasNext()
-				? build(tokenizer, null)
-				: null;
+		return build(tokenizer, null);
 	}
 
 	public static Iterator<Object> readMany(IntStream chars) {
@@ -63,6 +55,16 @@ public final class LispReader {
 				return build(tokenizer, null);
 			}
 		};
+	}
+
+	private static IntStream streamCharacters(Reader reader) {
+		return IntStream.generate(() -> {
+			try {
+				return reader.read();
+			} catch (IOException e) {
+				throw sneakyThrow(e);
+			}
+		});
 	}
 
 	private static Object build(Iterator<Token> it, Token expectedEnd) {
@@ -84,7 +86,7 @@ public final class LispReader {
 			case LIST_START:
 				ArrayList<Object> seqContent = new ArrayList<>();
 				buildCollection(seqContent, Token.LIST_END, it);
-				return new ListSequence(seqContent.toArray());
+				return new ArraySequence(seqContent.toArray());
 
 			case VECTOR_START:
 				ArrayList<Object> list = new ArrayList<>();
@@ -114,7 +116,11 @@ public final class LispReader {
 
 			case QUOTE:
 				Object[] quoted = {new Symbol("quote"), build(it, null)};
-				return new ListSequence(quoted);
+				return new ArraySequence(quoted);
+
+			case VAR:
+				Object[] varCall = {new Symbol("var"), build(it, null)};
+				return new ArraySequence(varCall);
 
 			case TAG:
 				// NOT YET SUPPORTED
@@ -144,7 +150,7 @@ public final class LispReader {
 			throw new LispException("Odd number or elements for map literal");
 		}
 		Map<Object, Object> map = new HashMap<>(mapContents.size());
-		Iterator mapIt = mapContents.iterator();
+		Iterator<?> mapIt = mapContents.iterator();
 		while (mapIt.hasNext()) {
 			Object key = mapIt.next();
 			if (map.containsKey(key)) {
