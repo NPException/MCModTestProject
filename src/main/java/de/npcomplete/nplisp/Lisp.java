@@ -23,7 +23,6 @@ import de.npcomplete.nplisp.function.Macro;
 import de.npcomplete.nplisp.function.SpecialForm;
 import de.npcomplete.nplisp.util.LispPrinter;
 
-// TODO: import classes: bind alias symbol to class
 // TODO: doc-strings
 // TODO: interop - (. $target-class $receiver-instance ($method-name $arg*))
 //                 (. $target-class $receiver-instance $field-name) // get
@@ -122,7 +121,7 @@ public class Lisp {
 
 		def(coreNs, "ns", CoreLibrary.SF_NS(namespaces::getOrCreateNamespace));
 		def(coreNs, "require", CoreLibrary.SF_REQUIRE(libFolder, namespaces::getNamespace));
-		// TODO: implement 'import'
+		def(coreNs, "import", CoreLibrary.SF_IMPORT);
 
 		// BASIC PREDICATES
 		def(coreNs, "nil?", (Fn1) Objects::isNull);

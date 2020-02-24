@@ -1,9 +1,10 @@
 (ns nplisp.string
+  (import '[java.lang String])
 
   (defn upper-case [s]
-    (. ^java.lang.String s (toUpperCase)))
+    (. String s (toUpperCase)))
 
   (defn lower-case [s]
-    (. ^java.lang.String s (toLowerCase)))
+    (. String s (toLowerCase)))
 
   )

@@ -725,6 +725,43 @@ public final class CoreLibrary {
 		};
 	}
 
+	// TODO implement via interop using once possible
+	public static final SpecialForm SF_IMPORT = (args, env, allowRecur) -> {
+		Namespace currentNs = env.namespace;
+
+		for (Object arg : args) {
+			// Since 'import' is supposed to be a regular function later on, I evaluate every
+			// argument as long as this is a SpecialForm.
+			// Means the vectors passed to 'import' already need to be quoted.
+			arg = Lisp.eval(arg, env, false);
+
+			Sequence spec = seq(arg);
+			if (spec != null && count(arg) < 2) {
+				throw new LispException("'import' spec needs at least 2 symbols (package and class) but was: " + spec);
+			}
+
+			String pckg = null;
+			while (spec != null) {
+				Object sym = spec.first();
+				spec = spec.next();
+				if (!isSimpleSymbol(sym)) {
+					throw new LispException("Elements of 'import' spec must be a simple symbol. Was: " + sym);
+				}
+				if (pckg == null) {
+					pckg = ((Symbol) sym).name;
+					continue;
+				}
+				Symbol classSym = (Symbol) sym;
+				try {
+					currentNs.importAs(classSym, Class.forName(pckg + '.' + classSym.name));
+				} catch (ClassNotFoundException e) {
+					throw sneakyThrow(e);
+				}
+			}
+		}
+		return null;
+	};
+
 	public static final Delay CORE_NS_FORM =
 			new Delay((Fn0) () -> loadNsForm(new Symbol("nplisp.core"), null, true));
 }
