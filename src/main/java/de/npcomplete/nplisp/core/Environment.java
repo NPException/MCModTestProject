@@ -1,4 +1,4 @@
-package de.npcomplete.nplisp;
+package de.npcomplete.nplisp.core;
 
 import java.util.HashMap;
 import java.util.Map;

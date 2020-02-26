@@ -1,6 +1,6 @@
 package de.npcomplete.nplisp.function;
 
-import static de.npcomplete.nplisp.util.Util.sneakyThrow;
+import static de.npcomplete.nplisp.util.LispElf.sneakyThrow;
 
 import java.util.Map;
 import java.util.Set;
@@ -11,7 +11,8 @@ import java.util.function.Supplier;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public final class LispFunctionFactory {
-	private LispFunctionFactory() {}
+	private LispFunctionFactory() {
+	}
 
 	/**
 	 * Attempts to create an {@link LispFunction} from the given object.

@@ -1,6 +1,8 @@
 package de.npcomplete.nplisp;
 
-import de.npcomplete.nplisp.data.CoreLibrary;
+import de.npcomplete.nplisp.core.Environment;
+import de.npcomplete.nplisp.core.Namespace;
+import de.npcomplete.nplisp.corelibrary.CoreLibrary;
 import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.LispFunction;
 import de.npcomplete.nplisp.function.LispFunctionFactory.Fn1;

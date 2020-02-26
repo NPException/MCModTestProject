@@ -15,7 +15,7 @@ import java.util.stream.DoubleStream;
 
 import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.Repl;
-import de.npcomplete.nplisp.Var;
+import de.npcomplete.nplisp.core.Var;
 import de.npcomplete.nplisp.function.LispFunctionFactory.Fn0;
 import de.npcomplete.nplisp.util.LispPrinter;
 import de.npcomplete.nplisp.util.LispReader;

@@ -2,9 +2,9 @@ package de.npcomplete.nplisp.function;
 
 import java.util.List;
 
-import de.npcomplete.nplisp.Environment;
 import de.npcomplete.nplisp.LispException;
-import de.npcomplete.nplisp.data.CoreLibrary.TailCall;
+import de.npcomplete.nplisp.core.Environment;
+import de.npcomplete.nplisp.corelibrary.CoreLibrary.TailCall;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.util.LispElf;

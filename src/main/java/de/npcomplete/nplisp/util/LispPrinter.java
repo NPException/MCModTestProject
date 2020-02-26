@@ -1,6 +1,6 @@
 package de.npcomplete.nplisp.util;
 
-import static de.npcomplete.nplisp.util.Util.sneakyThrow;
+import static de.npcomplete.nplisp.util.LispElf.sneakyThrow;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -10,7 +10,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.npcomplete.nplisp.LispException;
-import de.npcomplete.nplisp.Var;
+import de.npcomplete.nplisp.core.Var;
 import de.npcomplete.nplisp.data.Keyword;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;

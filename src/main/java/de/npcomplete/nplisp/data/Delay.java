@@ -1,6 +1,6 @@
 package de.npcomplete.nplisp.data;
 
-import static de.npcomplete.nplisp.util.Util.sneakyThrow;
+import static de.npcomplete.nplisp.util.LispElf.sneakyThrow;
 
 import de.npcomplete.nplisp.function.LispFunction;
 

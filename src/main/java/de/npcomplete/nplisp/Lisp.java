@@ -10,8 +10,12 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
-import de.npcomplete.nplisp.Var.MarkerVar;
-import de.npcomplete.nplisp.data.CoreLibrary;
+import de.npcomplete.nplisp.core.Environment;
+import de.npcomplete.nplisp.core.Namespace;
+import de.npcomplete.nplisp.core.Var;
+import de.npcomplete.nplisp.core.Var.MarkerVar;
+import de.npcomplete.nplisp.corelibrary.CoreLibrary;
+import de.npcomplete.nplisp.corelibrary.CoreLibrary.TailCall;
 import de.npcomplete.nplisp.data.Delay;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
@@ -291,7 +295,7 @@ public class Lisp {
 	}
 
 	private static Object check(boolean allowRecur, Object val) {
-		if (!allowRecur && val instanceof CoreLibrary.TailCall) {
+		if (!allowRecur && val instanceof TailCall) {
 			throw new LispException("Illegal call to 'recur'. Can only be used in function tail position.");
 		}
 		return val;

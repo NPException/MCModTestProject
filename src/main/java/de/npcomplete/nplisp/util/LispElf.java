@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-import de.npcomplete.nplisp.Environment;
 import de.npcomplete.nplisp.LispException;
+import de.npcomplete.nplisp.core.Environment;
 import de.npcomplete.nplisp.data.ArraySequence;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
@@ -159,5 +159,25 @@ public final class LispElf {
 	 */
 	public static boolean isSimpleSymbol(Object arg) {
 		return arg instanceof Symbol && ((Symbol) arg).nsName == null;
+	}
+
+	/**
+	 * Throw even checked exceptions without being required
+	 * to declare them or catch them. Suggested idiom:
+	 * <p>
+	 * <code>throw sneakyThrow( some exception );</code>
+	 */
+	public static RuntimeException sneakyThrow(Throwable t) {
+		// http://www.mail-archive.com/javaposse@googlegroups.com/msg05984.html
+		if (t == null) {
+			throw new NullPointerException();
+		}
+		sneakyThrow0(t);
+		return new RuntimeException("How on earth did the execution reach this point?!");
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <T extends Throwable> void sneakyThrow0(Throwable t) throws T {
+		throw (T) t;
 	}
 }

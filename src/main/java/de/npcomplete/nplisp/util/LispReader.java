@@ -1,6 +1,6 @@
 package de.npcomplete.nplisp.util;
 
-import static de.npcomplete.nplisp.util.Util.sneakyThrow;
+import static de.npcomplete.nplisp.util.LispElf.sneakyThrow;
 
 import java.io.IOException;
 import java.io.Reader;

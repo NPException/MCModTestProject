@@ -1,12 +1,13 @@
-package de.npcomplete.nplisp;
+package de.npcomplete.nplisp.core;
 
 import static de.npcomplete.nplisp.util.LispElf.isSimpleSymbol;
-import static de.npcomplete.nplisp.util.Util.sneakyThrow;
+import static de.npcomplete.nplisp.util.LispElf.sneakyThrow;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 
@@ -23,7 +24,7 @@ public class Namespace {
 	public final String name;
 	private final Function<Symbol, Var> internVar;
 
-	Namespace(String name, Namespace core, Function<Symbol, Var> internQualifiedVar) {
+	public Namespace(String name, Namespace core, Function<Symbol, Var> internQualifiedVar) {
 		referredCore = core != null ? core.mappings : null;
 		this.name = name;
 		this.internVar = sym -> internQualifiedVar.apply(new Symbol(name, sym.name));

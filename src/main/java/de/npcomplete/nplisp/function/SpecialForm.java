@@ -1,17 +1,17 @@
 package de.npcomplete.nplisp.function;
 
-import static de.npcomplete.nplisp.data.CoreLibrary.KW_MACRO;
-import static de.npcomplete.nplisp.data.CoreLibrary.KW_PRIVATE;
-import static de.npcomplete.nplisp.data.CoreLibrary.seq;
+import static de.npcomplete.nplisp.corelibrary.CoreLibrary.KW_MACRO;
+import static de.npcomplete.nplisp.corelibrary.CoreLibrary.KW_PRIVATE;
+import static de.npcomplete.nplisp.corelibrary.CoreLibrary.seq;
 
 import java.util.Iterator;
 import java.util.List;
 
-import de.npcomplete.nplisp.Environment;
 import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.LispException;
-import de.npcomplete.nplisp.Var;
-import de.npcomplete.nplisp.Var.MarkerVar;
+import de.npcomplete.nplisp.core.Environment;
+import de.npcomplete.nplisp.core.Var;
+import de.npcomplete.nplisp.core.Var.MarkerVar;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.MultiArityFunction.Builder;

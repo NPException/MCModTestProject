@@ -1,5 +1,6 @@
-package de.npcomplete.nplisp;
+package de.npcomplete.nplisp.core;
 
+import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.data.Deref;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;

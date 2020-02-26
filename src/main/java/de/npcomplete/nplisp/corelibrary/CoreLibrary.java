@@ -1,10 +1,10 @@
-package de.npcomplete.nplisp.data;
+package de.npcomplete.nplisp.corelibrary;
 
 import static de.npcomplete.nplisp.data.Sequence.EMPTY_SEQUENCE;
 import static de.npcomplete.nplisp.util.LispElf.isSimpleSymbol;
 import static de.npcomplete.nplisp.util.LispElf.mapIterator;
+import static de.npcomplete.nplisp.util.LispElf.sneakyThrow;
 import static de.npcomplete.nplisp.util.LispElf.truthy;
-import static de.npcomplete.nplisp.util.Util.sneakyThrow;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 
@@ -32,10 +32,19 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import de.npcomplete.nplisp.Environment;
 import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.LispException;
-import de.npcomplete.nplisp.Namespace;
+import de.npcomplete.nplisp.core.Environment;
+import de.npcomplete.nplisp.core.Namespace;
+import de.npcomplete.nplisp.data.ArraySequence;
+import de.npcomplete.nplisp.data.Cons;
+import de.npcomplete.nplisp.data.Countable;
+import de.npcomplete.nplisp.data.Delay;
+import de.npcomplete.nplisp.data.Deref;
+import de.npcomplete.nplisp.data.IteratorSequence;
+import de.npcomplete.nplisp.data.Keyword;
+import de.npcomplete.nplisp.data.Sequence;
+import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.LispFunction;
 import de.npcomplete.nplisp.function.LispFunctionFactory.Fn0;
 import de.npcomplete.nplisp.function.LispFunctionFactory.Fn1;
