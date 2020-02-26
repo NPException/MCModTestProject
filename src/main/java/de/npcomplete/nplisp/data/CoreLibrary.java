@@ -24,8 +24,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.RandomAccess;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -75,11 +77,23 @@ public final class CoreLibrary {
 
 	public static final LispFunction FN_LIST = (VarArgsFunction) ArraySequence::new;
 
+	public static boolean isSeq(Object arg) {
+		return arg instanceof Sequence;
+	}
+
 	public static final LispFunction FN_VECTOR =
 			(VarArgsFunction) args -> unmodifiableList(asList(args));
 
+	public static boolean isVector(Object arg) {
+		return arg instanceof List && arg instanceof RandomAccess;
+	}
+
 	public static final LispFunction FN_HASH_SET =
 			(VarArgsFunction) args -> Collections.unmodifiableSet(new HashSet<>(asList(args)));
+
+	public static boolean isSet(Object arg) {
+		return arg instanceof Set;
+	}
 
 	public static final LispFunction FN_HASH_MAP = (VarArgsFunction) args -> {
 		if (args.length % 2 != 0) {
@@ -93,7 +107,17 @@ public final class CoreLibrary {
 		return Collections.unmodifiableMap(map);
 	};
 
-	private static Sequence seq(Object o) {
+	public static boolean isMap(Object arg) {
+		return arg instanceof Map;
+	}
+
+	/**
+	 * Returns a seq on the collection. If the collection is
+	 * empty, returns nil. (seq nil) returns nil. seq also works on
+	 * Maps, native Java arrays (of reference types) and any objects
+	 * that implement Iterable.
+	 */
+	public static Sequence seq(Object o) {
 		if (o == null) {
 			return null;
 		}
@@ -120,19 +144,12 @@ public final class CoreLibrary {
 		throw new LispException("Don't know how to create sequence from" + o.getClass());
 	}
 
-	/**
-	 * Returns a seq on the collection. If the collection is
-	 * empty, returns nil. (seq nil) returns nil. seq also works on
-	 * Maps, native Java arrays (of reference types) and any objects
-	 * that implement Iterable.
-	 */
-	public static final LispFunction FN_SEQ = (Fn1) CoreLibrary::seq;
-
-	public static final LispFunction FN_SEQABLE_QMARK =
-			(Fn1) arg -> arg == null
-					|| arg instanceof Map
-					|| arg instanceof Iterable
-					|| arg instanceof Object[];
+	public static boolean isSeqable(Object o) {
+		return o == null
+				|| o instanceof Map
+				|| o instanceof Iterable
+				|| o instanceof Object[];
+	}
 
 	/**
 	 * Returns the first item in the collection. Calls seq on its
@@ -334,7 +351,7 @@ public final class CoreLibrary {
 		return result;
 	};
 
-	public static final LispFunction FN_STR = (VarArgsFunction) args -> {
+	public static String str(Object... args) {
 		StringBuilder sb = new StringBuilder();
 		for (Object o : args) {
 			if (o != null) {
@@ -342,11 +359,11 @@ public final class CoreLibrary {
 			}
 		}
 		return sb.toString();
-	};
+	}
 
-	public static final LispFunction FN_NAME = (Fn1) par1 -> {
+	public static String name(Object par1) {
 		if (par1 instanceof String) {
-			return par1;
+			return (String) par1;
 		}
 		if (par1 instanceof Symbol) {
 			return ((Symbol) par1).name;
@@ -354,8 +371,8 @@ public final class CoreLibrary {
 		if (par1 instanceof Keyword) {
 			return ((Keyword) par1).name;
 		}
-		throw new LispException("Doesn't support name: " + FN_STR.apply(par1));
-	};
+		throw new LispException("Doesn't support name: " + str(par1));
+	}
 
 	public static final LispFunction FN_SYMBOL = (Fn1) par1 -> {
 		if (par1 instanceof Symbol) {
@@ -368,8 +385,12 @@ public final class CoreLibrary {
 		if (par1 instanceof String) {
 			return new Symbol((String) par1);
 		}
-		throw new LispException("Can't create symbol from: " + FN_STR.apply(par1));
+		throw new LispException("Can't create symbol from: " + str(par1));
 	};
+
+	public static boolean isSymbol(Object arg) {
+		return arg instanceof Symbol;
+	}
 
 	public static final LispFunction FN_KEYWORD = (Fn1) par1 -> {
 		if (par1 instanceof Keyword) {
@@ -382,8 +403,12 @@ public final class CoreLibrary {
 		if (par1 instanceof String) {
 			return new Keyword((String) par1);
 		}
-		throw new LispException("Can't create keyword from: " + FN_STR.apply(par1));
+		throw new LispException("Can't create keyword from: " + str(par1));
 	};
+
+	public static boolean isKeyword(Object arg) {
+		return arg instanceof Keyword;
+	}
 
 	// BASIC I/O
 

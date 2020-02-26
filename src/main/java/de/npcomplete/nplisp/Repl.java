@@ -20,7 +20,7 @@ public class Repl {
 		 * creating it if it does not yet exist.
 		 */
 		in_ns_function = (Fn1) par -> {
-			String name = (String) CoreLibrary.FN_NAME.apply(par);
+			String name = CoreLibrary.str(par);
 			Namespace ns = lisp.namespaces.getOrCreateNamespace(name);
 			currentReplNs[0] = ns;
 			return ns;

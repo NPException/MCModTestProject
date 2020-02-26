@@ -21,6 +21,7 @@ import de.npcomplete.nplisp.function.LispFunctionFactory.Fn1;
 import de.npcomplete.nplisp.function.LispFunctionFactory.Fn2;
 import de.npcomplete.nplisp.function.Macro;
 import de.npcomplete.nplisp.function.SpecialForm;
+import de.npcomplete.nplisp.function.VarArgsFunction;
 import de.npcomplete.nplisp.util.LispPrinter;
 
 // TODO: doc-strings
@@ -76,7 +77,7 @@ public class Lisp {
 		def(coreNs, "hash-map", CoreLibrary.FN_HASH_MAP);
 
 		// SEQUENCE INTERACTION
-		def(coreNs, "seq", CoreLibrary.FN_SEQ);
+		def(coreNs, "seq", (Fn1) CoreLibrary::seq);
 		def(coreNs, "first", CoreLibrary.FN_FIRST);
 		def(coreNs, "next", CoreLibrary.FN_NEXT);
 		def(coreNs, "rest", CoreLibrary.FN_REST);
@@ -90,8 +91,8 @@ public class Lisp {
 		def(coreNs, "/", CoreLibrary.FN_DIVIDE);
 
 		// STRING, SYMBOL, AND KEYWORD INTERACTION
-		def(coreNs, "str", CoreLibrary.FN_STR);
-		def(coreNs, "name", CoreLibrary.FN_NAME);
+		def(coreNs, "str", (VarArgsFunction) CoreLibrary::str);
+		def(coreNs, "name", (Fn1) CoreLibrary::name);
 		def(coreNs, "symbol", CoreLibrary.FN_SYMBOL);
 		def(coreNs, "keyword", CoreLibrary.FN_KEYWORD);
 
@@ -123,14 +124,16 @@ public class Lisp {
 		def(coreNs, "require", CoreLibrary.SF_REQUIRE(libFolder, namespaces::getNamespace));
 		def(coreNs, "import", CoreLibrary.SF_IMPORT);
 
-		// BASIC PREDICATES
+		// PREDICATES
 		def(coreNs, "nil?", (Fn1) Objects::isNull);
 		def(coreNs, "some?", (Fn1) Objects::nonNull);
-		def(coreNs, "seqable?", CoreLibrary.FN_SEQABLE_QMARK);
-		def(coreNs, "seq?", (Fn1) arg -> arg instanceof Sequence);
-		def(coreNs, "vector?", (Fn1) arg -> arg instanceof List);
-		def(coreNs, "set?", (Fn1) arg -> arg instanceof Set);
-		def(coreNs, "map?", (Fn1) arg -> arg instanceof Map);
+		def(coreNs, "symbol?", (Fn1) CoreLibrary::isSymbol);
+		def(coreNs, "keyword?", (Fn1) CoreLibrary::isKeyword);
+		def(coreNs, "seqable?", (Fn1) CoreLibrary::isSeqable);
+		def(coreNs, "seq?", (Fn1) CoreLibrary::isSeq);
+		def(coreNs, "vector?", (Fn1) CoreLibrary::isVector);
+		def(coreNs, "set?", (Fn1) CoreLibrary::isSet);
+		def(coreNs, "map?", (Fn1) CoreLibrary::isMap);
 
 		// TODO: COMPARISONS
 		def(coreNs, "equals", (Fn2) Objects::equals); // TODO: replace with interop when available

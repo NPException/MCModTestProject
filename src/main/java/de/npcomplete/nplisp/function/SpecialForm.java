@@ -2,6 +2,7 @@ package de.npcomplete.nplisp.function;
 
 import static de.npcomplete.nplisp.data.CoreLibrary.KW_MACRO;
 import static de.npcomplete.nplisp.data.CoreLibrary.KW_PRIVATE;
+import static de.npcomplete.nplisp.data.CoreLibrary.seq;
 
 import java.util.Iterator;
 import java.util.List;
@@ -11,7 +12,6 @@ import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.Var;
 import de.npcomplete.nplisp.Var.MarkerVar;
-import de.npcomplete.nplisp.data.CoreLibrary;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.MultiArityFunction.Builder;
@@ -45,7 +45,7 @@ public interface SpecialForm {
 		// process flags
 		if (!(o instanceof Symbol)) {
 			o = Lisp.eval(o, env, false);
-			Sequence flags = (Sequence) CoreLibrary.FN_SEQ.apply(o);
+			Sequence flags = seq(o);
 			if (flags != null) {
 				for (Object flag : flags) {
 					if (KW_PRIVATE.equals(flag)) {
