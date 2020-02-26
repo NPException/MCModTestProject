@@ -240,7 +240,7 @@ public interface SpecialForm {
 		if (!(o instanceof Symbol)) {
 			throw new LispException("Argument to 'var' must be a symbol");
 		}
-		return env.namespace.lookupVar((Symbol) o, true);
+		return env.namespace.lookupVar((Symbol) o, true, false);
 	}
 
 	/**

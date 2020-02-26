@@ -15,6 +15,9 @@ class Token {
 	static final Token FALSE = new Token(Type.BOOLEAN, false);
 
 	static final Token QUOTE = new Token(Type.QUOTE, "'");
+	static final Token SYNTAX_QUOTE = new Token(Type.SYNTAX_QUOTE, "'`'");
+	static final Token UNQUOTE = new Token(Type.UNQUOTE, "~");
+	static final Token UNQUOTE_SPLICING = new Token(Type.UNQUOTE_SPLICING, "~@");
 
 	static final Token VAR = new Token(Type.VAR, "#'");
 
@@ -33,6 +36,9 @@ class Token {
 		SYMBOL,
 		KEYWORD,
 		QUOTE,
+		SYNTAX_QUOTE,
+		UNQUOTE,
+		UNQUOTE_SPLICING,
 		VAR,
 		TAG
 	}

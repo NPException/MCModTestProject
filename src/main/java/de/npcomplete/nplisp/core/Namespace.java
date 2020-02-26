@@ -107,7 +107,7 @@ public class Namespace {
 		return referred.computeIfAbsent(sym, internVar).bind(c);
 	}
 
-	public Var lookupVar(Symbol symbol, boolean allowPrivate) {
+	public Var lookupVar(Symbol symbol, boolean allowPrivate, boolean nullOnUnbound) {
 		Var var;
 		String symNs = symbol.nsName;
 		if (symNs == null) {
@@ -136,13 +136,16 @@ public class Namespace {
 					throw sneakyThrow(e);
 				}
 			}
+			if (nullOnUnbound) {
+				return null;
+			}
 			throw new LispException("Unable to resolve var '" + symName + "' in namespace '" + this.name + "'");
 		}
 		Namespace aliasedNamespace = aliases.get(symNs);
 		if (aliasedNamespace == null) {
 			throw new LispException("Unknown namespace or alias: '" + symNs + "' (Namespaces need to be required before use)");
 		}
-		var = aliasedNamespace.lookupVar(new Symbol(symName), false);
+		var = aliasedNamespace.lookupVar(new Symbol(symName), false, false);
 		return allowPrivate
 				? var
 				: referAs(symbol, var);

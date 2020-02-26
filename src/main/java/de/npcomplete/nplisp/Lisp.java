@@ -16,6 +16,7 @@ import de.npcomplete.nplisp.core.Var;
 import de.npcomplete.nplisp.core.Var.MarkerVar;
 import de.npcomplete.nplisp.corelibrary.CoreLibrary;
 import de.npcomplete.nplisp.corelibrary.CoreLibrary.TailCall;
+import de.npcomplete.nplisp.corelibrary.SyntaxQuote;
 import de.npcomplete.nplisp.data.Delay;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
@@ -35,10 +36,8 @@ import de.npcomplete.nplisp.util.LispPrinter;
 // TODO: 'try/catch/finally' form
 // TODO: 'with-open' form
 // TODO: javadoc in CoreLibrary
-// TODO: private Vars (add 'def-' & 'defn-' which set the var to private)
 // TODO: proper macro expansion
 // TODO: ensure all used symbols are already bound when invoking 'fn' or 'defmacro'
-// TODO: syntax-quote / unquote
 // TODO: destructuring
 // TODO: switch from using java.util.List to own Vector class
 
@@ -66,6 +65,7 @@ public class Lisp {
 		def(coreNs, "let", (SpecialForm) SpecialForm::LET);
 		def(coreNs, "var", (SpecialForm) SpecialForm::VAR);
 		def(coreNs, "quote", (SpecialForm) SpecialForm::QUOTE);
+		def(coreNs, "syntax-quote", new SyntaxQuote());
 
 		def(coreNs, "loop", (SpecialForm) SpecialForm::LOOP);
 		def(coreNs, "recur", CoreLibrary.FN_RECUR);
@@ -75,18 +75,18 @@ public class Lisp {
 		def(coreNs, "force", (Fn1) Delay::force);
 
 		// DATA STRUCTURE CREATION
-		def(coreNs, "list", CoreLibrary.FN_LIST);
-		def(coreNs, "vector", CoreLibrary.FN_VECTOR);
-		def(coreNs, "hash-set", CoreLibrary.FN_HASH_SET);
-		def(coreNs, "hash-map", CoreLibrary.FN_HASH_MAP);
+		def(coreNs, "list", (VarArgsFunction) CoreLibrary::list);
+		def(coreNs, "vector", (VarArgsFunction) CoreLibrary::vector);
+		def(coreNs, "hash-set", (VarArgsFunction) CoreLibrary::hashSet);
+		def(coreNs, "hash-map", (VarArgsFunction) CoreLibrary::hashMap);
 
 		// SEQUENCE INTERACTION
 		def(coreNs, "seq", (Fn1) CoreLibrary::seq);
 		def(coreNs, "first", CoreLibrary.FN_FIRST);
 		def(coreNs, "next", CoreLibrary.FN_NEXT);
 		def(coreNs, "rest", CoreLibrary.FN_REST);
-		def(coreNs, "count", CoreLibrary.FN_COUNT);
-		def(coreNs, "cons", CoreLibrary.FN_CONS);
+		def(coreNs, "count", (Fn1) CoreLibrary::count);
+		def(coreNs, "cons", (Fn2) CoreLibrary::cons);
 
 		// MATHS
 		def(coreNs, "+", CoreLibrary.FN_ADD);

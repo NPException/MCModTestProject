@@ -78,6 +78,17 @@ class LispTokenizer implements Iterator<Token> {
 		if (chr == '\'') {
 			return Token.QUOTE;
 		}
+		if (chr == '`') {
+			return Token.SYNTAX_QUOTE;
+		}
+		if (chr == '~') {
+			chr = nextChar();
+			if (chr == '@') {
+				return Token.UNQUOTE_SPLICING;
+			}
+			nextChar = chr;
+			return Token.UNQUOTE;
+		}
 
 		// data structure begin / end
 		if (isGroupToken(chr)) {

@@ -135,3 +135,12 @@
 (var my-var)
 
 (var defn)
+
+(defmacro or
+  ([] nil)
+  ([x] x)
+  ([x & next]
+   `(let [test ~x]
+      (if test test (or ~@next)))))
+
+(or nil false 1 2 3)

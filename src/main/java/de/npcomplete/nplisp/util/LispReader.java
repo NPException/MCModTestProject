@@ -117,6 +117,15 @@ public final class LispReader {
 			case QUOTE:
 				Object[] quoted = {new Symbol("quote"), build(it, null)};
 				return new ArraySequence(quoted);
+			case SYNTAX_QUOTE:
+				Object[] syntaxQuoted = {new Symbol("syntax-quote"), build(it, null)};
+				return new ArraySequence(syntaxQuoted);
+			case UNQUOTE:
+				Object[] unquoted = {new Symbol("unquote"), build(it, null)};
+				return new ArraySequence(unquoted);
+			case UNQUOTE_SPLICING:
+				Object[] unquoteSpliced = {new Symbol("unquote-splicing"), build(it, null)};
+				return new ArraySequence(unquoteSpliced);
 
 			case VAR:
 				Object[] varCall = {new Symbol("var"), build(it, null)};

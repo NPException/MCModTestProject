@@ -48,7 +48,6 @@ import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.LispFunction;
 import de.npcomplete.nplisp.function.LispFunctionFactory.Fn0;
 import de.npcomplete.nplisp.function.LispFunctionFactory.Fn1;
-import de.npcomplete.nplisp.function.LispFunctionFactory.Fn2;
 import de.npcomplete.nplisp.function.SpecialForm;
 import de.npcomplete.nplisp.function.VarArgsFunction;
 import de.npcomplete.nplisp.util.LispPrinter;
@@ -84,27 +83,31 @@ public final class CoreLibrary {
 
 	public static final LispFunction FN_RECUR = (VarArgsFunction) TailCall::new;
 
-	public static final LispFunction FN_LIST = (VarArgsFunction) ArraySequence::new;
+	public static Sequence list(Object... args) {
+		return new ArraySequence(args);
+	}
 
 	public static boolean isSeq(Object arg) {
 		return arg instanceof Sequence;
 	}
 
-	public static final LispFunction FN_VECTOR =
-			(VarArgsFunction) args -> unmodifiableList(asList(args));
+	public static List<Object> vector(Object... args) {
+		return asList(args);
+	}
 
 	public static boolean isVector(Object arg) {
 		return arg instanceof List && arg instanceof RandomAccess;
 	}
 
-	public static final LispFunction FN_HASH_SET =
-			(VarArgsFunction) args -> Collections.unmodifiableSet(new HashSet<>(asList(args)));
+	public static Set<Object> hashSet(Object... args) {
+		return Collections.unmodifiableSet(new HashSet<>(asList(args)));
+	}
 
 	public static boolean isSet(Object arg) {
 		return arg instanceof Set;
 	}
 
-	public static final LispFunction FN_HASH_MAP = (VarArgsFunction) args -> {
+	public static Map<Object, Object> hashMap(Object... args) {
 		if (args.length % 2 != 0) {
 			throw new LispException("hash-map function only accepts even numbers of arguments");
 		}
@@ -114,7 +117,7 @@ public final class CoreLibrary {
 			map.put(it.next(), it.next());
 		}
 		return Collections.unmodifiableMap(map);
-	};
+	}
 
 	public static boolean isMap(Object arg) {
 		return arg instanceof Map;
@@ -187,24 +190,27 @@ public final class CoreLibrary {
 		return s != null ? s.more() : EMPTY_SEQUENCE;
 	};
 
-	private static long count(Object par1) {
-		if (par1 == null) {
+	/**
+	 * Returns the number of items contained in col.
+	 */
+	public static long count(Object col) {
+		if (col == null) {
 			return 0;
 		}
-		if (par1 instanceof Countable) {
-			return ((Countable) par1).count();
+		if (col instanceof Countable) {
+			return ((Countable) col).count();
 		}
-		if (par1 instanceof Collection) {
-			return ((Collection) par1).size();
+		if (col instanceof Collection) {
+			return ((Collection) col).size();
 		}
-		if (par1 instanceof Map) {
-			return ((Map) par1).size();
+		if (col instanceof Map) {
+			return ((Map) col).size();
 		}
-		if (par1 instanceof String) {
-			return ((String) par1).length();
+		if (col instanceof String) {
+			return ((String) col).length();
 		}
-		if (par1 instanceof Sequence) {
-			Sequence s = seq(par1);
+		if (col instanceof Sequence) {
+			Sequence s = seq(col);
 			long n = 0;
 			while (s != null) {
 				n++;
@@ -212,18 +218,15 @@ public final class CoreLibrary {
 			}
 			return n;
 		}
-		throw new LispException("Can't get count of: " + par1);
+		throw new LispException("Can't get count of: " + col);
 	}
-
-	/**
-	 * Returns the number of items contained in col.
-	 */
-	public static final LispFunction FN_COUNT = (Fn1) CoreLibrary::count;
 
 	/**
 	 * Constructs a new sequence with the new element prepended to the given sequence
 	 */
-	public static final LispFunction FN_CONS = (Fn2) (par1, par2) -> new Cons(par1, seq(par2));
+	public static Cons cons(Object par1, Object par2) {
+		return new Cons(par1, seq(par2));
+	}
 
 	// TODO: replace with interop like clojure (https://github.com/clojure/clojure/blob/clojure-1.9.0/src/clj/clojure/core.clj#L652)
 	public static final LispFunction FN_APPLY = new LispFunction() {
@@ -717,7 +720,8 @@ public final class CoreLibrary {
 				Symbol nsSym = (Symbol) sym;
 
 				// load options map (:refer, :as, :reload, :reload-all)
-				Map<?, ?> options = (Map<?, ?>) FN_HASH_MAP.applyTo(spec.next());
+				LispFunction hashMapFn = (VarArgsFunction) CoreLibrary::hashMap;
+				Map<?, ?> options = (Map<?, ?>) hashMapFn.applyTo(spec.next());
 
 				boolean reload = truthy(options.get(KW_RELOAD));
 				boolean reloadAll = truthy(options.get(KW_RELOAD_ALL));
