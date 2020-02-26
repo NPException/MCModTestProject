@@ -43,7 +43,7 @@ public final class Playground {
 				Object form = forms.next();
 				if (isAuto) {
 					System.out.println();
-					System.out.print(repl.currentNs().name + "=> " + form);
+					System.out.print(repl.currentNs().name + "=> " + LispPrinter.prStr(form));
 					System.out.println();
 				}
 				Object result = repl.eval(form);
