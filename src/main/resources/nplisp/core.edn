@@ -112,17 +112,13 @@
 
   ;; DATA STRUCTURE MANIPULATION
 
-  ;; TODO: create specialized ConcatSequence class to improve this slow madness
   (defn concat
     ([] '())
     ([x] x)
     ([x y]
-     (let [s (seq x)]
-       (if s
-         (cons (first s) (concat (rest s) y))
-         (seq y))))
+     (concat* x y))
     ([x y & zs]
-     (apply concat (concat x y) zs)))
+     (apply concat (concat* x y) zs)))
 
 
   (defn sequence

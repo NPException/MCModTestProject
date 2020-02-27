@@ -16,6 +16,7 @@ import de.npcomplete.nplisp.core.Var;
 import de.npcomplete.nplisp.corelibrary.CoreLibrary;
 import de.npcomplete.nplisp.corelibrary.CoreLibrary.TailCall;
 import de.npcomplete.nplisp.corelibrary.SyntaxQuote;
+import de.npcomplete.nplisp.corelibrary.Concat;
 import de.npcomplete.nplisp.data.Delay;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
@@ -89,6 +90,7 @@ public class Lisp {
 		def(coreNs, "rest", CoreLibrary.FN_REST);
 		def(coreNs, "count", (Fn1) CoreLibrary::count);
 		def(coreNs, "cons", (Fn2) CoreLibrary::cons);
+		def(coreNs, "concat*", (Fn2) Concat::concat);
 
 		// MATHS
 		def(coreNs, "+", CoreLibrary.FN_ADD);
