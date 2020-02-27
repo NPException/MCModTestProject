@@ -11,7 +11,6 @@ import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.core.Environment;
 import de.npcomplete.nplisp.core.Var;
-import de.npcomplete.nplisp.core.Var.MarkerVar;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.MultiArityFunction.Builder;
@@ -69,7 +68,7 @@ public interface SpecialForm {
 			throw new LispException("'def' binding target is not a symbol: " + s);
 		}
 		Var var = env.namespace.define((Symbol) o);
-		if (!(var instanceof MarkerVar)) {
+		if (!var.isFixed()) {
 			var.setPrivate(isPrivate);
 			var.macro(isMacro);
 		}

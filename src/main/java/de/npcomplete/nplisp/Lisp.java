@@ -13,7 +13,6 @@ import java.util.Set;
 import de.npcomplete.nplisp.core.Environment;
 import de.npcomplete.nplisp.core.Namespace;
 import de.npcomplete.nplisp.core.Var;
-import de.npcomplete.nplisp.core.Var.MarkerVar;
 import de.npcomplete.nplisp.corelibrary.CoreLibrary;
 import de.npcomplete.nplisp.corelibrary.CoreLibrary.TailCall;
 import de.npcomplete.nplisp.corelibrary.SyntaxQuote;
@@ -42,8 +41,11 @@ import de.npcomplete.nplisp.util.LispPrinter;
 // TODO: switch from using java.util.List to own Vector class
 
 public class Lisp {
-	static final Var CORE_EVAL_VAR = new MarkerVar(new Symbol("nplisp.core/eval"));
-	static final Var CORE_CURRENT_NS_VAR = new MarkerVar(new Symbol("nplisp.core/*ns*"));
+	static final Var CORE_EVAL_VAR = new Var(new Symbol("nplisp.core/eval")).markFixed();
+	static final Var CORE_CURRENT_NS_VAR = new Var(new Symbol("nplisp.core/*ns*")).markFixed();
+	static final Var CORE_SYNTAX_QUOTE_VAR = new Var(new Symbol("nplisp.core/syntax-quote")).macro(true).markFixed();
+
+	private static final Symbol CORE_SYNTAX_QUOTE_STAR_SYM = new Symbol("nplisp.core/syntax-quote*");
 
 	public final NamespaceMap namespaces = new NamespaceMap();
 
@@ -65,7 +67,7 @@ public class Lisp {
 		def(coreNs, "let", (SpecialForm) SpecialForm::LET);
 		def(coreNs, "var", (SpecialForm) SpecialForm::VAR);
 		def(coreNs, "quote", (SpecialForm) SpecialForm::QUOTE);
-		def(coreNs, "syntax-quote", new SyntaxQuote());
+		def(coreNs, "syntax-quote*", (Fn2) SyntaxQuote::syntaxQuoteStar);
 
 		def(coreNs, "loop", (SpecialForm) SpecialForm::LOOP);
 		def(coreNs, "recur", CoreLibrary.FN_RECUR);
@@ -171,6 +173,16 @@ public class Lisp {
 		if (var.isMacro()) {
 			if (!allowMacro) {
 				throw new LispException("Can't take value of a macro: " + var);
+			}
+			if (var == CORE_SYNTAX_QUOTE_VAR) {
+				Namespace ns = env.namespace;
+				Var sqFnVar = ns.lookupVar(CORE_SYNTAX_QUOTE_STAR_SYM, true, false);
+				return (Macro) args -> {
+					if (args.next() != null) {
+						throw new LispException("syntax-quote only takes a single argument");
+					}
+					return sqFnVar.apply(args.first(), ns);
+				};
 			}
 			LispFunction macroFunction = LispFunctionFactory.from(var.deref());
 			return (Macro) macroFunction::applyTo;
@@ -317,6 +329,7 @@ public class Lisp {
 			HashMap<String, Var> coreVars = new HashMap<>();
 			coreVars.put("eval", CORE_EVAL_VAR);
 			coreVars.put("*ns*", CORE_CURRENT_NS_VAR);
+			coreVars.put("syntax-quote", CORE_SYNTAX_QUOTE_VAR);
 			allVars.put(core.name, coreVars);
 		}
 

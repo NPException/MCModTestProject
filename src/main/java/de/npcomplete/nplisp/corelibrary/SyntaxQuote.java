@@ -14,21 +14,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.LispException;
-import de.npcomplete.nplisp.core.Environment;
 import de.npcomplete.nplisp.core.Namespace;
 import de.npcomplete.nplisp.core.Var;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
-import de.npcomplete.nplisp.function.SpecialForm;
 
 // TODO gensyms (see clojure.core/or)
 // TODO Find a way to implement in nplisp.core
 //      (reference: clojure.tools.reader/syntax-quote*)
-//      This requires a way to access the calling namespace in the 'syntax-quote' macro,
-//      so that it can be used for looking up the namespaces for simple symbols in the form.
-public final class SyntaxQuote implements SpecialForm {
+public final class SyntaxQuote {
+	private SyntaxQuote() {}
 
 	private static final Symbol SYM_UNQUOTE = new Symbol("unquote");
 	private static final Symbol SYM_UNQUOTE_SPLICING = new Symbol("unquote-splicing");
@@ -82,7 +78,7 @@ public final class SyntaxQuote implements SpecialForm {
 				: res;
 	}
 
-	public static Object syntaxQuote(Object item, Namespace ns) {
+	private static Object syntaxQuote(Object item, Namespace ns) {
 		if (isUnquote(item)) {
 			return unquote(item);
 		}
@@ -116,10 +112,7 @@ public final class SyntaxQuote implements SpecialForm {
 		return list(SYM_CORE_QUOTE, item);
 	}
 
-	@Override
-	public Object apply(Sequence args, Environment env, boolean allowRecur) {
-		Object form = args.first();
-		Object quoted = syntaxQuote(form, env.namespace);
-		return Lisp.eval(quoted, env, false);
+	public static Object syntaxQuoteStar(Object item, Object ns) {
+		return syntaxQuote(item, (Namespace) ns);
 	}
 }

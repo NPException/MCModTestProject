@@ -16,6 +16,8 @@ public class Var implements LispFunction, Deref {
 	private boolean isMacro;
 	private boolean isPrivate;
 
+	private boolean isFixed;
+
 	public Var(Symbol symbol) {
 		if (symbol.nsName == null) {
 			throw new LispException("Can't create var without fully qualified symbol");
@@ -23,11 +25,27 @@ public class Var implements LispFunction, Deref {
 		this.symbol = symbol;
 	}
 
+	public Var markFixed() {
+		isFixed = true;
+		return this;
+	}
+
+	public boolean isFixed() {
+		return isFixed;
+	}
+
+	private void prepareModification() {
+		if (isFixed) {
+			throw new LispException("Var must not be modified: " + this);
+		}
+	}
+
 	public boolean isPrivate() {
 		return isPrivate;
 	}
 
 	public Var setPrivate(boolean isPrivate) {
+		prepareModification();
 		this.isPrivate = isPrivate;
 		return this;
 	}
@@ -37,6 +55,7 @@ public class Var implements LispFunction, Deref {
 	}
 
 	public Var macro(boolean isMacro) {
+		prepareModification();
 		this.isMacro = isMacro;
 		return this;
 	}
@@ -59,6 +78,7 @@ public class Var implements LispFunction, Deref {
 	}
 
 	public Var bind(Object value) {
+		prepareModification();
 		this.value = value;
 		return this;
 	}
@@ -111,26 +131,5 @@ public class Var implements LispFunction, Deref {
 	@Override
 	public Object applyTo(Sequence args) {
 		return fn().applyTo(args);
-	}
-
-
-	public static final class MarkerVar extends Var {
-		public MarkerVar(Symbol symbol) {
-			super(symbol);
-		}
-
-		private LispException forbiddenModification() {
-			return new LispException("Var must not be modified: " + this);
-		}
-
-		@Override
-		public Var bind(Object value) {
-			throw forbiddenModification();
-		}
-
-		@Override
-		public Var macro(boolean isMacro) {
-			throw forbiddenModification();
-		}
 	}
 }
