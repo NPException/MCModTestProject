@@ -23,11 +23,15 @@ public class Namespace {
 
 	public final String name;
 	private final Function<Symbol, Var> internVar;
+	private final Function<String, Namespace> lookupNamespace;
 
-	public Namespace(String name, Namespace core, Function<Symbol, Var> internQualifiedVar) {
+	public Namespace(String name, Namespace core,
+			Function<Symbol, Var> internQualifiedVar,
+			Function<String, Namespace> lookupNamespace) {
 		referredCore = core != null ? core.mappings : null;
 		this.name = name;
 		this.internVar = sym -> internQualifiedVar.apply(new Symbol(name, sym.name));
+		this.lookupNamespace = lookupNamespace;
 		// add alias to self to resolve fully qualified symbols
 		addAlias(name, this);
 		if (core != null) {
@@ -141,11 +145,11 @@ public class Namespace {
 			}
 			throw new LispException("Unable to resolve var '" + symName + "' in namespace '" + this.name + "'");
 		}
-		Namespace aliasedNamespace = aliases.get(symNs);
-		if (aliasedNamespace == null) {
-			throw new LispException("Unknown namespace or alias: '" + symNs + "' (Namespaces need to be required before use)");
+		Namespace ns = aliases.computeIfAbsent(symNs, lookupNamespace);
+		if (ns == null) {
+			throw new LispException("No such namespace: '" + symNs + "'");
 		}
-		var = aliasedNamespace.lookupVar(new Symbol(symName), false, false);
+		var = ns.lookupVar(new Symbol(symName), false, false);
 		return allowPrivate
 				? var
 				: referAs(symbol, var);

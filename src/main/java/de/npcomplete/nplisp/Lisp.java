@@ -322,7 +322,7 @@ public class Lisp {
 	public static class NamespaceMap {
 		private final Map<String, Namespace> namespaces = new HashMap<>();
 		private final Map<String, Map<String, Var>> allVars = new HashMap<>();
-		final Namespace core = new Namespace("nplisp.core", null, this::internVar);
+		final Namespace core = new Namespace("nplisp.core", null, this::internVar, this::getNamespace);
 
 		NamespaceMap() {
 			namespaces.put(core.name, core);
@@ -348,7 +348,7 @@ public class Lisp {
 		}
 
 		public Namespace getOrCreateNamespace(String name) {
-			return namespaces.computeIfAbsent(name, k -> new Namespace(k, core, this::internVar));
+			return namespaces.computeIfAbsent(name, k -> new Namespace(k, core, this::internVar, this::getNamespace));
 		}
 	}
 }
