@@ -13,8 +13,11 @@ public class Var implements LispFunction, Deref {
 
 	public final Symbol symbol;
 	private Object value = UNBOUND;
+
 	private boolean isMacro;
 	private boolean isPrivate;
+
+	private String doc;
 
 	private boolean isFixed;
 
@@ -60,6 +63,15 @@ public class Var implements LispFunction, Deref {
 		return this;
 	}
 
+	public String doc() {
+		return doc;
+	}
+
+	public Var doc(String doc) {
+		this.doc = doc;
+		return this;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) {
@@ -78,8 +90,10 @@ public class Var implements LispFunction, Deref {
 	}
 
 	public Var bind(Object value) {
-		prepareModification();
-		this.value = value;
+		if (this.value != value) {
+			prepareModification();
+			this.value = value;
+		}
 		return this;
 	}
 

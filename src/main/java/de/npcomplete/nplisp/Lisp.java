@@ -29,7 +29,6 @@ import de.npcomplete.nplisp.function.SpecialForm;
 import de.npcomplete.nplisp.function.VarArgsFunction;
 import de.npcomplete.nplisp.util.LispPrinter;
 
-// TODO: doc-strings
 // TODO: interop - (. $target-class $receiver-instance ($method-name $arg*))
 //                 (. $target-class $receiver-instance $field-name) // get
 //                 (. $target-class $receiver-instance $field-name $value) // set
@@ -137,6 +136,7 @@ public class Lisp {
 		def(coreNs, "some?", (Fn1) Objects::nonNull);
 		def(coreNs, "symbol?", (Fn1) CoreLibrary::isSymbol);
 		def(coreNs, "keyword?", (Fn1) CoreLibrary::isKeyword);
+		def(coreNs, "string?", (Fn1) CoreLibrary::isString);
 		def(coreNs, "seqable?", (Fn1) CoreLibrary::isSeqable);
 		def(coreNs, "seq?", (Fn1) CoreLibrary::isSeq);
 		def(coreNs, "vector?", (Fn1) CoreLibrary::isVector);

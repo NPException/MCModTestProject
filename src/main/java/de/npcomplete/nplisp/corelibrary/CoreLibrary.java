@@ -43,6 +43,7 @@ import de.npcomplete.nplisp.data.Delay;
 import de.npcomplete.nplisp.data.Deref;
 import de.npcomplete.nplisp.data.IteratorSequence;
 import de.npcomplete.nplisp.data.Keyword;
+import de.npcomplete.nplisp.data.RandomAccessListSequence;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.LispFunction;
@@ -136,6 +137,10 @@ public final class CoreLibrary {
 		if (o instanceof Sequence) {
 			Sequence s = (Sequence) o;
 			return s.empty() ? null : s;
+		}
+		if (isVector(o)) {
+			List list = (List) o;
+			return list.isEmpty() ? null : new RandomAccessListSequence(list);
 		}
 		if (o instanceof Map) {
 			@SuppressWarnings("unchecked")
@@ -420,6 +425,10 @@ public final class CoreLibrary {
 
 	public static boolean isKeyword(Object arg) {
 		return arg instanceof Keyword;
+	}
+
+	public static boolean isString(Object arg) {
+		return arg instanceof String;
 	}
 
 	// BASIC I/O

@@ -1,4 +1,11 @@
 (ns nplisp.core
+  ;; TODO: def all core functions (and add docstrings)
+
+  ;; redefine 'def' with itself to add a docstring
+  (def def
+    "Creates and interns or locates a global var with the
+    name of symbol and a namespace of the value of the current namespace (*ns*)."
+    def)
 
   ;; implemented as a special cases in de.npcomplete.nplisp.Lisp#lookup
   (def eval)
@@ -7,28 +14,32 @@
 
   (def decode-defn-args
     (fn [args]
-      (let [arg-1 (first args)
-            flags (if (some? arg-1)
-                    (if (seqable? arg-1)
-                      arg-1))
-            name (if flags
-                   (first (next args))
-                   arg-1)
-            specs (if flags
-                    (next (next args))
-                    (next args))]
+      (let [arg (first args)
+            flags (if (vector? arg) arg)
+            args (if flags (next args) args)
+            name (first args)
+            args (next args)
+            arg (first args)
+            docstring (if (string? arg) arg)
+            specs (if docstring (next args) args)]
         {:flags flags
-         :name name
+         :name  name
+         :doc   docstring
          :specs specs})))
 
 
   (def [:macro] defn
+    "Same as (def name (fn [params*] exprs*))
+    or (def name (fn ([params* ] exprs*)+))
+    with any doc-string or tags."
     (fn [& args]
       (let [fn-map (decode-defn-args args)
-            flags (:flags fn-map)
+            flags (apply vector (:flags fn-map))
             name (:name fn-map)
+            doc (:doc fn-map)
+            doc (if doc doc "")
             specs (:specs fn-map)]
-        (list 'nplisp.core/def flags name
+        (list 'nplisp.core/def flags name doc
           (apply list 'nplisp.core/fn name specs)))))
 
 
@@ -38,8 +49,10 @@
     (let [fn-map (decode-defn-args args)
           flags (apply vector :macro (:flags fn-map))
           name (:name fn-map)
+          doc (:doc fn-map)
+          doc (if doc doc "")
           specs (:specs fn-map)]
-      (apply list 'nplisp.core/defn flags name specs)))
+      (apply list 'nplisp.core/defn flags name doc specs)))
 
 
   (defmacro declare

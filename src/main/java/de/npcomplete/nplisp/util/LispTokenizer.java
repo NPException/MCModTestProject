@@ -200,6 +200,17 @@ class LispTokenizer implements Iterator<Token> {
 			if (escaped) {
 				chr = readEscapedChar(chr);
 				escaped = false;
+			} else if (chr == '\r') {
+				continue;
+			} else if (chr == '\n') {
+				while ((chr = nextChar()) != -1 && Character.isWhitespace(chr)) {
+					// skip whitespace after linebreak
+				}
+				if (chr == -1) {
+					break;
+				}
+				nextChar = chr;
+				chr = ' '; // insert space as separator
 			} else if (chr == '\\') {
 				escaped = true;
 				continue;

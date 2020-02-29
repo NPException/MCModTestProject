@@ -11,6 +11,7 @@ import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.core.Environment;
 import de.npcomplete.nplisp.core.Var;
+import de.npcomplete.nplisp.corelibrary.CoreLibrary;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.MultiArityFunction.Builder;
@@ -31,20 +32,20 @@ public interface SpecialForm {
 	 * Returns the var.
 	 */
 	static Var DEF(Sequence args, Environment env, boolean allowRecur) {
-		if (!LispElf.matchSize(args, 1, 3)) {
+		if (!LispElf.matchSize(args, 1, 4)) {
 			throw new LispException("'def' can take some optional flags and requires at lest 1 argument:" +
-					" (def ?FLAGS SYMBOL ?INIT)");
+					" (def ?FLAGS NAME ?DOCSTRING ?INIT)");
 		}
 
 		boolean isMacro = false;
 		boolean isPrivate = false;
 
-		Object o = args.first();
+		Object arg = args.first();
 
 		// process flags
-		if (!(o instanceof Symbol)) {
-			o = Lisp.eval(o, env, false);
-			Sequence flags = seq(o);
+		if (CoreLibrary.isVector(arg)) {
+			arg = Lisp.eval(arg, env, false);
+			Sequence flags = seq(arg);
 			if (flags != null) {
 				for (Object flag : flags) {
 					if (KW_PRIVATE.equals(flag)) {
@@ -55,30 +56,44 @@ public interface SpecialForm {
 				}
 			}
 			args = args.more();
-			o = args.first();
+			arg = args.first();
 		}
 
-		if (!LispElf.matchSize(args, 1, 2)) {
-			throw new LispException("'def' can take some optional flags and requires at lest 1 argument:" +
-					" (def ?FLAGS SYMBOL ?INIT)");
+		if (!LispElf.matchSize(args, 1, 3)) {
+			throw new LispException("'def' can take some optional flags and docstring and requires at lest 1 argument:" +
+					" (def ?FLAGS NAME ?DOCSTRING ?INIT)");
 		}
 
-		if (!(o instanceof Symbol)) {
-			String s = LispPrinter.prStr(o);
+		if (!(arg instanceof Symbol)) {
+			String s = LispPrinter.prStr(arg);
 			throw new LispException("'def' binding target is not a symbol: " + s);
 		}
-		Var var = env.namespace.define((Symbol) o);
+		Var var = env.namespace.define((Symbol) arg);
 		if (!var.isFixed()) {
 			var.setPrivate(isPrivate);
 			var.macro(isMacro);
 		}
 
-		Sequence nextArgs = args.next();
-		if (nextArgs != null) {
-			Object initForm = nextArgs.first();
-			Object value = Lisp.eval(initForm, env, false);
-			var.bind(value);
+		args = args.next();
+		if (args == null) {
+			return var;
 		}
+
+		arg = args.first();
+		if (arg instanceof String) {
+			args = args.next();
+			if (args != null) {
+				// init value is available, so this arg is the docstring
+				String docstring = (String) arg;
+				if (!docstring.isEmpty()) {
+					var.doc(docstring);
+				}
+				arg = args.first();
+			}
+		}
+
+		Object value = Lisp.eval(arg, env, false);
+		var.bind(value);
 
 		return var;
 	}
