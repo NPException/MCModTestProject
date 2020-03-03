@@ -1,6 +1,11 @@
 package de.npcomplete.nplisp.data;
 
+import static de.npcomplete.nplisp.util.LispElf.seqEquals;
+import static de.npcomplete.nplisp.util.LispElf.seqHash;
+
 import java.util.Iterator;
+
+import de.npcomplete.nplisp.util.LispPrinter;
 
 /**
  * A sequence that is based on the given iterator. The programmer must
@@ -14,6 +19,8 @@ public class IteratorSequence implements Sequence {
 	private Iterator<?> it;
 	private Object first;
 	private Sequence next;
+
+	private int hash;
 
 	public IteratorSequence(Iterator<?> it) {
 		this.it = it;
@@ -48,5 +55,20 @@ public class IteratorSequence implements Sequence {
 			first();
 		}
 		return first == EMPTY;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		return seqEquals(this, o);
+	}
+
+	@Override
+	public int hashCode() {
+		return hash != 0 ? hash : (hash = seqHash(this));
+	}
+
+	@Override
+	public String toString() {
+		return LispPrinter.prStr(this);
 	}
 }

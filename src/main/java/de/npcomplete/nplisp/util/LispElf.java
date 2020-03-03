@@ -1,17 +1,21 @@
 package de.npcomplete.nplisp.util;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
+import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.LispException;
 import de.npcomplete.nplisp.core.Environment;
 import de.npcomplete.nplisp.data.ArraySequence;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class LispElf {
 	public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 	public static final Symbol[] EMPTY_SYMBOL_ARRAY = new Symbol[0];
@@ -179,5 +183,43 @@ public final class LispElf {
 	@SuppressWarnings("unchecked")
 	private static <T extends Throwable> void sneakyThrow0(Throwable t) throws T {
 		throw (T) t;
+	}
+
+	public static boolean seqEquals(Sequence seq, Object o) {
+		if (seq == o) {
+			return true;
+		}
+		if (!(o instanceof Sequence)) {
+			return false;
+		}
+		Sequence other = (Sequence) o;
+		if (seq.empty() != other.empty()) {
+			return false;
+		}
+		if (seq.empty() && other.empty()) {
+			return true;
+		}
+		if (seq.hashCode() != other.hashCode()) {
+			return false;
+		}
+		Iterator a = seq.iterator();
+		Iterator b = other.iterator();
+		while (a.hasNext() && b.hasNext()) {
+			if (!Objects.equals(a.next(), b.next())) {
+				return false;
+			}
+		}
+		return !(a.hasNext() || b.hasNext());
+	}
+
+	public static int seqHash(Sequence seq) {
+		if (seq.empty()) {
+			return 0;
+		}
+		int result = 1;
+		for (Object element : seq) {
+			result = 31 * result + Objects.hashCode(element);
+		}
+		return result;
 	}
 }

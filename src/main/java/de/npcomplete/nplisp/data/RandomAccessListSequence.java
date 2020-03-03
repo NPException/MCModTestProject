@@ -1,8 +1,10 @@
 package de.npcomplete.nplisp.data;
 
+import static de.npcomplete.nplisp.util.LispElf.seqEquals;
+import static de.npcomplete.nplisp.util.LispElf.seqHash;
+
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 import java.util.RandomAccess;
 
 import de.npcomplete.nplisp.util.LispPrinter;
@@ -15,7 +17,7 @@ public final class RandomAccessListSequence implements Sequence, Countable {
 
 	private Sequence next;
 
-	private int hash = 0;
+	private int hash;
 
 	/**
 	 * Creates a new sequence from a given LList, starting at the
@@ -68,42 +70,12 @@ public final class RandomAccessListSequence implements Sequence, Countable {
 
 	@Override
 	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (!(o instanceof Sequence)) {
-			return false;
-		}
-		Sequence other = (Sequence) o;
-		if (empty() != other.empty()) {
-			return false;
-		}
-		if (empty() && other.empty()) {
-			return true;
-		}
-		Iterator<?> a = iterator();
-		Iterator<?> b = other.iterator();
-		while (a.hasNext() && b.hasNext()) {
-			if (!Objects.equals(a.next(), b.next())) {
-				return false;
-			}
-		}
-		return !(a.hasNext() || b.hasNext());
+		return seqEquals(this, o);
 	}
 
 	@Override
 	public int hashCode() {
-		if (hash != 0) {
-			return hash;
-		}
-		if (empty) {
-			return 0;
-		}
-		int result = 1;
-		for (Object element : this) {
-			result = 31 * result + Objects.hashCode(element);
-		}
-		return hash = result;
+		return hash != 0 ? hash : (hash = seqHash(this));
 	}
 
 	@Override

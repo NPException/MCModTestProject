@@ -1,5 +1,7 @@
 package de.npcomplete.nplisp.data;
 
+import static de.npcomplete.nplisp.util.LispElf.seqEquals;
+
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -9,6 +11,9 @@ public interface Sequence extends Iterable<Object> {
 		@Override public Object first() { return null; }
 		@Override public Sequence next() { return null; }
 		@Override public boolean empty() { return true; }
+		@Override public boolean equals(Object o) { return seqEquals(this, o); }
+		@Override public int hashCode() { return 0; }
+		@Override public String toString() { return "()"; }
 	};
 	//@formatter:on
 

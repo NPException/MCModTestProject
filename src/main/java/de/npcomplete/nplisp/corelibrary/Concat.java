@@ -1,8 +1,11 @@
 package de.npcomplete.nplisp.corelibrary;
 
 import static de.npcomplete.nplisp.data.Sequence.EMPTY_SEQUENCE;
+import static de.npcomplete.nplisp.util.LispElf.seqEquals;
+import static de.npcomplete.nplisp.util.LispElf.seqHash;
 
 import de.npcomplete.nplisp.data.Sequence;
+import de.npcomplete.nplisp.util.LispPrinter;
 
 public final class Concat {
 	private Concat() {
@@ -26,6 +29,8 @@ public final class Concat {
 
 		private final Object first;
 		private Sequence next;
+
+		private int hash;
 
 		// a and b will always be non-empty here
 		ConcatSequence(Sequence a, Sequence b) {
@@ -53,6 +58,21 @@ public final class Concat {
 		@Override
 		public boolean empty() {
 			return false;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			return seqEquals(this, o);
+		}
+
+		@Override
+		public int hashCode() {
+			return hash != 0 ? hash : (hash = seqHash(this));
+		}
+
+		@Override
+		public String toString() {
+			return LispPrinter.prStr(this);
 		}
 	}
 }

@@ -1,8 +1,10 @@
 package de.npcomplete.nplisp.data;
 
+import static de.npcomplete.nplisp.util.LispElf.seqEquals;
+import static de.npcomplete.nplisp.util.LispElf.seqHash;
+
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 
 import de.npcomplete.nplisp.util.LispPrinter;
 
@@ -12,6 +14,8 @@ public final class ArraySequence implements Sequence, Countable {
 	private final boolean empty;
 
 	private Sequence next;
+
+	private int hash;
 
 	/**
 	 * Creates a new sequence from a given array, starting at the
@@ -64,39 +68,12 @@ public final class ArraySequence implements Sequence, Countable {
 
 	@Override
 	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (!(o instanceof Sequence)) {
-			return false;
-		}
-		Sequence other = (Sequence) o;
-		if (empty() != other.empty()) {
-			return false;
-		}
-		if (empty() && other.empty()) {
-			return true;
-		}
-		Iterator<?> a = iterator();
-		Iterator<?> b = other.iterator();
-		while (a.hasNext() && b.hasNext()) {
-			if (!Objects.equals(a.next(), b.next())) {
-				return false;
-			}
-		}
-		return !(a.hasNext() || b.hasNext());
+		return seqEquals(this, o);
 	}
 
 	@Override
 	public int hashCode() {
-		if (empty) {
-			return 0;
-		}
-		int result = 1;
-		for (Object element : this) {
-			result = 31 * result + Objects.hashCode(element);
-		}
-		return result;
+		return hash != 0 ? hash : (hash = seqHash(this));
 	}
 
 	@Override
