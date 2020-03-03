@@ -44,7 +44,7 @@ public interface SpecialForm {
 
 		// process flags
 		if (CoreLibrary.isVector(arg)) {
-			arg = Lisp.eval(arg, env, false);
+			arg = Lisp._eval(arg, env, false);
 			Sequence flags = seq(arg);
 			if (flags != null) {
 				for (Object flag : flags) {
@@ -92,7 +92,7 @@ public interface SpecialForm {
 			}
 		}
 
-		Object value = Lisp.eval(arg, env, false);
+		Object value = Lisp._eval(arg, env, false);
 		var.bind(value);
 
 		return var;
@@ -109,7 +109,7 @@ public interface SpecialForm {
 			Object expr = body.first();
 			body = body.next();
 			boolean allowTailCall = allowRecur && body == null;
-			result = Lisp.eval(expr, env, allowTailCall);
+			result = Lisp._eval(expr, env, allowTailCall);
 		}
 		return result;
 	}
@@ -163,10 +163,10 @@ public interface SpecialForm {
 		if (!LispElf.matchSize(args, 2, 3)) {
 			throw new LispException("'if' requires 2 or 3 arguments: (if TEST THEN *ELSE*)");
 		}
-		Object test = Lisp.eval(args.first(), env, false);
+		Object test = Lisp._eval(args.first(), env, false);
 		return LispElf.truthy(test)
-				? Lisp.eval(args.next().first(), env, allowRecur)
-				: Lisp.eval(args.next().more().first(), env, allowRecur);
+				? Lisp._eval(args.next().first(), env, allowRecur)
+				: Lisp._eval(args.next().more().first(), env, allowRecur);
 	}
 
 	/**
@@ -198,7 +198,7 @@ public interface SpecialForm {
 				String s = LispPrinter.prStr(sym);
 				throw new LispException("'let' binding target is not a symbol: " + s);
 			}
-			Object value = Lisp.eval(it.next(), localEnv, false);
+			Object value = Lisp._eval(it.next(), localEnv, false);
 			localEnv.bind((Symbol) sym, value);
 		}
 
@@ -237,7 +237,7 @@ public interface SpecialForm {
 			}
 			Symbol sym = (Symbol) o;
 			paramSymbols[i] = sym;
-			Object value = Lisp.eval(bindings.get(valIndex), localEnv, false);
+			Object value = Lisp._eval(bindings.get(valIndex), localEnv, false);
 			localEnv.bind(sym, value);
 		}
 

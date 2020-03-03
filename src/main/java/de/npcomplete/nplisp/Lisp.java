@@ -13,10 +13,11 @@ import java.util.Set;
 import de.npcomplete.nplisp.core.Environment;
 import de.npcomplete.nplisp.core.Namespace;
 import de.npcomplete.nplisp.core.Var;
+import de.npcomplete.nplisp.corelibrary.Concat;
 import de.npcomplete.nplisp.corelibrary.CoreLibrary;
 import de.npcomplete.nplisp.corelibrary.CoreLibrary.TailCall;
+import de.npcomplete.nplisp.corelibrary.Macroexpand;
 import de.npcomplete.nplisp.corelibrary.SyntaxQuote;
-import de.npcomplete.nplisp.corelibrary.Concat;
 import de.npcomplete.nplisp.data.Delay;
 import de.npcomplete.nplisp.data.Sequence;
 import de.npcomplete.nplisp.data.Symbol;
@@ -46,6 +47,7 @@ public class Lisp {
 	static final Var CORE_SYNTAX_QUOTE_VAR = new Var(new Symbol("nplisp.core/syntax-quote")).macro(true).markFixed();
 
 	private static final Symbol CORE_SYNTAX_QUOTE_STAR_SYM = new Symbol("nplisp.core/syntax-quote*");
+	private static final Symbol CORE_MACROEXPAND_ALL_SYM = new Symbol("nplisp.core/macroexpand-all*");
 
 	public final NamespaceMap namespaces = new NamespaceMap();
 
@@ -67,6 +69,7 @@ public class Lisp {
 		def(coreNs, "let", (SpecialForm) SpecialForm::LET);
 		def(coreNs, "var", (SpecialForm) SpecialForm::VAR);
 		def(coreNs, "quote", (SpecialForm) SpecialForm::QUOTE);
+
 		def(coreNs, "syntax-quote*", (Fn2) SyntaxQuote::syntaxQuoteStar);
 
 		def(coreNs, "loop", (SpecialForm) SpecialForm::LOOP);
@@ -84,9 +87,9 @@ public class Lisp {
 
 		// SEQUENCE INTERACTION
 		def(coreNs, "seq", (Fn1) CoreLibrary::seq);
-		def(coreNs, "first", CoreLibrary.FN_FIRST);
-		def(coreNs, "next", CoreLibrary.FN_NEXT);
-		def(coreNs, "rest", CoreLibrary.FN_REST);
+		def(coreNs, "first", (Fn1) CoreLibrary::first);
+		def(coreNs, "next", (Fn1) CoreLibrary::next);
+		def(coreNs, "rest", (Fn1) CoreLibrary::rest);
 		def(coreNs, "count", (Fn1) CoreLibrary::count);
 		def(coreNs, "cons", (Fn2) CoreLibrary::cons);
 		def(coreNs, "concat*", (Fn2) Concat::concat);
@@ -132,6 +135,7 @@ public class Lisp {
 		def(coreNs, "import", CoreLibrary.SF_IMPORT);
 
 		// PREDICATES
+		def(coreNs, "identical?", (Fn2) (x, y) -> x == y);
 		def(coreNs, "nil?", (Fn1) Objects::isNull);
 		def(coreNs, "some?", (Fn1) Objects::nonNull);
 		def(coreNs, "symbol?", (Fn1) CoreLibrary::isSymbol);
@@ -155,9 +159,14 @@ public class Lisp {
 		// UTILITY
 		def(coreNs, "time", CoreLibrary.SF_TIME);
 
+		// MACRO EXPANSION
+		def(coreNs, "macroexpand-1*", (Fn2) Macroexpand::macroexpand1);
+		def(coreNs, "macroexpand*", (Fn2) Macroexpand::macroexpand);
+		def(coreNs, CORE_MACROEXPAND_ALL_SYM.name, (Fn2) Macroexpand::macroexpandAll);
+
 		// bootstrap rest of core library
 		Environment coreEnv = new Environment(coreNs);
-		eval(CoreLibrary.CORE_NS_FORM.deref(), coreEnv, false);
+		_eval(CoreLibrary.CORE_NS_FORM.deref(), coreEnv, false);
 
 		// Note: Initialization is quite slow when all the lambdas are first bootstrapped and
 		//       and the core namespace is read from disk once. (~30 ms)
@@ -192,7 +201,7 @@ public class Lisp {
 		// generate 'eval' function which uses the current namespace for evaluation
 		if (var == CORE_EVAL_VAR) {
 			Namespace ns = env.namespace;
-			return (Fn1) par -> eval(par, new Environment(ns), false);
+			return (Fn1) par -> eval(par, new Environment(ns));
 		}
 		if (var == CORE_CURRENT_NS_VAR) {
 			return env.namespace;
@@ -200,7 +209,18 @@ public class Lisp {
 		return var.deref();
 	}
 
-	public static Object eval(Object obj, Environment env, boolean allowRecur) throws LispException {
+	/**
+	 * Evaluates the given object in the context of the environment.
+	 * Does a macro expansion first.
+	 */
+	public static Object eval(Object obj, Environment env) {
+		Var macroexpandAllVar = env.namespace.lookupVar(CORE_MACROEXPAND_ALL_SYM, false, false);
+		LispFunction macroexpandAll = (LispFunction) macroexpandAllVar.deref();
+		obj = macroexpandAll.apply(env.namespace, obj);
+		return _eval(obj, env, false);
+	}
+
+	public static Object _eval(Object obj, Environment env, boolean allowRecur) throws LispException {
 		if (obj instanceof Symbol) {
 			return lookup(env, (Symbol) obj, false);
 		}
@@ -214,7 +234,7 @@ public class Lisp {
 			Object firstElement = seq.first();
 			Object callable = firstElement instanceof Symbol
 					? lookup(env, (Symbol) firstElement, true)
-					: eval(seq.first(), env, false);
+					: _eval(seq.first(), env, false);
 
 			// call to special form
 			if (callable instanceof SpecialForm) {
@@ -222,11 +242,12 @@ public class Lisp {
 				return check(allowRecur, ((SpecialForm) callable).apply(args, env, allowRecur));
 			}
 
-			// TODO: proper macro expansion phase (try to expand macros after reading)
+			// this should idealy not be hit at all
 			if (callable instanceof Macro) {
+				// System.err.println("Encountered macro when evaluating: " + obj);
 				Sequence args = seq.more();
 				Object expansion = ((Macro) callable).expand(args);
-				return eval(expansion, env, allowRecur);
+				return _eval(expansion, env, allowRecur);
 			}
 
 			// call to function
@@ -237,19 +258,19 @@ public class Lisp {
 					return check(allowRecur, fn.apply()); // no arguments
 				}
 
-				Object arg1 = eval(args.first(), env, false);
+				Object arg1 = _eval(args.first(), env, false);
 				args = args.next();
 				if (args == null) {
 					return check(allowRecur, fn.apply(arg1)); // one argument
 				}
 
-				Object arg2 = eval(args.first(), env, false);
+				Object arg2 = _eval(args.first(), env, false);
 				args = args.next();
 				if (args == null) {
 					return check(allowRecur, fn.apply(arg1, arg2)); // two arguments
 				}
 
-				Object arg3 = eval(args.first(), env, false);
+				Object arg3 = _eval(args.first(), env, false);
 				args = args.next();
 				if (args == null) {
 					return check(allowRecur, fn.apply(arg1, arg2, arg3)); // three arguments
@@ -258,7 +279,7 @@ public class Lisp {
 				// more than three arguments
 				List<Object> moreArgs = new ArrayList<>(3);
 				do {
-					moreArgs.add(eval(args.first(), env, false));
+					moreArgs.add(_eval(args.first(), env, false));
 				} while ((args = args.next()) != null);
 				return check(allowRecur, fn.apply(arg1, arg2, arg3, moreArgs.toArray()));
 			}
@@ -274,7 +295,7 @@ public class Lisp {
 			List<?> list = (List<?>) obj;
 			List<Object> result = new ArrayList<>();
 			for (Object o : list) {
-				result.add(eval(o, env, false));
+				result.add(_eval(o, env, false));
 			}
 			return result;
 		}
@@ -283,7 +304,7 @@ public class Lisp {
 			Set<?> set = (Set<?>) obj;
 			Set<Object> result = new HashSet<>(set.size() * 2);
 			for (Object o : set) {
-				Object key = eval(o, env, false);
+				Object key = _eval(o, env, false);
 				if (result.contains(key)) {
 					throw new LispException("Set creation with duplicate key: " + key);
 				}
@@ -296,11 +317,11 @@ public class Lisp {
 			Map<?, ?> map = (Map<?, ?>) obj;
 			Map<Object, Object> result = new HashMap<>(map.size() * 2);
 			for (Entry<?, ?> e : map.entrySet()) {
-				Object key = eval(e.getKey(), env, false);
+				Object key = _eval(e.getKey(), env, false);
 				if (result.containsKey(key)) {
 					throw new LispException("Map creation with duplicate key: " + key);
 				}
-				result.put(key, eval(e.getValue(), env, false));
+				result.put(key, _eval(e.getValue(), env, false));
 			}
 			return result;
 		}

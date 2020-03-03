@@ -172,28 +172,28 @@ public final class CoreLibrary {
 	 * Returns the first item in the collection. Calls seq on its
 	 * argument. If coll is nil, returns nil.
 	 */
-	public static final LispFunction FN_FIRST = (Fn1) par1 -> {
+	public static Object first(Object par1) {
 		Sequence s = seq(par1);
 		return s != null ? s.first() : null;
-	};
+	}
 
 	/**
 	 * Returns a seq of the items after the first. Calls seq on its
 	 * argument. If there are no more items, returns nil.
 	 */
-	public static final LispFunction FN_NEXT = (Fn1) par1 -> {
+	public static Object next(Object par1) {
 		Sequence s = seq(par1);
 		return s != null ? s.next() : null;
-	};
+	}
 
 	/**
 	 * Returns a possibly empty seq of the items after the first. Calls seq on its
 	 * argument.
 	 */
-	public static final LispFunction FN_REST = (Fn1) par1 -> {
+	public static Object rest(Object par1) {
 		Sequence s = seq(par1);
 		return s != null ? s.more() : EMPTY_SEQUENCE;
-	};
+	}
 
 	/**
 	 * Returns the number of items contained in col.
@@ -633,7 +633,7 @@ public final class CoreLibrary {
 			throw new LispException("'time' requires exactly one argument");
 		}
 		long start = System.nanoTime();
-		Object val = Lisp.eval(args.first(), env, allowRecur);
+		Object val = Lisp._eval(args.first(), env, allowRecur);
 		long time = System.nanoTime() - start;
 		FN_PRN.apply("Elapsed time: " + time / 1_000_000.0 + " msecs");
 		return val;
@@ -642,10 +642,12 @@ public final class CoreLibrary {
 	/**
 	 * Executes the body in the context of the given namespace.
 	 * Creates the namespace if it does not yet exist.
+	 * Does macro expansion for the body before evaluating it.
 	 * Returns the namespace.
 	 * Note: The 'ns' form does not capture any bindings from a surrounding environment.
 	 */
 	public static SpecialForm SF_NS(Function<String, Namespace> internNamespace) {
+		Symbol doSym = new Symbol("nplisp.core/do");
 		return (args, env, allowRecur) -> {
 			if (args.empty()) {
 				throw new LispException("'ns' requires at least one argument: (ns NAME *&BODY*)");
@@ -657,7 +659,9 @@ public final class CoreLibrary {
 			Namespace ns = internNamespace.apply(((Symbol) o).name);
 
 			// evaluate body
-			SpecialForm.DO(args.next(), new Environment(ns), false);
+			env = new Environment(ns);
+			Sequence body = cons(doSym, args.next());
+			Lisp.eval(body, env);
 			return ns;
 		};
 	}
@@ -719,7 +723,7 @@ public final class CoreLibrary {
 				// Since 'require' is supposed to be a regular function later on, I evaluate every
 				// argument as long as this is a SpecialForm.
 				// Means the vectors passed to 'require' already need to be quoted.
-				arg = Lisp.eval(arg, env, false);
+				arg = Lisp._eval(arg, env, false);
 
 				Sequence spec = seq(arg);
 				Object sym = spec.first();
@@ -742,7 +746,7 @@ public final class CoreLibrary {
 					if (form != null) {
 						boolean startReloadAll = reloadAll && !outerReloadAll;
 						reloadAllFlag.setIf(startReloadAll);
-						ns = (Namespace) Lisp.eval(form, new Environment(currentNs), false);
+						ns = (Namespace) Lisp._eval(form, new Environment(currentNs), false);
 						reloadAllFlag.unsetIf(startReloadAll);
 					}
 				}
@@ -780,7 +784,7 @@ public final class CoreLibrary {
 			// Since 'import' is supposed to be a regular function later on, I evaluate every
 			// argument as long as this is a SpecialForm.
 			// Means the vectors passed to 'import' already need to be quoted.
-			arg = Lisp.eval(arg, env, false);
+			arg = Lisp._eval(arg, env, false);
 
 			Sequence spec = seq(arg);
 			if (spec != null && count(arg) < 2) {

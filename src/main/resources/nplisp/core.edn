@@ -59,6 +59,10 @@
     [name]
     (list 'nplisp.core/def name))
 
+
+  (defn identity [x] x)
+
+
   ;; LOGIC FUNCTIONS AND MACROS
 
   (defn not [x]
@@ -144,5 +148,28 @@
   ;; everything available for syntax quote now
 
   (def syntax-quote)
+
+
+  ;; MACRO EXPANSION
+
+  (defmacro macroexpand-1
+    "If form represents a macro form, returns its expansion,
+    else returns form."
+    [x]
+    `(macroexpand-1* *ns* ~x))
+
+
+  (defmacro macroexpand
+    "Repeatedly calls macroexpand-1 on form until it no longer
+    represents a macro form, then returns it.  Note neither
+    macroexpand-1 nor macroexpand expand macros in subforms."
+    [x]
+    `(macroexpand* *ns* ~x))
+
+
+  (defmacro macroexpand-all
+    "Recursively performs all possible macroexpansions in form."
+    [x]
+    `(macroexpand-all* *ns* ~x))
 
   )

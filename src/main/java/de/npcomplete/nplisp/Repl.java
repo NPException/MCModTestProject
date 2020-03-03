@@ -41,7 +41,7 @@ public class Repl {
 		Namespace ns = currentNs();
 		Environment replEnv = new Environment(ns);
 		replEnv.bind(IN_NS_SYMBOL, in_ns_function);
-		return (T) Lisp.eval(form, replEnv, false);
+		return (T) Lisp.eval(form, replEnv);
 	}
 
 	/**
