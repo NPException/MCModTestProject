@@ -43,22 +43,23 @@ public interface Sequence extends Iterable<Object> {
 	 */
 	@Override
 	default Iterator<Object> iterator() {
-		Sequence[] box = {this};
+		Sequence self = this;
 		return new Iterator<Object>() {
+			private Sequence seq = self;
+
 			@Override
 			public boolean hasNext() {
-				Sequence seq = box[0];
 				return seq != null && !seq.empty();
 			}
 
 			@Override
 			public Object next() {
-				Sequence seq = box[0];
-				if (seq == null || empty()) {
+				if (seq == null || seq.empty()) {
 					throw new NoSuchElementException();
 				}
-				box[0] = seq.next();
-				return seq.first();
+				Object item = seq.first();
+				seq = seq.next();
+				return item;
 			}
 		};
 	}
