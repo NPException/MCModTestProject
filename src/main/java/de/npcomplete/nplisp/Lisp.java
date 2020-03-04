@@ -160,9 +160,13 @@ public class Lisp {
 		def(coreNs, "time", CoreLibrary.SF_TIME);
 
 		// MACRO EXPANSION
-		def(coreNs, "macroexpand-1*", (Fn2) Macroexpand::macroexpand1);
-		def(coreNs, "macroexpand*", (Fn2) Macroexpand::macroexpand);
-		def(coreNs, CORE_MACROEXPAND_ALL_SYM.name, (Fn2) Macroexpand::macroexpandAll);
+		LispFunction macroExpand1 = Macroexpand.macroexpand1(Lisp::derefVar);
+		LispFunction macroExpand = Macroexpand.macroexpand(macroExpand1);
+		LispFunction macroExpandAll = Macroexpand.macroexpandAll(macroExpand);
+
+		def(coreNs, "macroexpand-1*", macroExpand1);
+		def(coreNs, "macroexpand*", macroExpand);
+		def(coreNs, CORE_MACROEXPAND_ALL_SYM.name, macroExpandAll);
 
 		// bootstrap rest of core library
 		Environment coreEnv = new Environment(coreNs);
@@ -175,36 +179,30 @@ public class Lisp {
 		System.out.println("Core library initialized in " + time / 1_000_000.0 + " msecs");
 	}
 
-	private static Object lookup(Environment env, Symbol sym, boolean allowMacro) {
+	private static Object lookup(Environment env, Symbol sym) {
 		Object val = env.lookup(sym);
 		if (!(val instanceof Var)) {
 			return val;
 		}
-		Var var = (Var) val;
+		return derefVar((Var) val, env.namespace);
+	}
+
+	private static Object derefVar(Var var, Namespace currentNs) {
 		if (var.isMacro()) {
-			if (!allowMacro) {
-				throw new LispException("Can't take value of a macro: " + var);
-			}
 			if (var == CORE_SYNTAX_QUOTE_VAR) {
-				Namespace ns = env.namespace;
-				Var sqFnVar = ns.lookupVar(CORE_SYNTAX_QUOTE_STAR_SYM, true, false);
-				return (Macro) args -> {
-					if (args.next() != null) {
-						throw new LispException("syntax-quote only takes a single argument");
-					}
-					return sqFnVar.apply(args.first(), ns);
-				};
+				Var sqv = currentNs.lookupVar(CORE_SYNTAX_QUOTE_STAR_SYM, true, false);
+				LispFunction partialSyntaxQuoteFn = (Fn1) form -> sqv.apply(form, currentNs);
+				return (Macro) partialSyntaxQuoteFn::applyTo;
 			}
 			LispFunction macroFunction = LispFunctionFactory.from(var.deref());
 			return (Macro) macroFunction::applyTo;
 		}
 		// generate 'eval' function which uses the current namespace for evaluation
 		if (var == CORE_EVAL_VAR) {
-			Namespace ns = env.namespace;
-			return (Fn1) par -> eval(par, new Environment(ns));
+			return (Fn1) par -> eval(par, new Environment(currentNs));
 		}
 		if (var == CORE_CURRENT_NS_VAR) {
-			return env.namespace;
+			return currentNs;
 		}
 		return var.deref();
 	}
@@ -222,7 +220,7 @@ public class Lisp {
 
 	public static Object _eval(Object obj, Environment env, boolean allowRecur) throws LispException {
 		if (obj instanceof Symbol) {
-			return lookup(env, (Symbol) obj, false);
+			return lookup(env, (Symbol) obj);
 		}
 
 		if (obj instanceof Sequence) {
@@ -230,11 +228,7 @@ public class Lisp {
 			if (seq.empty()) {
 				throw new LispException("Can't evaluate empty list");
 			}
-			// evaluate first element with special handling for symbols to allow macros
-			Object firstElement = seq.first();
-			Object callable = firstElement instanceof Symbol
-					? lookup(env, (Symbol) firstElement, true)
-					: _eval(seq.first(), env, false);
+			Object callable = _eval(seq.first(), env, false);
 
 			// call to special form
 			if (callable instanceof SpecialForm) {
