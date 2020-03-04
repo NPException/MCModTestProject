@@ -1,4 +1,4 @@
-(def fn-0 (fn [] (println "No args call!")))
+(defn fn-0 [] (println "No args call!"))
 (if true (println "Hello\nWorld!"))
 (if nil
   (println "you don't see me")
@@ -144,3 +144,5 @@
       (if test test (or ~@next)))))
 
 (or nil false 1 2 3)
+
+(and 1 2 nil 4)
