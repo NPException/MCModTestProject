@@ -1,5 +1,8 @@
 package playground;
 
+import static de.npcomplete.nplisp.corelibrary.CoreLibrary.list;
+import static java.util.stream.Collectors.toList;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -16,6 +19,7 @@ import java.util.stream.DoubleStream;
 import de.npcomplete.nplisp.Lisp;
 import de.npcomplete.nplisp.Repl;
 import de.npcomplete.nplisp.core.Var;
+import de.npcomplete.nplisp.data.Symbol;
 import de.npcomplete.nplisp.function.LispFunctionFactory.Fn0;
 import de.npcomplete.nplisp.util.LispPrinter;
 import de.npcomplete.nplisp.util.LispReader;
@@ -81,13 +85,30 @@ public final class Playground {
 	}
 
 	public static final class PerfCheck {
+		private static Symbol macroExpandAll = new Symbol("nplisp.core/macroexpand-all");
+		private static Symbol quote = new Symbol("nplisp.core/quote");
+
+		private static Object macroExpandForm(Object form) {
+			return repl.eval(list(macroExpandAll, list(quote, form)));
+		}
+
 		public static void main(String[] arguments) throws Exception {
+			long start = System.nanoTime();
+			repl.eval(quote);
+			double bootstrap = (System.nanoTime() - start) / 1_000_000.0;
+
 			// read forms ahead of time, to remove that from the timing
 			List<Object> forms = new ArrayList<>();
 			Iterator<Object> it = LispReader.readMany(new FileReader("test.edn"));
 			while (it.hasNext()) {
 				forms.add(it.next());
 			}
+
+			start = System.nanoTime();
+			forms = forms.stream()
+					.map(PerfCheck::macroExpandForm)
+					.collect(toList());
+			double expand = (System.nanoTime() - start) / 1_000_000.0;
 
 			// disable output
 			PrintStream sysout = System.out;
@@ -103,7 +124,7 @@ public final class Playground {
 
 			// run a few times
 			for (int i = 0; i < count; i++) {
-				long start = System.nanoTime();
+				start = System.nanoTime();
 				evalForms(forms.iterator(), true);
 				times[i] = (System.nanoTime() - start) / 1_000_000.0;
 			}
@@ -116,11 +137,13 @@ public final class Playground {
 							.getAsDouble();
 
 			DoubleSummaryStatistics stats = DoubleStream.of(times).summaryStatistics();
+			sysout.println("      bootstrap: " + bootstrap + " ms");
+			sysout.println("macro-expansion: " + expand + " ms");
+			sysout.println();
 			sysout.println("   min: " + stats.getMin() + " ms");
 			sysout.println("median: " + median + " ms");
 			sysout.println("   avg: " + stats.getAverage() + " ms");
 			sysout.println("   max: " + stats.getMax() + " ms");
-			sysout.println(" first: " + times[0] + " ms");
 
 			System.setOut(sysout);
 			Thread.sleep(100);
